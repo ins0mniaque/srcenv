@@ -49,7 +49,7 @@ The following table shows how to source `.env` in different shells:
 
 For a list of supported shells, see `srcenv --help`.
 
-For more advanced usage see the [srcenv(1) manpage](https://github.com/ins0mniaque/srcenv/blob/main/srcenv.1) (`man ./srcenv.1`).
+For more advanced usage see the [srcenv(1) manpage](https://github.com/ins0mniaque/srcenv/blob/main/srcenv.1.md) (`man ./srcenv.1`).
 
 ## Roadmap
 
