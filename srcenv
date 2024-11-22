@@ -1,0 +1,95 @@
+#!/bin/sh
+
+version() {
+    echo "srcenv 1.0.0"
+}
+
+header() {
+    cat >&2 << EOF
+srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.
+
+Usage: srcenv [options] [files]
+              [-h|--help|-v|--version]
+
+srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
+and prints a script exporting the environment variables that have changed since
+the snapshot, for one of the following shells:
+
+    bash, csh/tcsh, dash, elvish, fish, murex, nushell, powershell, zsh
+
+EOF
+}
+
+help() {
+    cat >&2 << EOF
+For listing the command options, use '${0##*/} --help'.
+
+For more advanced usage see the srcenv(1) manpage ("man srcenv") and/or
+https://github.com/ins0mniaque/srcenv/.
+EOF
+}
+
+usage() {
+    cat >&2 << EOF
+Options:
+  --bash                Format the output as a Bash script
+  --csh, --tcsh         Format the output as a Csh/Tcsh script
+  --dash                Format the output as a Dash script
+  --elvish              Format the output as an Elvish script
+  --env                 Format the output as a .env file
+  --fish                Format the output as a Fish script
+  --murex               Format the output as a Murex script
+  --nu, --nushell       Format the output as a Nushell script
+  --posix, --sh         Format the output as a POSIX shell script
+  --pwsh, --powershell  Format the output as a PowerShell script
+  --zsh                 Format the output as a Zsh script
+  -h, --help            Display help and exit
+  -v, --version         Display the version number and exit
+
+For more advanced usage see the srcenv(1) manpage ("man srcenv") and/or
+https://github.com/ins0mniaque/srcenv/.
+EOF
+}
+
+invalid() {
+    cat >&2 << EOF
+error: unexpected argument '$1' found
+
+Usage: srcenv [options] [files]
+              [-h|--help|-v|--version]
+
+For more information, try '${0##*/} --help'.
+EOF
+}
+
+if [ $# = 0 ]; then
+    header; help; exit 1
+fi
+
+diff='reduce (env|keys_unsorted[]) as $k ({}; if $snapshot | has($k) and env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+keys='keys_unsorted[] as $k'
+format='\($k)='\''\(.[$k]|tojson|.[1:-1])'\'
+
+snapshot=$(jq -n 'env')
+
+while [ $# -gt 0 ]; do
+    case $1 in
+        --bash|\
+        --csh|--tcsh|\
+        --dash|\
+        --murex|\
+        --posix|--sh|\
+        --zsh)               format='export \($k)='\''\(.[$k]|tojson|.[1:-1])'\';  shift ;;
+        --elvish)            format='set-env $\($k) \(.[$k]|tojson)';              shift ;;
+        --fish)              format='set -gx \($k) '\''\(.[$k]|tojson|.[1:-1])'\'; shift ;;
+        --nu|--nushell)      format='$env.\($k) = \(.[$k]|tojson)';                shift ;;
+        --pwsh|--powershell) format='$Env:\($k) = \(.[$k]|tojson)';                shift ;;
+        --env)               format='\($k)='\''\(.[$k]|tojson|.[1:-1])'\';         shift ;;
+        -\?|-h|--help)       header; usage;      exit 1 ;;
+        -v|--version)        version;            exit 1 ;;
+        -*)                  invalid "$1";       exit 1 ;;
+        *)                   . "$1" > /dev/null; shift ;;
+    esac
+done
+
+jq --argjson snapshot "$snapshot" -rn "$diff | $keys | \"$format\""
