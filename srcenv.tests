@@ -45,7 +45,7 @@ trap 'rm -f "$input"' EXIT
 
 # Tests
 
-test "./srcenv --version" "srcenv 1.0.0"
+test "./srcenv --version" "srcenv 1.0.1"
 
 test "./srcenv $input" "SRCENV_TEST='6'
 SRCENV_TEST2='7'
