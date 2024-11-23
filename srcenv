@@ -63,7 +63,7 @@ EOF
 }
 
 if [ $# = 0 ]; then
-    header; help; exit 1
+    header; help; exit 0
 fi
 
 diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
@@ -85,8 +85,8 @@ while [ $# -gt 0 ]; do
         --nu|--nushell)      format='$env.\($k) = \(.[$k]|tojson)';                shift ;;
         --pwsh|--powershell) format='$Env:\($k) = \(.[$k]|tojson)';                shift ;;
         --env)               format='\($k)='\''\(.[$k]|tojson|.[1:-1])'\';         shift ;;
-        -\?|-h|--help)       header; usage;      exit 1 ;;
-        -v|--version)        version;            exit 1 ;;
+        -\?|-h|--help)       header; usage;      exit 0 ;;
+        -v|--version)        version;            exit 0 ;;
         -*)                  invalid "$1";       exit 1 ;;
         *)                   . "$1" > /dev/null; shift ;;
     esac
