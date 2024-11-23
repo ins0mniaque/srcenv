@@ -63,11 +63,11 @@ EOF
 }
 
 if [ $# = 0 ]; then
-    header; help; exit 0
+    header; help; exit 0g
 fi
 
 diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
-keys='keys_unsorted[] as $k'
+keys='keys[] as $k'
 format='\($k)='\''\(.[$k]|tojson|.[1:-1])'\'
 
 snapshot=$(jq -n 'env')
