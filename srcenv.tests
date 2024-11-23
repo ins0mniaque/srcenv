@@ -1,0 +1,64 @@
+#!/bin/sh
+
+# Test framework
+
+RED=$(tput setaf 1 || printf "\e[31m")
+GREEN=$(tput setaf 2 || printf "\e[32m")
+NORMAL=$(tput sgr0 || printf "\e[00m")
+
+unit_test() {
+    line="$1"; cmd="$2"; output="$($2)"; exitcode=$?;
+    expected="$3"; expected_exitcode="${4:-0}"
+
+    if [ "$output" != "$expected" ]; then
+        printf "[Line %s] ${RED}✖ %s${NORMAL}: %s ${RED}!=${NORMAL} %s\n" "$line" "$cmd" "$output" "$expected" >&2
+    elif [ "$exitcode" != "$expected_exitcode" ]; then
+        printf "[Line %s] ${RED}✖ %s${NORMAL}: Exit code %s ${RED}!=${NORMAL} Exit code %s\n" "$line" "$cmd" "$exitcode" "$expected_exitcode" >&2
+    else
+        printf "[Line %s] ${GREEN}✔ %s${NORMAL}\n" "$line" "$cmd" >&2
+    fi
+}
+
+alias test='unit_test "$LINENO"'
+
+trap 'unalias test' EXIT
+
+# Setup tests
+
+export SRCENV_TEST_EXISTING=6
+
+trap 'unset SRCENV_TEST_EXISTING' EXIT
+
+input=srcenv.tests.input
+
+tee "$input" > /dev/null << EOF
+export SRCENV_TEST="\$SRCENV_TEST_EXISTING"
+export SRCENV_TEST2="\${SRCENV_TEST_NOT_EXISTING:-7}"
+export SRCENV_TEST3="\$((SRCENV_TEST * SRCENV_TEST2))"
+export SRCENV_TEST_MULTILINE="
+\$SRCENV_TEST
+\$SRCENV_TEST2
+\$SRCENV_TEST3"
+EOF
+
+trap 'rm -f "$input"' EXIT
+
+# Tests
+
+test "./srcenv --version" "srcenv 1.0.0"
+
+test "./srcenv $input" "SRCENV_TEST='6'
+SRCENV_TEST2='7'
+SRCENV_TEST3='42'
+SRCENV_TEST_MULTILINE='\n6\n7\n42'"
+
+# NOTE: STDIN not supported yet
+# test "cat $input | ./srcenv" "SRCENV_TEST='6'
+# SRCENV_TEST2='7'
+# SRCENV_TEST3='42'
+# SRCENV_TEST_MULTILINE='\n6\n7\n42'"
+
+test "./srcenv --fish $input" "set -gx SRCENV_TEST '6'
+set -gx SRCENV_TEST2 '7'
+set -gx SRCENV_TEST3 '42'
+set -gx SRCENV_TEST_MULTILINE '\n6\n7\n42'"
