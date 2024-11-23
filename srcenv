@@ -63,7 +63,7 @@ EOF
 }
 
 if [ $# = 0 ]; then
-    header; help; exit 0g
+    header; help; exit 0
 fi
 
 diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
