@@ -72,6 +72,14 @@ Options
 
 :   Format the output as a Zsh script.
 
+-s, \--sort
+
+:   Sort the environment variables alphabetically.
+
+-u, \--unsorted
+
+:   Keep the environment variables unsorted.
+
 -h, \--help
 
 :   Display help and exit.

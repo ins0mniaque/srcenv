@@ -43,6 +43,8 @@ Options:
   --posix, --sh         Format the output as a POSIX shell script
   --pwsh, --powershell  Format the output as a PowerShell script
   --zsh                 Format the output as a Zsh script
+  -s, --sort            Sort the environment variables alphabetically
+  -u, --unsorted        Keep the environment variables unsorted
   -h, --help            Display help and exit
   -v, --version         Display the version number and exit
 
@@ -85,6 +87,8 @@ while [ $# -gt 0 ]; do
         --nu|--nushell)      format='$env.\($k) = \(.[$k]|tojson)';                shift ;;
         --pwsh|--powershell) format='$Env:\($k) = \(.[$k]|tojson)';                shift ;;
         --env)               format='\($k)='\''\(.[$k]|tojson|.[1:-1])'\';         shift ;;
+        -s|--sort)           keys='keys[] as $k';                                  shift ;;
+        -u|--unsorted)       keys='keys_unsorted[] as $k';                         shift ;;
         -\?|-h|--help)       header; usage;      exit 0 ;;
         -v|--version)        version;            exit 0 ;;
         -*)                  invalid "$1";       exit 1 ;;
