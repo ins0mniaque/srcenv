@@ -72,6 +72,14 @@ Options
 
 :   Format the output as a Zsh script.
 
+-
+
+:   Source from STDIN.
+
+-a ARG, -a=ARG, \--arg ARG, \--arg=ARG
+
+:   Source from string value of ARG.
+
 -e, \--export
 
 :   Export all variables (Default for .env/.envrc files).

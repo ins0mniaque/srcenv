@@ -47,6 +47,9 @@ Options:
   --posix, --sh         Format the output as a POSIX shell script
   --pwsh, --powershell  Format the output as a PowerShell script
   --zsh                 Format the output as a Zsh script
+  -                     Source from STDIN
+  -a ARG, --arg ARG,
+  -a=ARG, --arg=ARG     Source from string value of ARG
   -e, --export          Export all variables (Default for .env/.envrc files)
   -n, --noexport        Do not export all variables
   -s, --sort            Sort the environment variables alphabetically
@@ -112,6 +115,8 @@ while [ $# -gt 0 ]; do
         -u|--unsorted)       keys='keys_unsorted[] as $k';         shift ;;
         -\?|-h|--help)       header; usage;                        exit 0 ;;
         -v|--version)        version;                              exit 0 ;;
+        -a|--arg)            src var "$2" "$export";               shift; shift ;;
+        -a=*|--arg=*)        src var "${1#*=}" "$export";          shift ;;
         -)                   src var "$(cat)" "$export";           shift ;;
         -*)                  invalid "$1";                         exit 1 ;;
         *.env|*.envrc)       src file "$1" "${export:---export}";  shift ;;
