@@ -89,6 +89,22 @@ if [ $# = 0 ]; then
     header; help; exit 0
 fi
 
+case $(ps -o comm= -p "$PPID") in
+    -bash|bash)     set -- --bash "$@" ;;
+    -csh|csh)       set -- --csh "$@" ;;
+    -tcsh|tcsh)     set -- --tcsh "$@" ;;
+    -dash|dash)     set -- --dash "$@" ;;
+    -murex|murex)   set -- --murex "$@" ;;
+    -sh|sh)         set -- --sh "$@" ;;
+    -zsh|zsh)       set -- --zsh "$@" ;;
+    -elvish|elvish) set -- --elvish "$@" ;;
+    -fish|fish)     set -- --fish "$@" ;;
+    -nu|nu)         set -- --nu "$@" ;;
+    -pwsh|pwsh|\
+    -powershell|\
+    powershell)     set -- --pwsh "$@" ;;
+esac
+
 diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
 keys='keys[] as $k'
 format='\($k)=\(.[$k]|@sh)'
