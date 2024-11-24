@@ -1,4 +1,8 @@
 #!/bin/sh
+#
+# srcenv.tests - A cross-shell tool for sourcing POSIX compliant .env scripts
+#
+# shellcheck disable=SC2016
 
 version() {
     echo "srcenv 1.0.1"
@@ -64,6 +68,18 @@ For more information, try '${0##*/} --help'.
 EOF
 }
 
+src() {
+    [ "$3" = --export ] && set -a
+
+    if [ "$1" = var ]; then
+        eval "$2" > /dev/null
+    else
+        . "$2" > /dev/null
+    fi
+
+    [ "$3" = --export ] && set +a
+}
+
 if [ $# = 0 ]; then
     header; help; exit 0
 fi
@@ -71,6 +87,7 @@ fi
 diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
 keys='keys[] as $k'
 format='\($k)=\(.[$k]|@sh)'
+export=
 
 snapshot=$(jq -n 'env')
 
@@ -81,19 +98,20 @@ while [ $# -gt 0 ]; do
         --dash|\
         --murex|\
         --posix|--sh|\
-        --zsh)               format='export \($k)=\(.[$k]|@sh)';      shift ;;
-        --elvish)            format='set-env $\($k) \(.[$k]|tojson)'; shift ;;
-        --fish)              format='set -gx \($k) \(.[$k]|@sh)';     shift ;;
-        --nu|--nushell)      format='$env.\($k) = \(.[$k]|tojson)';   shift ;;
-        --pwsh|--powershell) format='$Env:\($k) = \(.[$k]|tojson)';   shift ;;
-        --env)               format='\($k)=\(.[$k]|@sh)';             shift ;;
-        -s|--sort)           keys='keys[] as $k';                     shift ;;
-        -u|--unsorted)       keys='keys_unsorted[] as $k';            shift ;;
-        -\?|-h|--help)       header; usage;      exit 0 ;;
-        -v|--version)        version;            exit 0 ;;
-        -)                   eval "$(cat)";      shift ;;
-        -*)                  invalid "$1";       exit 1 ;;
-        *)                   . "$1" > /dev/null; shift ;;
+        --zsh)               format='export \($k)=\(.[$k]|@sh)';   shift ;;
+        --elvish)            format='set-env $\($k) \(.[$k]|@sh)'; shift ;;
+        --fish)              format='set -gx \($k) \(.[$k]|@sh)';  shift ;;
+        --nu|--nushell)      format='$env.\($k) = \(.[$k]|@sh)';   shift ;;
+        --pwsh|--powershell) format='$Env:\($k) = \(.[$k]|@sh)';   shift ;;
+        --env)               format='\($k)=\(.[$k]|@sh)';          shift ;;
+        -s|--sort)           keys='keys[] as $k';                  shift ;;
+        -u|--unsorted)       keys='keys_unsorted[] as $k';         shift ;;
+        -\?|-h|--help)       header; usage;                        exit 0 ;;
+        -v|--version)        version;                              exit 0 ;;
+        -)                   src var "$(cat)" "$export";           shift ;;
+        -*)                  invalid "$1";                         exit 1 ;;
+        *.env|*.envrc)       src file "$1" "${export:---export}";  shift ;;
+        *)                   src file "$1" "$export";              shift ;;
     esac
 done
 
