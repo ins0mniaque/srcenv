@@ -28,6 +28,10 @@ installation options.
 Options
 -------
 
+\--ash
+
+:   Format the output as an Ash script.
+
 \--bash
 
 :   Format the output as a Bash script.
@@ -51,6 +55,10 @@ Options
 \--fish
 
 :   Format the output as a Fish script.
+
+\--ksh, \--pdksh
+
+:   Format the output as a Ksh script.
 
 \--murex
 

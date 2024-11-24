@@ -36,12 +36,14 @@ EOF
 usage() {
     cat >&2 << EOF
 Options:
+  --ash                 Format the output as an Ash script
   --bash                Format the output as a Bash script
   --csh, --tcsh         Format the output as a Csh/Tcsh script
   --dash                Format the output as a Dash script
   --elvish              Format the output as an Elvish script
   --env                 Format the output as a .env file
   --fish                Format the output as a Fish script
+  --ksh, --pdksh        Format the output as a Ksh script
   --murex               Format the output as a Murex script
   --nu, --nushell       Format the output as a Nushell script
   --posix, --sh         Format the output as a POSIX shell script
@@ -114,9 +116,11 @@ snapshot=$(jq -n 'env')
 
 while [ $# -gt 0 ]; do
     case $1 in
+        --ash|\
         --bash|\
         --csh|--tcsh|\
         --dash|\
+        --ksh|--pdksh|\
         --murex|\
         --posix|--sh|\
         --zsh)               format='export \($k)=\(.[$k]|@sh)';   shift ;;
