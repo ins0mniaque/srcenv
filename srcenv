@@ -164,5 +164,5 @@ while [ $# -gt 0 ]; do
 done
 
 jq --argjson snapshot "$snapshot" \
-   ${undo:+--argjson undo "$SRCENV_UNDO"} \
+   ${undo:+--argjson} ${undo:+undo} ${undo:+"$SRCENV_UNDO"} \
    -rn "$undo $diff $backup | $keys | $format"
