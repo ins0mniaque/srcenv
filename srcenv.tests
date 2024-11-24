@@ -157,7 +157,7 @@ EOF
 # Tests
 ##############################################################################
 
-test "./srcenv --version" "srcenv 1.1.0"
+test "./srcenv --version" "srcenv 1.1.1"
 
 test "./srcenv --invalid" "" 1
 
