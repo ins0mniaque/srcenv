@@ -1,64 +1,221 @@
 #!/bin/sh
+#
+# srcenv.tests - Test suite for srcenv
 
+##############################################################################
 # Test framework
+#
+# Usage: test <command> <expected output> [<expected exit code>]
+##############################################################################
+
+alias test='unit_test "$LINENO"'
 
 RED=$(tput setaf 1 || printf "\e[31m")
 GREEN=$(tput setaf 2 || printf "\e[32m")
 NORMAL=$(tput sgr0 || printf "\e[00m")
 
 unit_test() {
-    line="$1"; cmd="$2"; output="$($2)"; exitcode=$?;
+    line="$1"; cmd="$2"; output="$($2 2> /dev/null)"; exitcode=$?;
     expected="$3"; expected_exitcode="${4:-0}"
 
     if [ "$output" != "$expected" ]; then
-        printf "[Line %s] ${RED}✖ %s${NORMAL}: %s ${RED}!=${NORMAL} %s\n" "$line" "$cmd" "$output" "$expected" >&2
+        printf "[Line %s] ${RED}✖ %s${NORMAL}: %s ${RED}!=${NORMAL} %s\n" \
+               "$line" "$cmd" "$output" "$expected" >&2
     elif [ "$exitcode" != "$expected_exitcode" ]; then
-        printf "[Line %s] ${RED}✖ %s${NORMAL}: Exit code %s ${RED}!=${NORMAL} Exit code %s\n" "$line" "$cmd" "$exitcode" "$expected_exitcode" >&2
+        printf "[Line %s] ${RED}✖ %s${NORMAL}: Exit code %s ${RED}!=${NORMAL} Exit code %s\n" \
+               "$line" "$cmd" "$exitcode" "$expected_exitcode" >&2
     else
         printf "[Line %s] ${GREEN}✔ %s${NORMAL}\n" "$line" "$cmd" >&2
     fi
 }
 
-alias test='unit_test "$LINENO"'
-
-trap 'unalias test' EXIT
-
+##############################################################################
 # Setup tests
+##############################################################################
 
-export SRCENV_TEST_EXISTING=6
+export SRCENV_TEST_EXISTING=1
+unset SRCENV_TEST_NOT_EXISTING
 
-trap 'unset SRCENV_TEST_EXISTING' EXIT
+env_input=test.env
+posix_input=test.env.sh
 
-input=srcenv.tests.input
+tee "$env_input" > /dev/null << 'EOF'
+# Interpolation tests
+SRCENV_TEST_A="${SRCENV_TEST_EXISTING:+6}"
+SRCENV_TEST_B="${SRCENV_TEST_NOT_EXISTING:-7}"
+SRCENV_TEST_C="$((SRCENV_TEST_A * SRCENV_TEST_B))"
 
-tee "$input" > /dev/null << EOF
-export SRCENV_TEST="\$SRCENV_TEST_EXISTING"
-export SRCENV_TEST2="\${SRCENV_TEST_NOT_EXISTING:-7}"
-export SRCENV_TEST3="\$((SRCENV_TEST * SRCENV_TEST2))"
-export SRCENV_TEST_MULTILINE="
-\$SRCENV_TEST
-\$SRCENV_TEST2
-\$SRCENV_TEST3"
+# Escape sequence tests
+SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\""
+
+# Multi-line tests
+SRCENV_TEST_MULTILINE="
+$SRCENV_TEST_A
+$SRCENV_TEST_B
+$SRCENV_TEST_C"
 EOF
 
-trap 'rm -f "$input"' EXIT
+tee "$posix_input" > /dev/null << 'EOF'
+# Unexported variable tests
+SRCENV_TEST_NOT_EXPORTED=1
 
+# Interpolation tests
+export SRCENV_TEST_A="${SRCENV_TEST_EXISTING:+6}"
+export SRCENV_TEST_B="${SRCENV_TEST_NOT_EXISTING:-7}"
+export SRCENV_TEST_C="$((SRCENV_TEST_A * SRCENV_TEST_B * SRCENV_TEST_NOT_EXPORTED))"
+
+# Escape sequence tests
+export SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\""
+
+# Multi-line tests
+export SRCENV_TEST_MULTILINE="
+$SRCENV_TEST_A
+$SRCENV_TEST_B
+$SRCENV_TEST_C"
+EOF
+
+cleanup() {
+    unset SRCENV_TEST_EXISTING
+
+    rm -f "$env_input"
+    rm -f "$posix_input"
+}
+
+trap cleanup EXIT
+
+##############################################################################
+# Expected outputs
+##############################################################################
+
+{ env_output=$(cat); } << 'EOF'
+SRCENV_TEST_A='6'
+SRCENV_TEST_B='7'
+SRCENV_TEST_C='42'
+SRCENV_TEST_ESCAPE='$NOT_EXPANDED\t\r\n'\''"'
+SRCENV_TEST_MULTILINE='
+6
+7
+42'
+EOF
+
+{ posix_output=$(cat); } << 'EOF'
+export SRCENV_TEST_A='6'
+export SRCENV_TEST_B='7'
+export SRCENV_TEST_C='42'
+export SRCENV_TEST_ESCAPE='$NOT_EXPANDED\t\r\n'\''"'
+export SRCENV_TEST_MULTILINE='
+6
+7
+42'
+EOF
+
+{ elvish_output=$(cat); } << 'EOF'
+set-env $SRCENV_TEST_A '6'
+set-env $SRCENV_TEST_B '7'
+set-env $SRCENV_TEST_C '42'
+set-env $SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"'
+set-env $SRCENV_TEST_MULTILINE '
+6
+7
+42'
+EOF
+
+{ fish_output=$(cat); } << 'EOF'
+set -gx SRCENV_TEST_A '6'
+set -gx SRCENV_TEST_B '7'
+set -gx SRCENV_TEST_C '42'
+set -gx SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"'
+set -gx SRCENV_TEST_MULTILINE '
+6
+7
+42'
+EOF
+
+{ nu_output=$(cat); } << 'EOF'
+$env.SRCENV_TEST_A = '6'
+$env.SRCENV_TEST_B = '7'
+$env.SRCENV_TEST_C = '42'
+$env.SRCENV_TEST_ESCAPE = '$NOT_EXPANDED\t\r\n'\''"'
+$env.SRCENV_TEST_MULTILINE = '
+6
+7
+42'
+EOF
+
+{ pwsh_output=$(cat); } << 'EOF'
+$Env:SRCENV_TEST_A = '6'
+$Env:SRCENV_TEST_B = '7'
+$Env:SRCENV_TEST_C = '42'
+$Env:SRCENV_TEST_ESCAPE = '$NOT_EXPANDED\t\r\n'\''"'
+$Env:SRCENV_TEST_MULTILINE = '
+6
+7
+42'
+EOF
+
+##############################################################################
 # Tests
+##############################################################################
 
 test "./srcenv --version" "srcenv 1.0.1"
 
-test "./srcenv $input" "SRCENV_TEST='6'
-SRCENV_TEST2='7'
-SRCENV_TEST3='42'
-SRCENV_TEST_MULTILINE='\n6\n7\n42'"
+test "./srcenv --invalid" "" 1
 
-# NOTE: STDIN not supported yet
-# test "cat $input | ./srcenv" "SRCENV_TEST='6'
-# SRCENV_TEST2='7'
-# SRCENV_TEST3='42'
-# SRCENV_TEST_MULTILINE='\n6\n7\n42'"
+test "./srcenv $env_input"                         "$env_output"
+# test "./srcenv --export --arg $(cat $env_input)"   "$env_output"  # TODO: Fix test framework arg support
+# test "./srcenv --export - < $env_input"            "$env_output"  # TODO: Fix test framework STDIN support
+test "./srcenv --noexport $env_input"              ""
+# test "./srcenv --noexport --arg $(cat $env_input)" ""             # TODO: Fix test framework arg support
+# test "./srcenv - < $env_input"                     ""             # TODO: Fix test framework STDIN support
 
-test "./srcenv --fish $input" "set -gx SRCENV_TEST '6'
-set -gx SRCENV_TEST2 '7'
-set -gx SRCENV_TEST3 '42'
-set -gx SRCENV_TEST_MULTILINE '\n6\n7\n42'"
+test "./srcenv --bash $env_input"       "$posix_output"
+test "./srcenv --csh $env_input"        "$posix_output"
+test "./srcenv --tcsh $env_input"       "$posix_output"
+test "./srcenv --dash $env_input"       "$posix_output"
+test "./srcenv --murex $env_input"      "$posix_output"
+test "./srcenv --posix $env_input"      "$posix_output"
+test "./srcenv --sh $env_input"         "$posix_output"
+test "./srcenv --zsh $env_input"        "$posix_output"
+test "./srcenv --elvish $env_input"     "$elvish_output"
+test "./srcenv --fish $env_input"       "$fish_output"
+test "./srcenv --nu $env_input"         "$nu_output"
+test "./srcenv --nushell $env_input"    "$nu_output"
+test "./srcenv --pwsh $env_input"       "$pwsh_output"
+test "./srcenv --powershell $env_input" "$pwsh_output"
+test "./srcenv --env $env_input"        "$env_output"
+
+test "./srcenv --bash --noexport $env_input"       ""
+test "./srcenv --csh --noexport $env_input"        ""
+test "./srcenv --tcsh --noexport $env_input"       ""
+test "./srcenv --dash --noexport $env_input"       ""
+test "./srcenv --murex --noexport $env_input"      ""
+test "./srcenv --posix --noexport $env_input"      ""
+test "./srcenv --sh --noexport $env_input"         ""
+test "./srcenv --zsh --noexport $env_input"        ""
+test "./srcenv --elvish --noexport $env_input"     ""
+test "./srcenv --fish --noexport $env_input"       ""
+test "./srcenv --nu --noexport $env_input"         ""
+test "./srcenv --nushell --noexport $env_input"    ""
+test "./srcenv --pwsh --noexport $env_input"       ""
+test "./srcenv --powershell --noexport $env_input" ""
+test "./srcenv --env --noexport $env_input"        ""
+
+test "./srcenv $posix_input"              "$env_output"
+# test "./srcenv --arg $(cat $posix_input)" "$env_output"  # TODO: Fix test framework arg support
+# test "./srcenv - < $posix_input"          "$env_output"  # TODO: Fix test framework STDIN support
+
+test "./srcenv --bash $posix_input"       "$posix_output"
+test "./srcenv --csh $posix_input"        "$posix_output"
+test "./srcenv --tcsh $posix_input"       "$posix_output"
+test "./srcenv --dash $posix_input"       "$posix_output"
+test "./srcenv --murex $posix_input"      "$posix_output"
+test "./srcenv --posix $posix_input"      "$posix_output"
+test "./srcenv --sh $posix_input"         "$posix_output"
+test "./srcenv --zsh $posix_input"        "$posix_output"
+test "./srcenv --elvish $posix_input"     "$elvish_output"
+test "./srcenv --fish $posix_input"       "$fish_output"
+test "./srcenv --nu $posix_input"         "$nu_output"
+test "./srcenv --nushell $posix_input"    "$nu_output"
+test "./srcenv --pwsh $posix_input"       "$pwsh_output"
+test "./srcenv --powershell $posix_input" "$pwsh_output"
+test "./srcenv --env $posix_input"        "$env_output"
