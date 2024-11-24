@@ -1,6 +1,8 @@
 # srcenv
 
+[![Tag](https://img.shields.io/github/v/tag/ins0mniaque/srcenv)](https://github.com/ins0mniaque/srcenv/tags)
 [![License](https://img.shields.io/github/license/ins0mniaque/srcenv)](https://github.com/ins0mniaque/srcenv/blob/master/LICENSE)
+[![CI](https://github.com/ins0mniaque/srcenv/actions/workflows/ci.yml/badge.svg)](https://github.com/ins0mniaque/srcenv/actions/workflows/ci.yml)
 
 [Installation](#installation) / [Usage](#usage) / [Roadmap](#roadmap) / [Contributing](#contributing)
 
