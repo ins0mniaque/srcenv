@@ -171,7 +171,7 @@ EOF
 # Tests
 ##############################################################################
 
-test "./srcenv --version" "srcenv 1.2.0"
+test "./srcenv --version" "srcenv 1.2.1"
 
 test "./srcenv --invalid" "" 1
 
