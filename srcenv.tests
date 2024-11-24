@@ -6,22 +6,32 @@
 # Test framework
 #
 # Usage: test <command> <expected output> [<expected exit code>]
+#        end
 ##############################################################################
 
+tests_exitcode=0
+
 alias test='unit_test "$LINENO"'
+
+end() {
+    exit $tests_exitcode
+}
 
 RED=$(tput setaf 1 || printf "\e[31m")
 GREEN=$(tput setaf 2 || printf "\e[32m")
 NORMAL=$(tput sgr0 || printf "\e[00m")
 
+# shellcheck disable=SC2317
 unit_test() {
     line="$1"; cmd="$2"; output="$($2 2> /dev/null)"; exitcode=$?;
     expected="$3"; expected_exitcode="${4:-0}"
 
     if [ "$output" != "$expected" ]; then
+        tests_exitcode=1
         printf "[Line %s] ${RED}✖ %s${NORMAL}: %s ${RED}!=${NORMAL} %s\n" \
                "$line" "$cmd" "$output" "$expected" >&2
     elif [ "$exitcode" != "$expected_exitcode" ]; then
+        tests_exitcode=1
         printf "[Line %s] ${RED}✖ %s${NORMAL}: Exit code %s ${RED}!=${NORMAL} Exit code %s\n" \
                "$line" "$cmd" "$exitcode" "$expected_exitcode" >&2
     else
@@ -74,6 +84,7 @@ $SRCENV_TEST_B
 $SRCENV_TEST_C"
 EOF
 
+# shellcheck disable=SC2317
 cleanup() {
     unset SRCENV_TEST_EXISTING
 
@@ -228,3 +239,5 @@ test "./srcenv --nushell $posix_input"    "$nu_output"
 test "./srcenv --pwsh $posix_input"       "$pwsh_output"
 test "./srcenv --powershell $posix_input" "$pwsh_output"
 test "./srcenv --env $posix_input"        "$env_output"
+
+end

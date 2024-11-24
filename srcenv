@@ -83,6 +83,7 @@ src() {
     if [ "$1" = var ]; then
         eval "$2" > /dev/null
     else
+        # shellcheck disable=SC1090
         . "$2" > /dev/null
     fi
 
