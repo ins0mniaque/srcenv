@@ -90,9 +90,12 @@ cleanup() {
 
     rm -f "$env_input"
     rm -f "$posix_input"
+
+    trap - EXIT
+    exit
 }
 
-trap cleanup EXIT
+trap cleanup EXIT INT HUP TERM
 
 ##############################################################################
 # Expected outputs
