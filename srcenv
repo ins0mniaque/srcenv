@@ -9,71 +9,93 @@ version() {
 }
 
 header() {
+    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
+    DIM=$(tput dim 2> /dev/null || printf "\e[2m")
+    ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
+    UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")
+
     cat >&2 << EOF
 srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.
 
-Usage: srcenv [options] [files]
+${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]
               [-h|--help|-v|--version]
 
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
 and prints a script exporting the environment variables that have changed since
 the snapshot, for one of the following shells:
 
-    bash, csh/tcsh, dash, elvish, fish, murex, nushell, powershell, zsh
+    ${DIM}bash, csh/tcsh, dash, elvish, fish, murex, nushell, powershell, zsh${NORMAL}
 
 EOF
 }
 
 help() {
-    cat >&2 << EOF
-For listing the command options, use '${0##*/} --help'.
+    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
+    ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
 
-For more advanced usage see the srcenv(1) manpage ("man srcenv") and/or
+    cat >&2 << EOF
+For listing the command options, use '${0##*/} ${BOLD}--help${NORMAL}'.
+
+For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
 https://github.com/ins0mniaque/srcenv/.
 EOF
 }
 
 usage() {
-    cat >&2 << EOF
-Options:
-  --ash                 Format the output as an Ash script
-  --bash                Format the output as a Bash script
-  --csh, --tcsh         Format the output as a Csh/Tcsh script
-  --dash                Format the output as a Dash script
-  --elvish              Format the output as an Elvish script
-  --env                 Format the output as a .env file
-  --fish                Format the output as a Fish script
-  --ksh, --pdksh        Format the output as a Ksh script
-  --murex               Format the output as a Murex script
-  --nu, --nushell       Format the output as a Nushell script
-  --posix, --sh         Format the output as a POSIX shell script
-  --pwsh, --powershell  Format the output as a PowerShell script
-  --zsh                 Format the output as a Zsh script
-  -                     Source from STDIN
-  -a ARG, --arg ARG,
-  -a=ARG, --arg=ARG     Source from string value of ARG
-  -b, --backup          Backup changes in SRCENV_UNDO for undo
-  -u, --undo            Undo backed up changes from SRCENV_UNDO
-  -e, --export          Export all variables (Default for .env/.envrc files)
-  -l, --local           Do not export all variables
-  -s, --sort            Sort the environment variables alphabetically (Default)
-  -U, --unsorted        Keep the environment variables unsorted
-  -h, --help            Display help and exit
-  -v, --version         Display the version number and exit
+    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
+    ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
+    UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")
 
-For more advanced usage see the srcenv(1) manpage ("man srcenv") and/or
+    cat >&2 << EOF
+${BOLD}${UNDERLINE}Options${NORMAL}:
+  ${BOLD}--ash                 ${NORMAL}Format the output as an Ash script
+  ${BOLD}--bash                ${NORMAL}Format the output as a Bash script
+  ${BOLD}--csh, --tcsh         ${NORMAL}Format the output as a Csh/Tcsh script
+  ${BOLD}--dash                ${NORMAL}Format the output as a Dash script
+  ${BOLD}--elvish              ${NORMAL}Format the output as an Elvish script
+  ${BOLD}--env                 ${NORMAL}Format the output as a .env file
+  ${BOLD}--fish                ${NORMAL}Format the output as a Fish script
+  ${BOLD}--ksh, --pdksh        ${NORMAL}Format the output as a Ksh script
+  ${BOLD}--murex               ${NORMAL}Format the output as a Murex script
+  ${BOLD}--nu, --nushell       ${NORMAL}Format the output as a Nushell script
+  ${BOLD}--posix, --sh         ${NORMAL}Format the output as a POSIX shell script
+  ${BOLD}--pwsh, --powershell  ${NORMAL}Format the output as a PowerShell script
+  ${BOLD}--zsh                 ${NORMAL}Format the output as a Zsh script
+  ${BOLD}-                     ${NORMAL}Source from STDIN
+  ${BOLD}-a ARG, --arg ARG,
+  ${BOLD}-a=ARG, --arg=ARG     ${NORMAL}Source from string value of ARG
+  ${BOLD}-b, --backup          ${NORMAL}Backup changes in SRCENV_UNDO for undo
+  ${BOLD}-u, --undo            ${NORMAL}Undo backed up changes from SRCENV_UNDO
+  ${BOLD}-e, --export          ${NORMAL}Export all variables ${ITALIC}(Default for .env/.envrc files)${NORMAL}
+  ${BOLD}-l, --local           ${NORMAL}Do not export all variables
+  ${BOLD}-s, --sort            ${NORMAL}Sort the environment variables alphabetically ${ITALIC}(Default)${NORMAL}
+  ${BOLD}-U, --unsorted        ${NORMAL}Keep the environment variables unsorted
+  ${BOLD}-h, --help            ${NORMAL}Display help and exit
+  ${BOLD}-v, --version         ${NORMAL}Display the version number and exit
+
+For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
 https://github.com/ins0mniaque/srcenv/.
 EOF
 }
 
 invalid() {
-    cat >&2 << EOF
-error: unexpected argument '$1' found
+    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
+    ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
+    UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")
+    RED=$(tput setaf 1 2> /dev/null || printf "\e[31m")
+    YELLOW=$(tput setaf 3 2> /dev/null || printf "\e[33m")
 
-Usage: srcenv [options] [files]
+    cat >&2 << EOF
+${BOLD}${RED}error:${NORMAL} unexpected argument '${YELLOW}$1${NORMAL}' found
+
+${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]
               [-h|--help|-v|--version]
 
-For more information, try '${0##*/} --help'.
+For more information, try '${0##*/} ${BOLD}--help${NORMAL}'.
 EOF
 }
 
