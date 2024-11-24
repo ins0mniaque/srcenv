@@ -88,19 +88,27 @@ Options
 
 :   Source from string value of ARG.
 
+-b, \--backup
+
+:   Backup changes in SRCENV_UNDO for undo.
+
+-u, \--undo
+
+:   Undo backed up changes from SRCENV_UNDO.
+
 -e, \--export
 
 :   Export all variables (Default for .env/.envrc files).
 
--n, \--noexport
+-l, \--local
 
 :   Do not export all variables.
 
 -s, \--sort
 
-:   Sort the environment variables alphabetically.
+:   Sort the environment variables alphabetically (Default).
 
--u, \--unsorted
+-U, \--unsorted
 
 :   Keep the environment variables unsorted.
 

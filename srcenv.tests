@@ -161,12 +161,12 @@ test "./srcenv --version" "srcenv 1.1.1"
 
 test "./srcenv --invalid" "" 1
 
-test "./srcenv $env_input"                         "$env_output"
-# test "./srcenv --export --arg $(cat $env_input)"   "$env_output"  # TODO: Fix test framework arg support
-# test "./srcenv --export - < $env_input"            "$env_output"  # TODO: Fix test framework STDIN support
-test "./srcenv --noexport $env_input"              ""
-# test "./srcenv --noexport --arg $(cat $env_input)" ""             # TODO: Fix test framework arg support
-# test "./srcenv - < $env_input"                     ""             # TODO: Fix test framework STDIN support
+test "./srcenv $env_input"                       "$env_output"
+# test "./srcenv --export --arg $(cat $env_input)" "$env_output"  # TODO: Fix test framework arg support
+# test "./srcenv --export - < $env_input"          "$env_output"  # TODO: Fix test framework STDIN support
+test "./srcenv --local $env_input"               ""
+# test "./srcenv --local --arg $(cat $env_input)"  ""             # TODO: Fix test framework arg support
+# test "./srcenv - < $env_input"                   ""             # TODO: Fix test framework STDIN support
 
 test "./srcenv --ash $env_input"        "$posix_output"
 test "./srcenv --bash $env_input"       "$posix_output"
@@ -187,24 +187,24 @@ test "./srcenv --pwsh $env_input"       "$pwsh_output"
 test "./srcenv --powershell $env_input" "$pwsh_output"
 test "./srcenv --env $env_input"        "$env_output"
 
-test "./srcenv --ash --noexport $env_input"        ""
-test "./srcenv --bash --noexport $env_input"       ""
-test "./srcenv --csh --noexport $env_input"        ""
-test "./srcenv --tcsh --noexport $env_input"       ""
-test "./srcenv --dash --noexport $env_input"       ""
-test "./srcenv --ksh --noexport $env_input"        ""
-test "./srcenv --pdksh --noexport $env_input"      ""
-test "./srcenv --murex --noexport $env_input"      ""
-test "./srcenv --posix --noexport $env_input"      ""
-test "./srcenv --sh --noexport $env_input"         ""
-test "./srcenv --zsh --noexport $env_input"        ""
-test "./srcenv --elvish --noexport $env_input"     ""
-test "./srcenv --fish --noexport $env_input"       ""
-test "./srcenv --nu --noexport $env_input"         ""
-test "./srcenv --nushell --noexport $env_input"    ""
-test "./srcenv --pwsh --noexport $env_input"       ""
-test "./srcenv --powershell --noexport $env_input" ""
-test "./srcenv --env --noexport $env_input"        ""
+test "./srcenv --ash --local $env_input"        ""
+test "./srcenv --bash --local $env_input"       ""
+test "./srcenv --csh --local $env_input"        ""
+test "./srcenv --tcsh --local $env_input"       ""
+test "./srcenv --dash --local $env_input"       ""
+test "./srcenv --ksh --local $env_input"        ""
+test "./srcenv --pdksh --local $env_input"      ""
+test "./srcenv --murex --local $env_input"      ""
+test "./srcenv --posix --local $env_input"      ""
+test "./srcenv --sh --local $env_input"         ""
+test "./srcenv --zsh --local $env_input"        ""
+test "./srcenv --elvish --local $env_input"     ""
+test "./srcenv --fish --local $env_input"       ""
+test "./srcenv --nu --local $env_input"         ""
+test "./srcenv --nushell --local $env_input"    ""
+test "./srcenv --pwsh --local $env_input"       ""
+test "./srcenv --powershell --local $env_input" ""
+test "./srcenv --env --local $env_input"        ""
 
 test "./srcenv $posix_input"              "$env_output"
 # test "./srcenv --arg $(cat $posix_input)" "$env_output"  # TODO: Fix test framework arg support

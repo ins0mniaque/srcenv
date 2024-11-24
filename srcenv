@@ -52,10 +52,12 @@ Options:
   -                     Source from STDIN
   -a ARG, --arg ARG,
   -a=ARG, --arg=ARG     Source from string value of ARG
+  -b, --backup          Backup changes in SRCENV_UNDO for undo
+  -u, --undo            Undo backed up changes from SRCENV_UNDO
   -e, --export          Export all variables (Default for .env/.envrc files)
-  -n, --noexport        Do not export all variables
-  -s, --sort            Sort the environment variables alphabetically
-  -u, --unsorted        Keep the environment variables unsorted
+  -l, --local           Do not export all variables
+  -s, --sort            Sort the environment variables alphabetically (Default)
+  -U, --unsorted        Keep the environment variables unsorted
   -h, --help            Display help and exit
   -v, --version         Display the version number and exit
 
@@ -111,9 +113,18 @@ case $(ps -o comm= -p "$PPID") in
 esac
 
 diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+ffid='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
 keys='keys[] as $k'
-format='\($k)=\(.[$k]|@sh)'
+format=
 export=
+backup=
+undo=
+
+fmt() {
+    format='if .[$k] != null then "'$1'" else "'$2'" end';
+}
+
+fmt '\($k)=\(.[$k]|@sh)' '\($k)='
 
 snapshot=$(jq -n 'env')
 
@@ -126,25 +137,31 @@ while [ $# -gt 0 ]; do
         --ksh|--pdksh|\
         --murex|\
         --posix|--sh|\
-        --zsh)               format='export \($k)=\(.[$k]|@sh)';   shift ;;
-        --elvish)            format='set-env $\($k) \(.[$k]|@sh)'; shift ;;
-        --fish)              format='set -gx \($k) \(.[$k]|@sh)';  shift ;;
-        --nu|--nushell)      format='$env.\($k) = \(.[$k]|@sh)';   shift ;;
-        --pwsh|--powershell) format='$Env:\($k) = \(.[$k]|@sh)';   shift ;;
-        --env)               format='\($k)=\(.[$k]|@sh)';          shift ;;
-        -e|--export)         export=--export;                      shift ;;
-        -n|--noexport)       export=0;                             shift ;;
-        -s|--sort)           keys='keys[] as $k';                  shift ;;
-        -u|--unsorted)       keys='keys_unsorted[] as $k';         shift ;;
-        -\?|-h|--help)       header; usage;                        exit 0 ;;
-        -v|--version)        version;                              exit 0 ;;
-        -a|--arg)            src var "$2" "$export";               shift; shift ;;
-        -a=*|--arg=*)        src var "${1#*=}" "$export";          shift ;;
-        -)                   src var "$(cat)" "$export";           shift ;;
-        -*)                  invalid "$1";                         exit 1 ;;
-        *.env|*.envrc)       src file "$1" "${export:---export}";  shift ;;
-        *)                   src file "$1" "$export";              shift ;;
+        --zsh)               fmt 'export \($k)=\(.[$k]|@sh)'   'unset \($k)';        shift ;;
+        --elvish)            fmt 'set-env $\($k) \(.[$k]|@sh)' 'unset-env $\($k)';   shift ;;
+        --fish)              fmt 'set -gx \($k) \(.[$k]|@sh)'  'set -e \($k)';       shift ;;
+        --nu|--nushell)      fmt '$env.\($k) = \(.[$k]|@sh)'   '$env.\($k) = null';  shift ;;
+        --pwsh|--powershell) fmt '$Env:\($k) = \(.[$k]|@sh)'   '$Env:\($k) = $null'; shift ;;
+        --env)               fmt '\($k)=\(.[$k]|@sh)'          '\($k)=';             shift ;;
+
+        -b|--backup)   backup='| . += { SRCENV_UNDO: ('$ffid' | tostring) }'; shift ;;
+        -u|--undo)     undo='$undo | . += ';         shift ;;
+        -e|--export)   export=--export;              shift ;;
+        -l|--local)    export=0;                     shift ;;
+        -s|--sort)     keys='keys[] as $k';          shift ;;
+        -U|--unsorted) keys='keys_unsorted[] as $k'; shift ;;
+
+        -\?|-h|--help) header; usage;                        exit 0 ;;
+        -v|--version)  version;                              exit 0 ;;
+        -a|--arg)      src var "$2" "$export";               shift; shift ;;
+        -a=*|--arg=*)  src var "${1#*=}" "$export";          shift ;;
+        -)             src var "$(cat)" "$export";           shift ;;
+        -*)            invalid "$1";                         exit 1 ;;
+        *.env|*.envrc) src file "$1" "${export:---export}";  shift ;;
+        *)             src file "$1" "$export";              shift ;;
     esac
 done
 
-jq --argjson snapshot "$snapshot" -rn "$diff | $keys | \"$format\""
+jq --argjson snapshot "$snapshot" \
+   ${undo:+--argjson undo "$SRCENV_UNDO"} \
+   -rn "$undo $diff $backup | $keys | $format"
