@@ -17,7 +17,7 @@ jobs:
         shell: bash
         run: |
           curl -Ls https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz | \
-          tar xz --strip-components=1 shellcheck-v0.10.0/shellcheck
+          tar xJ --strip-components=1 shellcheck-v0.10.0/shellcheck
       - name: Run ShellCheck
         run: ./shellcheck --color=always srcenv srcenv.tests
       - name: Run srcenv tests
