@@ -92,10 +92,13 @@ if [ $# = 0 ]; then
 fi
 
 case $(ps -o comm= -p "$PPID") in
+    -ash|ash)       set -- --ash "$@" ;;
     -bash|bash)     set -- --bash "$@" ;;
     -csh|csh)       set -- --csh "$@" ;;
     -tcsh|tcsh)     set -- --tcsh "$@" ;;
     -dash|dash)     set -- --dash "$@" ;;
+    -ksh|ksh)       set -- --ksh "$@" ;;
+    -pdksh|pdksh)   set -- --pdksh "$@" ;;
     -murex|murex)   set -- --murex "$@" ;;
     -sh|sh)         set -- --sh "$@" ;;
     -zsh|zsh)       set -- --zsh "$@" ;;
