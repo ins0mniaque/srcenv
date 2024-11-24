@@ -46,8 +46,8 @@ unit_test() {
 export SRCENV_TEST_EXISTING=1
 unset SRCENV_TEST_NOT_EXISTING
 
-env_input=test.env
-posix_input=test.env.sh
+env_input=./test.env
+posix_input=./test.env.sh
 
 tee "$env_input" > /dev/null << 'EOF'
 # Interpolation tests
