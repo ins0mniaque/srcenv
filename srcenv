@@ -47,6 +47,8 @@ Options:
   --posix, --sh         Format the output as a POSIX shell script
   --pwsh, --powershell  Format the output as a PowerShell script
   --zsh                 Format the output as a Zsh script
+  -e, --export          Export all variables (Default for .env/.envrc files)
+  -n, --noexport        Do not export all variables
   -s, --sort            Sort the environment variables alphabetically
   -u, --unsorted        Keep the environment variables unsorted
   -h, --help            Display help and exit
@@ -104,6 +106,8 @@ while [ $# -gt 0 ]; do
         --nu|--nushell)      format='$env.\($k) = \(.[$k]|@sh)';   shift ;;
         --pwsh|--powershell) format='$Env:\($k) = \(.[$k]|@sh)';   shift ;;
         --env)               format='\($k)=\(.[$k]|@sh)';          shift ;;
+        -e|--export)         export=--export;                      shift ;;
+        -n|--noexport)       export=0;                             shift ;;
         -s|--sort)           keys='keys[] as $k';                  shift ;;
         -u|--unsorted)       keys='keys_unsorted[] as $k';         shift ;;
         -\?|-h|--help)       header; usage;                        exit 0 ;;

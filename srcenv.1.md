@@ -72,6 +72,14 @@ Options
 
 :   Format the output as a Zsh script.
 
+-e, \--export
+
+:   Export all variables (Default for .env/.envrc files).
+
+-n, \--noexport
+
+:   Do not export all variables.
+
 -s, \--sort
 
 :   Sort the environment variables alphabetically.
