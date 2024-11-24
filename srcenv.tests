@@ -2,12 +2,10 @@
 #
 # srcenv.tests - Test suite for srcenv
 
-##############################################################################
-# Test framework
+# region Framework
 #
 # Usage: test <command> <expected output> [<expected exit code>]
 #        end
-##############################################################################
 
 tests_exitcode=0
 
@@ -39,9 +37,9 @@ unit_test() {
     fi
 }
 
-##############################################################################
-# Setup tests
-##############################################################################
+# endregion Framework
+
+# region Setup
 
 export SRCENV_TEST_EXISTING=1
 unset SRCENV_TEST_NOT_EXISTING
@@ -97,9 +95,9 @@ cleanup() {
 
 trap cleanup EXIT INT HUP TERM
 
-##############################################################################
-# Expected outputs
-##############################################################################
+# endregion Setup
+
+# region Outputs
 
 { env_output=$(cat); } << 'EOF'
 SRCENV_TEST_A='6'
@@ -167,9 +165,9 @@ $Env:SRCENV_TEST_MULTILINE = '
 42'
 EOF
 
-##############################################################################
-# Tests
-##############################################################################
+# endregion Outputs
+
+# region Tests
 
 test "./srcenv --version" "srcenv 1.2.1"
 
@@ -244,3 +242,5 @@ test "./srcenv --powershell $posix_input" "$pwsh_output"
 test "./srcenv --env $posix_input"        "$env_output"
 
 end
+
+# endregion Tests

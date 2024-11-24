@@ -8,6 +8,8 @@ version() {
     echo "srcenv 1.2.1"
 }
 
+# region Help / Usage
+
 header() {
     NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
     BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
@@ -99,18 +101,7 @@ For more information, try '${0##*/} ${BOLD}--help${NORMAL}'.
 EOF
 }
 
-src() {
-    [ "$3" = --export ] && set -a
-
-    if [ "$1" = var ]; then
-        eval "$2" > /dev/null
-    else
-        # shellcheck disable=SC1090
-        . "$2" > /dev/null
-    fi
-
-    [ "$3" = --export ] && set +a
-}
+# endregion Help / Usage
 
 if [ $# = 0 ]; then
     header; help; exit 0
@@ -148,6 +139,19 @@ fmt() {
 }
 
 fmt '\($k)=\(.[$k]|@sh)' '\($k)='
+
+src() {
+    [ "$3" = --export ] && set -a
+
+    if [ "$1" = var ]; then
+        eval "$2" > /dev/null
+    else
+        # shellcheck disable=SC1090
+        . "$2" > /dev/null
+    fi
+
+    [ "$3" = --export ] && set +a
+}
 
 snapshot=$(jq -n 'env')
 
