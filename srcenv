@@ -130,6 +130,7 @@ esac
 
 diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
 ffid='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
+addundo='('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_UNDO: ($ffid | tostring) } else . end'
 keys='keys[] as $k'
 prefix=
 format=
@@ -179,7 +180,7 @@ while [ $# -gt 0 ]; do
         --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                                  'launchctl unsetenv \($k)';                          shift ;;
 
-        -b|--backup)   backup='| . += { SRCENV_UNDO: ('$ffid' | tostring) }'; shift ;;
+        -b|--backup)   backup='| '$addundo;          shift ;;
         -u|--undo)     undo='$undo | . += ';         shift ;;
         -e|--export)   export=--export;              shift ;;
         -l|--local)    export=0;                     shift ;;
