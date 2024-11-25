@@ -56,7 +56,7 @@ fi
 
 REPLACE="srcenv $(echo "$CURRENT" | sed s/\\./\\\\./g)"
 WITH="srcenv $(echo "$VERSION" | sed s/\\./\\\\./g)"
-sed -i "" "s/$REPLACE/$WITH/g" srcenv srcenv.tests srcenv.1.md 
+sed -i "" "s/$REPLACE/$WITH/g" srcenv srcenv.tests srcenv.1.md
 
 check srcenv       "$VERSION"
 check srcenv.tests "$VERSION"
