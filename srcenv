@@ -131,9 +131,9 @@ esac
 diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
 ffid='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
 if [ -z "$SRCENV_UNDO" ]; then
-    addundo='('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_UNDO: ($ffid | tostring) } else . end'
+    addundo='('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_UNDO: ($ffid | . += { SRCENV_UNDO: null } | tostring) } else . end'
 else
-    addundo='. += { SRCENV_UNDO: ('$ffid' | tostring) }'
+    addundo='. += { SRCENV_UNDO: ('$ffid' | . += { SRCENV_UNDO: null } | tostring) }'
 fi
 
 keys='keys[] as $k'

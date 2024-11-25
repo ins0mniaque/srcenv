@@ -111,7 +111,7 @@ SRCENV_TEST_MULTILINE='
 EOF
 
 { env_backup_output=$(printf "%s\n%s" "$env_output" "$(cat)"); } << 'EOF'
-SRCENV_UNDO='{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+SRCENV_UNDO='{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null,"SRCENV_UNDO":null}'
 EOF
 
 { posix_output=$(cat); } << 'EOF'
@@ -126,7 +126,7 @@ export SRCENV_TEST_MULTILINE='
 EOF
 
 { posix_backup_output=$(printf "%s\n%s" "$posix_output" "$(cat)"); } << 'EOF'
-export SRCENV_UNDO='{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+export SRCENV_UNDO='{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null,"SRCENV_UNDO":null}'
 EOF
 
 { cmd_output_prefix=$(cat); } << 'EOF'
@@ -145,7 +145,7 @@ set "SRCENV_TEST_MULTILINE=%LF%6%LF%7%LF%42"
 EOF
 
 { cmd_backup_output=$(printf "%s\n%s" "$cmd_output" "$(cat)"); } << 'EOF'
-set "SRCENV_UNDO={^"SRCENV_TEST_ESCAPE^":null,^"SRCENV_TEST_MULTILINE^":null,^"SRCENV_TEST_C^":null,^"SRCENV_TEST_B^":null,^"SRCENV_TEST_A^":null}"
+set "SRCENV_UNDO={^"SRCENV_TEST_ESCAPE^":null,^"SRCENV_TEST_MULTILINE^":null,^"SRCENV_TEST_C^":null,^"SRCENV_TEST_B^":null,^"SRCENV_TEST_A^":null,^"SRCENV_UNDO^":null}"
 EOF
 
 { elvish_output=$(cat); } << 'EOF'
@@ -160,7 +160,7 @@ set-env $SRCENV_TEST_MULTILINE '
 EOF
 
 { elvish_backup_output=$(printf "%s\n%s" "$elvish_output" "$(cat)"); } << 'EOF'
-set-env $SRCENV_UNDO '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+set-env $SRCENV_UNDO '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null,"SRCENV_UNDO":null}'
 EOF
 
 { fish_output=$(cat); } << 'EOF'
@@ -175,7 +175,7 @@ set -gx SRCENV_TEST_MULTILINE '
 EOF
 
 { fish_backup_output=$(printf "%s\n%s" "$fish_output" "$(cat)"); } << 'EOF'
-set -gx SRCENV_UNDO '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+set -gx SRCENV_UNDO '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null,"SRCENV_UNDO":null}'
 EOF
 
 { launchctl_output=$(cat); } << 'EOF'
@@ -190,7 +190,7 @@ launchctl setenv SRCENV_TEST_MULTILINE '
 EOF
 
 { launchctl_backup_output=$(printf "%s\n%s" "$launchctl_output" "$(cat)"); } << 'EOF'
-launchctl setenv SRCENV_UNDO '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+launchctl setenv SRCENV_UNDO '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null,"SRCENV_UNDO":null}'
 EOF
 
 { nu_output=$(cat); } << 'EOF'
@@ -205,7 +205,7 @@ $env.SRCENV_TEST_MULTILINE = '
 EOF
 
 { nu_backup_output=$(printf "%s\n%s" "$nu_output" "$(cat)"); } << 'EOF'
-$env.SRCENV_UNDO = '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+$env.SRCENV_UNDO = '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null,"SRCENV_UNDO":null}'
 EOF
 
 { pwsh_output=$(cat); } << 'EOF'
@@ -220,7 +220,7 @@ $Env:SRCENV_TEST_MULTILINE = '
 EOF
 
 { pwsh_backup_output=$(printf "%s\n%s" "$pwsh_output" "$(cat)"); } << 'EOF'
-$Env:SRCENV_UNDO = '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+$Env:SRCENV_UNDO = '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null,"SRCENV_UNDO":null}'
 EOF
 
 # endregion Outputs
