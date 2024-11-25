@@ -15,12 +15,12 @@ list:
 	@echo "make ${BOLD}list      ${NORMAL}Display this list"
 
 build:
-	@shellcheck srcenv srcenv.tests srcenv.version
+	@shellcheck --color=always srcenv srcenv.tests srcenv.version
 	@pandoc --standalone --to man srcenv.1.md -o srcenv.1 && \
 	echo "${GREEN}✔${NORMAL} Generate srcenv.1"
 
 test:
-	@shellcheck srcenv srcenv.tests srcenv.version
+	@shellcheck --color=always srcenv srcenv.tests srcenv.version
 	@./srcenv.tests
 
 version:
