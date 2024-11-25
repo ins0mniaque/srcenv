@@ -19,7 +19,7 @@ jobs:
       - name: Update Homebrew Formula
         run: |
           TAG="$(curl -Ls "https://api.github.com/repos/ins0mniaque/srcenv/tags" | jq -r '.[0].name')"
-          URL="https://github.com/ins0mniaque/srcenv/archive/refs/tags/$TAG.zip"
+          URL="https://github.com/ins0mniaque/srcenv/archive/refs/tags/$TAG.tar.gz"
           SHA256="$(curl -Ls "$URL" | shasum -a 256 | cut -c1-64)"
           VERSION="$(echo "$TAG" | cut -c2-)"
 
