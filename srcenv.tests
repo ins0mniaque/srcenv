@@ -121,6 +121,21 @@ export SRCENV_TEST_MULTILINE='
 42'
 EOF
 
+{ cmd_output_prefix=$(cat); } << 'EOF'
+set LFM=^
+
+
+set LF=^^^%LFM%%LFM%^%LFM%%LFM%
+EOF
+
+{ cmd_output=$(printf "%s\n%s" "$cmd_output_prefix" "$(cat)"); } << 'EOF'
+set "SRCENV_TEST_A=6"
+set "SRCENV_TEST_B=7"
+set "SRCENV_TEST_C=42"
+set "SRCENV_TEST_ESCAPE=$NOT_EXPANDED\t\r\n'^""
+set "SRCENV_TEST_MULTILINE=%LF%6%LF%7%LF%42"
+EOF
+
 { elvish_output=$(cat); } << 'EOF'
 set-env $SRCENV_TEST_A '6'
 set-env $SRCENV_TEST_B '7'
@@ -191,6 +206,8 @@ test "./srcenv --murex $env_input"      "$posix_output"
 test "./srcenv --posix $env_input"      "$posix_output"
 test "./srcenv --sh $env_input"         "$posix_output"
 test "./srcenv --zsh $env_input"        "$posix_output"
+test "./srcenv --bat $env_input"        "$cmd_output"
+test "./srcenv --cmd $env_input"        "$cmd_output"
 test "./srcenv --elvish $env_input"     "$elvish_output"
 test "./srcenv --fish $env_input"       "$fish_output"
 test "./srcenv --nu $env_input"         "$nu_output"
@@ -210,6 +227,8 @@ test "./srcenv --murex --local $env_input"      ""
 test "./srcenv --posix --local $env_input"      ""
 test "./srcenv --sh --local $env_input"         ""
 test "./srcenv --zsh --local $env_input"        ""
+test "./srcenv --bat --local $env_input"        "$cmd_output_prefix"
+test "./srcenv --cmd --local $env_input"        "$cmd_output_prefix"
 test "./srcenv --elvish --local $env_input"     ""
 test "./srcenv --fish --local $env_input"       ""
 test "./srcenv --nu --local $env_input"         ""
@@ -233,6 +252,8 @@ test "./srcenv --murex $posix_input"      "$posix_output"
 test "./srcenv --posix $posix_input"      "$posix_output"
 test "./srcenv --sh $posix_input"         "$posix_output"
 test "./srcenv --zsh $posix_input"        "$posix_output"
+test "./srcenv --bat $posix_input"        "$cmd_output"
+test "./srcenv --cmd $posix_input"        "$cmd_output"
 test "./srcenv --elvish $posix_input"     "$elvish_output"
 test "./srcenv --fish $posix_input"       "$fish_output"
 test "./srcenv --nu $posix_input"         "$nu_output"

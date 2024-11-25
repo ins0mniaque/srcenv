@@ -36,6 +36,10 @@ Options
 
 :   Format the output as a Bash script.
 
+\--bat, \--cmd
+
+:   Format the output as a Windows batch script.
+
 \--csh, \--tcsh
 
 :   Format the output as a Csh/Tcsh script.

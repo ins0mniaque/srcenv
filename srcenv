@@ -55,6 +55,7 @@ usage() {
 ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}--ash                 ${NORMAL}Format the output as an Ash script
   ${BOLD}--bash                ${NORMAL}Format the output as a Bash script
+  ${BOLD}--bat, --cmd          ${NORMAL}Format the output as a Windows batch script
   ${BOLD}--csh, --tcsh         ${NORMAL}Format the output as a Csh/Tcsh script
   ${BOLD}--dash                ${NORMAL}Format the output as a Dash script
   ${BOLD}--elvish              ${NORMAL}Format the output as an Elvish script
@@ -129,6 +130,7 @@ esac
 diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
 ffid='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
 keys='keys[] as $k'
+prefix=
 format=
 export=
 backup=
@@ -170,6 +172,9 @@ while [ $# -gt 0 ]; do
         --nu|--nushell)      fmt '$env.\($k) = \(.[$k]|@sh)'   '$env.\($k) = null';  shift ;;
         --pwsh|--powershell) fmt '$Env:\($k) = \(.[$k]|@sh)'   '$Env:\($k) = $null'; shift ;;
         --env)               fmt '\($k)=\(.[$k]|@sh)'          '\($k)=';             shift ;;
+        --bat|--cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
+                                 'set \($k)=';
+                             prefix="set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%"; shift ;;
 
         -b|--backup)   backup='| . += { SRCENV_UNDO: ('$ffid' | tostring) }'; shift ;;
         -u|--undo)     undo='$undo | . += ';         shift ;;
@@ -188,6 +193,8 @@ while [ $# -gt 0 ]; do
         *)             src file "$1" "$export";              shift ;;
     esac
 done
+
+[ -n "$prefix" ] && echo "$prefix"
 
 jq --argjson snapshot "$snapshot" \
    ${undo:+--argjson} ${undo:+undo} ${undo:+"$SRCENV_UNDO"} \
