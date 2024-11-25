@@ -15,9 +15,9 @@ end() {
     exit $tests_exitcode
 }
 
+NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
 RED=$(tput setaf 1 2> /dev/null || printf "\e[31m")
 GREEN=$(tput setaf 2 2> /dev/null || printf "\e[32m")
-NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
 
 # shellcheck disable=SC2317
 unit_test() {

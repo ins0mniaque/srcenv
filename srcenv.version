@@ -1,0 +1,73 @@
+#!/bin/sh
+#
+# srcenv.version - Version tool for srcenv
+
+CURRENT="${2:-$(git describe --tags --abbrev=0 | cut -c2-)}"
+VERSION="$1"
+ERRORS=""
+
+NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
+DIM=$(tput dim 2> /dev/null || printf "\e[2m")
+RED=$(tput setaf 1 2> /dev/null || printf "\e[31m")
+GREEN=$(tput setaf 2 2> /dev/null || printf "\e[32m")
+YELLOW=$(tput setaf 3 2> /dev/null || printf "\e[33m")
+
+check() {
+    if ! grep "$2" "$1" > /dev/null; then
+        ERRORS="$ERRORS${ERRORS:+\n}$(printf "${RED}✖${NORMAL} %s version does not match version: ${YELLOW}%s${NORMAL}" "$1" "$2")"
+        return 1
+    fi
+}
+
+usage() {
+    echo ""
+    echo "${BOLD}make version v=X.Y.Z ${DIM}[from=X.Y.Z]${NORMAL} to change version"
+}
+
+if [ -n "$VERSION" ]; then
+    check srcenv       "$VERSION"
+    check srcenv.tests "$VERSION"
+    check srcenv.1.md  "$VERSION"
+
+    if [ -z "$ERRORS" ]; then
+        printf "${GREEN}✔${NORMAL} srcenv \e[33m%s${NORMAL}\n" "$VERSION"
+        exit
+    fi
+
+    ERRORS=""
+fi
+
+check srcenv       "$CURRENT"
+check srcenv.tests "$CURRENT"
+check srcenv.1.md  "$CURRENT"
+
+if [ -n "$ERRORS" ]; then
+    echo "$ERRORS"
+    usage
+    exit 1
+fi
+
+if [ -z "$VERSION" ]; then
+    printf "srcenv ${YELLOW}%s${NORMAL}\n" "$CURRENT"
+    usage
+    exit
+fi
+
+REPLACE="srcenv $(echo "$CURRENT" | sed s/\\./\\\\./g)"
+WITH="srcenv $(echo "$VERSION" | sed s/\\./\\\\./g)"
+sed -i "" "s/$REPLACE/$WITH/g" srcenv srcenv.tests srcenv.1.md 
+
+check srcenv       "$VERSION"
+check srcenv.tests "$VERSION"
+check srcenv.1.md  "$VERSION"
+
+if [ -n "$ERRORS" ]; then
+    echo "$ERRORS"
+    usage
+    exit 1
+fi
+
+printf "${GREEN}✔${NORMAL} Change srcenv ${YELLOW}%s${NORMAL} to srcenv ${YELLOW}%s${NORMAL}\n" "$CURRENT" "$VERSION"
+
+make build
