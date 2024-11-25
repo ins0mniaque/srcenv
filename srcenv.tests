@@ -26,14 +26,14 @@ unit_test() {
 
     if [ "$output" != "$expected" ]; then
         tests_exitcode=1
-        printf "%s${RED}✖ %s${NORMAL}: %s ${RED}!=${NORMAL} %s\n" \
+        printf "%s${RED}✖${NORMAL} %s: %s ${RED}!=${NORMAL} %s\n" \
                "$line" "$cmd" "$output" "$expected" >&2
     elif [ "$exitcode" != "$expected_exitcode" ]; then
         tests_exitcode=1
-        printf "%s${RED}✖ %s${NORMAL}: Exit code %s ${RED}!=${NORMAL} Exit code %s\n" \
+        printf "%s${RED}✖${NORMAL} %s: Exit code %s ${RED}!=${NORMAL} Exit code %s\n" \
                "$line" "$cmd" "$exitcode" "$expected_exitcode" >&2
     else
-        printf "%s${GREEN}✔ %s${NORMAL}\n" "$line" "$cmd" >&2
+        printf "%s${GREEN}✔${NORMAL} %s\n" "$line" "$cmd" >&2
     fi
 }
 
