@@ -13,11 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install ShellCheck
-        shell: bash
         run: |
           curl -Ls https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz | \
           tar xJ --strip-components=1 shellcheck-v0.10.0/shellcheck
       - name: Run ShellCheck
-        run: ./shellcheck --color=always srcenv srcenv.tests
+        run: ./shellcheck --color=always srcenv srcenv.tests srcenv.version
       - name: Run srcenv tests
         run: ./srcenv.tests
