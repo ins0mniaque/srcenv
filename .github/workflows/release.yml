@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Homebrew Formula
+        uses: actions/checkout@v4
+        with:
+          repository: ins0mniaque/homebrew-srcenv
+          token: ${{ secrets.HOMEBREW_TOKEN }}
+          path: homebrew-srcenv
+
+      - name: Update Homebrew Formula
+        run: |
+          TAG="$(curl -Ls "https://api.github.com/repos/ins0mniaque/srcenv/tags" | jq -r '.[0].name')"
+          URL="https://github.com/ins0mniaque/srcenv/archive/refs/tags/$TAG.zip"
+          SHA256="$(curl -Ls "$URL" | shasum -a 256 | cut -c1-64)"
+          VERSION="$(echo "$TAG" | cut -c2-)"
+
+          cd homebrew-srcenv
+
+          (
+            echo 'class Srcenv < Formula'
+            echo '  desc "Cross-shell tool for sourcing POSIX compliant .env scripts"'
+            echo '  homepage "https://github.com/ins0mniaque/srcenv"'
+            echo '  url "'$URL'"'
+            echo '  version "'$VERSION'"'
+            echo '  sha256 "'$SHA256'"'
+            echo '  license "MIT"'
+            echo ''
+            echo '  depends_on "jq"'
+            echo ''
+            echo '  def install'
+            echo '    bin.install "srcenv"'
+            echo '    man1.install "srcenv.1"'
+            echo '  end'
+            echo ''
+            echo '  test do'
+            echo '    expected_version = "srcenv #{version}"'
+            echo '    actual_version = shell_output("#{bin}/srcenv --version").strip'
+            echo '    assert_match expected_version, actual_version'
+            echo '  end'
+            echo 'end'
+          ) | tee Formula/srcenv.rb
+
+          git add Formula/srcenv.rb
+          git commit -m "Bump srcenv to $VERSION"
+          git push
