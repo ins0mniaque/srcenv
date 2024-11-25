@@ -70,4 +70,10 @@ fi
 
 printf "${GREEN}✔${NORMAL} Change srcenv ${YELLOW}%s${NORMAL} to srcenv ${YELLOW}%s${NORMAL}\n" "$CURRENT" "$VERSION"
 
-make build
+make build || exit 1
+
+git add srcenv srcenv.tests srcenv.1.md srcenv.1 && \
+git commit -m "Bump version to $VERSION" && \
+git tag "v$VERSION" && \
+git push && \
+git push origin "v$VERSION"
