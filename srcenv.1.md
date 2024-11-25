@@ -68,6 +68,10 @@ Options
 
 :   Format the output as a Murex script.
 
+\--launchctl
+
+:   Format the output as a launchctl calls (macOS).
+
 \--nu, \--nushell
 
 :   Format the output as a Nushell script.

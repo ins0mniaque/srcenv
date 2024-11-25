@@ -62,6 +62,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}--env                 ${NORMAL}Format the output as a .env file
   ${BOLD}--fish                ${NORMAL}Format the output as a Fish script
   ${BOLD}--ksh, --pdksh        ${NORMAL}Format the output as a Ksh script
+  ${BOLD}--launchctl           ${NORMAL}Format the output as a launchctl calls (macOS)
   ${BOLD}--murex               ${NORMAL}Format the output as a Murex script
   ${BOLD}--nu, --nushell       ${NORMAL}Format the output as a Nushell script
   ${BOLD}--posix, --sh         ${NORMAL}Format the output as a POSIX shell script
@@ -175,6 +176,8 @@ while [ $# -gt 0 ]; do
         --bat|--cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
                                  'set \($k)=';
                              prefix="set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%"; shift ;;
+        --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
+                                 'launchctl unsetenv \($k)';                          shift ;;
 
         -b|--backup)   backup='| . += { SRCENV_UNDO: ('$ffid' | tostring) }'; shift ;;
         -u|--undo)     undo='$undo | . += ';         shift ;;

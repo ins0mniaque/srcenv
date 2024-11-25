@@ -158,6 +158,17 @@ set -gx SRCENV_TEST_MULTILINE '
 42'
 EOF
 
+{ launchctl_output=$(cat); } << 'EOF'
+launchctl setenv SRCENV_TEST_A '6'
+launchctl setenv SRCENV_TEST_B '7'
+launchctl setenv SRCENV_TEST_C '42'
+launchctl setenv SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"'
+launchctl setenv SRCENV_TEST_MULTILINE '
+6
+7
+42'
+EOF
+
 { nu_output=$(cat); } << 'EOF'
 $env.SRCENV_TEST_A = '6'
 $env.SRCENV_TEST_B = '7'
@@ -210,6 +221,7 @@ test "./srcenv --bat $env_input"        "$cmd_output"
 test "./srcenv --cmd $env_input"        "$cmd_output"
 test "./srcenv --elvish $env_input"     "$elvish_output"
 test "./srcenv --fish $env_input"       "$fish_output"
+test "./srcenv --launchctl $env_input"  "$launchctl_output"
 test "./srcenv --nu $env_input"         "$nu_output"
 test "./srcenv --nushell $env_input"    "$nu_output"
 test "./srcenv --pwsh $env_input"       "$pwsh_output"
@@ -231,6 +243,7 @@ test "./srcenv --bat --local $env_input"        "$cmd_output_prefix"
 test "./srcenv --cmd --local $env_input"        "$cmd_output_prefix"
 test "./srcenv --elvish --local $env_input"     ""
 test "./srcenv --fish --local $env_input"       ""
+test "./srcenv --launchctl --local $env_input"  ""
 test "./srcenv --nu --local $env_input"         ""
 test "./srcenv --nushell --local $env_input"    ""
 test "./srcenv --pwsh --local $env_input"       ""
@@ -256,6 +269,7 @@ test "./srcenv --bat $posix_input"        "$cmd_output"
 test "./srcenv --cmd $posix_input"        "$cmd_output"
 test "./srcenv --elvish $posix_input"     "$elvish_output"
 test "./srcenv --fish $posix_input"       "$fish_output"
+test "./srcenv --launchctl $posix_input"  "$launchctl_output"
 test "./srcenv --nu $posix_input"         "$nu_output"
 test "./srcenv --nushell $posix_input"    "$nu_output"
 test "./srcenv --pwsh $posix_input"       "$pwsh_output"
