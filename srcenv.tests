@@ -110,6 +110,10 @@ SRCENV_TEST_MULTILINE='
 42'
 EOF
 
+{ env_backup_output=$(printf "%s\n%s" "$env_output" "$(cat)"); } << 'EOF'
+SRCENV_UNDO='{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+EOF
+
 { posix_output=$(cat); } << 'EOF'
 export SRCENV_TEST_A='6'
 export SRCENV_TEST_B='7'
@@ -119,6 +123,10 @@ export SRCENV_TEST_MULTILINE='
 6
 7
 42'
+EOF
+
+{ posix_backup_output=$(printf "%s\n%s" "$posix_output" "$(cat)"); } << 'EOF'
+export SRCENV_UNDO='{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
 EOF
 
 { cmd_output_prefix=$(cat); } << 'EOF'
@@ -136,6 +144,10 @@ set "SRCENV_TEST_ESCAPE=$NOT_EXPANDED\t\r\n'^""
 set "SRCENV_TEST_MULTILINE=%LF%6%LF%7%LF%42"
 EOF
 
+{ cmd_backup_output=$(printf "%s\n%s" "$cmd_output" "$(cat)"); } << 'EOF'
+set "SRCENV_UNDO={^"SRCENV_TEST_ESCAPE^":null,^"SRCENV_TEST_MULTILINE^":null,^"SRCENV_TEST_C^":null,^"SRCENV_TEST_B^":null,^"SRCENV_TEST_A^":null}"
+EOF
+
 { elvish_output=$(cat); } << 'EOF'
 set-env $SRCENV_TEST_A '6'
 set-env $SRCENV_TEST_B '7'
@@ -145,6 +157,10 @@ set-env $SRCENV_TEST_MULTILINE '
 6
 7
 42'
+EOF
+
+{ elvish_backup_output=$(printf "%s\n%s" "$elvish_output" "$(cat)"); } << 'EOF'
+set-env $SRCENV_UNDO '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
 EOF
 
 { fish_output=$(cat); } << 'EOF'
@@ -158,6 +174,10 @@ set -gx SRCENV_TEST_MULTILINE '
 42'
 EOF
 
+{ fish_backup_output=$(printf "%s\n%s" "$fish_output" "$(cat)"); } << 'EOF'
+set -gx SRCENV_UNDO '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+EOF
+
 { launchctl_output=$(cat); } << 'EOF'
 launchctl setenv SRCENV_TEST_A '6'
 launchctl setenv SRCENV_TEST_B '7'
@@ -167,6 +187,10 @@ launchctl setenv SRCENV_TEST_MULTILINE '
 6
 7
 42'
+EOF
+
+{ launchctl_backup_output=$(printf "%s\n%s" "$launchctl_output" "$(cat)"); } << 'EOF'
+launchctl setenv SRCENV_UNDO '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
 EOF
 
 { nu_output=$(cat); } << 'EOF'
@@ -180,6 +204,10 @@ $env.SRCENV_TEST_MULTILINE = '
 42'
 EOF
 
+{ nu_backup_output=$(printf "%s\n%s" "$nu_output" "$(cat)"); } << 'EOF'
+$env.SRCENV_UNDO = '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
+EOF
+
 { pwsh_output=$(cat); } << 'EOF'
 $Env:SRCENV_TEST_A = '6'
 $Env:SRCENV_TEST_B = '7'
@@ -189,6 +217,10 @@ $Env:SRCENV_TEST_MULTILINE = '
 6
 7
 42'
+EOF
+
+{ pwsh_backup_output=$(printf "%s\n%s" "$pwsh_output" "$(cat)"); } << 'EOF'
+$Env:SRCENV_UNDO = '{"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_TEST_C":null,"SRCENV_TEST_B":null,"SRCENV_TEST_A":null}'
 EOF
 
 # endregion Outputs
@@ -228,6 +260,28 @@ test "./srcenv --pwsh $env_input"       "$pwsh_output"
 test "./srcenv --powershell $env_input" "$pwsh_output"
 test "./srcenv --env $env_input"        "$env_output"
 
+test "./srcenv --ash --backup $env_input"        "$posix_backup_output"
+test "./srcenv --bash --backup $env_input"       "$posix_backup_output"
+test "./srcenv --csh --backup $env_input"        "$posix_backup_output"
+test "./srcenv --tcsh --backup $env_input"       "$posix_backup_output"
+test "./srcenv --dash --backup $env_input"       "$posix_backup_output"
+test "./srcenv --ksh --backup $env_input"        "$posix_backup_output"
+test "./srcenv --pdksh --backup $env_input"      "$posix_backup_output"
+test "./srcenv --murex --backup $env_input"      "$posix_backup_output"
+test "./srcenv --posix --backup $env_input"      "$posix_backup_output"
+test "./srcenv --sh --backup $env_input"         "$posix_backup_output"
+test "./srcenv --zsh --backup $env_input"        "$posix_backup_output"
+test "./srcenv --bat --backup $env_input"        "$cmd_backup_output"
+test "./srcenv --cmd --backup $env_input"        "$cmd_backup_output"
+test "./srcenv --elvish --backup $env_input"     "$elvish_backup_output"
+test "./srcenv --fish --backup $env_input"       "$fish_backup_output"
+test "./srcenv --launchctl --backup $env_input"  "$launchctl_backup_output"
+test "./srcenv --nu --backup $env_input"         "$nu_backup_output"
+test "./srcenv --nushell --backup $env_input"    "$nu_backup_output"
+test "./srcenv --pwsh --backup $env_input"       "$pwsh_backup_output"
+test "./srcenv --powershell --backup $env_input" "$pwsh_backup_output"
+test "./srcenv --env --backup $env_input"        "$env_backup_output"
+
 test "./srcenv --ash --local $env_input"        ""
 test "./srcenv --bash --local $env_input"       ""
 test "./srcenv --csh --local $env_input"        ""
@@ -249,6 +303,28 @@ test "./srcenv --nushell --local $env_input"    ""
 test "./srcenv --pwsh --local $env_input"       ""
 test "./srcenv --powershell --local $env_input" ""
 test "./srcenv --env --local $env_input"        ""
+
+test "./srcenv --ash --local --backup $env_input"        ""
+test "./srcenv --bash --local --backup $env_input"       ""
+test "./srcenv --csh --local --backup $env_input"        ""
+test "./srcenv --tcsh --local --backup $env_input"       ""
+test "./srcenv --dash --local --backup $env_input"       ""
+test "./srcenv --ksh --local --backup $env_input"        ""
+test "./srcenv --pdksh --local --backup $env_input"      ""
+test "./srcenv --murex --local --backup $env_input"      ""
+test "./srcenv --posix --local --backup $env_input"      ""
+test "./srcenv --sh --local --backup $env_input"         ""
+test "./srcenv --zsh --local --backup $env_input"        ""
+test "./srcenv --bat --local --backup $env_input"        "$cmd_output_prefix"
+test "./srcenv --cmd --local --backup $env_input"        "$cmd_output_prefix"
+test "./srcenv --elvish --local --backup $env_input"     ""
+test "./srcenv --fish --local --backup $env_input"       ""
+test "./srcenv --launchctl --local --backup $env_input"  ""
+test "./srcenv --nu --local --backup $env_input"         ""
+test "./srcenv --nushell --local --backup $env_input"    ""
+test "./srcenv --pwsh --local --backup $env_input"       ""
+test "./srcenv --powershell --local --backup $env_input" ""
+test "./srcenv --env --local --backup $env_input"        ""
 
 test "./srcenv $posix_input"              "$env_output"
 # test "./srcenv --arg $(cat $posix_input)" "$env_output"  # TODO: Fix test framework arg support
@@ -275,6 +351,28 @@ test "./srcenv --nushell $posix_input"    "$nu_output"
 test "./srcenv --pwsh $posix_input"       "$pwsh_output"
 test "./srcenv --powershell $posix_input" "$pwsh_output"
 test "./srcenv --env $posix_input"        "$env_output"
+
+test "./srcenv --ash --backup $posix_input"        "$posix_backup_output"
+test "./srcenv --bash --backup $posix_input"       "$posix_backup_output"
+test "./srcenv --csh --backup $posix_input"        "$posix_backup_output"
+test "./srcenv --tcsh --backup $posix_input"       "$posix_backup_output"
+test "./srcenv --dash --backup $posix_input"       "$posix_backup_output"
+test "./srcenv --ksh --backup $posix_input"        "$posix_backup_output"
+test "./srcenv --pdksh --backup $posix_input"      "$posix_backup_output"
+test "./srcenv --murex --backup $posix_input"      "$posix_backup_output"
+test "./srcenv --posix --backup $posix_input"      "$posix_backup_output"
+test "./srcenv --sh --backup $posix_input"         "$posix_backup_output"
+test "./srcenv --zsh --backup $posix_input"        "$posix_backup_output"
+test "./srcenv --bat --backup $posix_input"        "$cmd_backup_output"
+test "./srcenv --cmd --backup $posix_input"        "$cmd_backup_output"
+test "./srcenv --elvish --backup $posix_input"     "$elvish_backup_output"
+test "./srcenv --fish --backup $posix_input"       "$fish_backup_output"
+test "./srcenv --launchctl --backup $posix_input"  "$launchctl_backup_output"
+test "./srcenv --nu --backup $posix_input"         "$nu_backup_output"
+test "./srcenv --nushell --backup $posix_input"    "$nu_backup_output"
+test "./srcenv --pwsh --backup $posix_input"       "$pwsh_backup_output"
+test "./srcenv --powershell --backup $posix_input" "$pwsh_backup_output"
+test "./srcenv --env --backup $posix_input"        "$env_backup_output"
 
 end
 
