@@ -1,4 +1,4 @@
-% SRCENV(1) srcenv 1.2.3 | General Commands Manual
+% SRCENV(1) srcenv 1.2.4 | General Commands Manual
 %
 % November 2024
 
