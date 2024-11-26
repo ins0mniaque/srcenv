@@ -11,6 +11,7 @@ list:
 	@echo ""
 	@echo "make ${BOLD}build     ${NORMAL}Run ShellCheck and generate man page"
 	@echo "make ${BOLD}test      ${NORMAL}Run ShellCheck and test suite"
+	@echo "make ${BOLD}bump      ${NORMAL}Bump srcenv version"
 	@echo "make ${BOLD}version   ${NORMAL}Display or change srcenv version"
 	@echo "make ${BOLD}list      ${NORMAL}Display this list"
 
