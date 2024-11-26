@@ -4,7 +4,7 @@ NORMAL=$$(tput sgr0 2> /dev/null || printf "\e[00m")
 BOLD=$$(tput bold 2> /dev/null || printf "\e[1m")
 GREEN=$$(tput setaf 2 2> /dev/null || printf "\e[32m")
 
-.PHONY: list build test version
+.PHONY: list build test bump version
 
 list:
 	@echo "srcenv Makefile"
@@ -22,6 +22,9 @@ build:
 test:
 	@shellcheck --color=always srcenv srcenv.tests srcenv.version
 	@./srcenv.tests
+
+bump:
+	@./srcenv.version bump "${v}" "${from}"
 
 version:
 	@./srcenv.version "${v}" "${from}"

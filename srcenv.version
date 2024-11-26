@@ -2,8 +2,25 @@
 #
 # srcenv.version - Version tool for srcenv
 
-CURRENT="${2:-$(git describe --tags --abbrev=0 | cut -c2-)}"
+TAG="$(git describe --tags --abbrev=0)"
+CURRENT="${TAG#v}"
 VERSION="$1"
+shift
+
+if [ "$VERSION" = "bump" ]; then
+    IFS=. read -r major minor patch << EOF
+$CURRENT
+EOF
+
+    case "$1" in
+        major)    VERSION="$((major+1)).0.0";           shift ;;
+        minor)    VERSION="$major.$((minor+1)).0";      shift ;;
+        patch|'') VERSION="$major.$minor.$((patch+1))"; shift ;;
+        *)        VERSION="$major.$minor.$((patch+1))"; ;;
+    esac
+fi
+
+CURRENT="${1:-$CURRENT}"
 ERRORS=""
 
 NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
@@ -22,7 +39,8 @@ check() {
 
 usage() {
     echo ""
-    echo "${BOLD}make version v=X.Y.Z ${DIM}[from=X.Y.Z]${NORMAL} to change version"
+    echo "make ${BOLD}bump [v=major|minor|patch] ${DIM}[from=X.Y.Z]${NORMAL} or "
+    echo "make ${BOLD}version v=X.Y.Z ${DIM}[from=X.Y.Z]${NORMAL} to change version"
 }
 
 if [ -n "$VERSION" ]; then
