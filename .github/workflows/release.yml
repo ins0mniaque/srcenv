@@ -5,12 +5,18 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Create Release Directory
+        run: mkdir -p release
 
       - name: Build RPM Package
         run: |
@@ -59,6 +65,13 @@ jobs:
           ) | tee rpmbuild/SPECS/srcenv.spec
 
           rpmbuild --define "_topdir $PWD/rpmbuild" -ba rpmbuild/SPECS/srcenv.spec
+
+          cp "rpmbuild/RPMS/noarch/srcenv-$VERSION-1.noarch.rpm" release
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create --generate-notes ${GITHUB_REF#refs/tags/} release/*
 
       - name: Checkout Homebrew Formula
         uses: actions/checkout@v4
