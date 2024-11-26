@@ -27,7 +27,7 @@ jobs:
           mkdir -p rpmbuild/SPECS
           mkdir -p rpmbuild/SRPMS
 
-          TAG="${{ github.event.release.tag_name }}"
+          TAG="${GITHUB_REF#refs/tags/}"
           URL="https://github.com/ins0mniaque/srcenv/archive/refs/tags/$TAG.tar.gz"
           VERSION="${TAG#v}"
 
@@ -71,7 +71,7 @@ jobs:
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create --generate-notes "${{ github.event.release.tag_name }}" release/*
+        run: gh release create --generate-notes "${GITHUB_REF#refs/tags/}" release/*
 
       - name: Checkout Homebrew Formula
         uses: actions/checkout@v4
@@ -82,7 +82,7 @@ jobs:
 
       - name: Update Homebrew Formula
         run: |
-          TAG="${{ github.event.release.tag_name }}"
+          TAG="${GITHUB_REF#refs/tags/}"
           URL="https://github.com/ins0mniaque/srcenv/archive/refs/tags/$TAG.tar.gz"
           SHA256="$(curl -Ls "$URL" | shasum -a 256 | cut -c1-64)"
           VERSION="${TAG#v}"
