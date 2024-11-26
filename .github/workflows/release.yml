@@ -9,6 +9,57 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build RPM Package
+        run: |
+          mkdir -p rpmbuild/BUILD
+          mkdir -p rpmbuild/BUILDROOT
+          mkdir -p rpmbuild/RPMS
+          mkdir -p rpmbuild/SOURCES
+          mkdir -p rpmbuild/SPECS
+          mkdir -p rpmbuild/SRPMS
+
+          TAG="$(curl -Ls "https://api.github.com/repos/ins0mniaque/srcenv/tags" | jq -r '.[0].name')"
+          URL="https://github.com/ins0mniaque/srcenv/archive/refs/tags/$TAG.tar.gz"
+          VERSION="$(echo "$TAG" | cut -c2-)"
+
+          curl -Ls "$URL" -o "rpmbuild/SOURCES/srcenv-$VERSION.tar.gz"
+
+          (
+            echo 'Name:           srcenv'
+            echo 'Version:        '$VERSION
+            echo 'Release:        1%{?dist}'
+            echo 'Summary:        A cross-shell tool for sourcing POSIX compliant .env scripts'
+            echo 'BuildArch:      noarch'
+            echo ''
+            echo 'License:        MIT'
+            echo 'Source0:        %{name}-%{version}.tar.gz'
+            echo ''
+            echo '%description'
+            echo 'A cross-shell tool for sourcing POSIX compliant .env scripts'
+            echo ''
+            echo '%prep'
+            echo '%setup -q'
+            echo ''
+            echo '%install'
+            echo 'rm -rf $RPM_BUILD_ROOT'
+            echo 'mkdir -p $RPM_BUILD_ROOT%{_bindir}'
+            echo 'mkdir -p $RPM_BUILD_ROOT%{_mandir}/man1'
+            echo 'cp %{name} $RPM_BUILD_ROOT%{_bindir}'
+            echo 'cp %{name}.1 $RPM_BUILD_ROOT%{_mandir}/man1'
+            echo ''
+            echo '%clean'
+            echo 'rm -rf $RPM_BUILD_ROOT'
+            echo ''
+            echo '%files'
+            echo '%{_bindir}/%{name}'
+            echo '%{_mandir}/man1/%{name}.1.gz'
+          ) | tee rpmbuild/SPECS/srcenv.spec
+
+          rpmbuild --define "_topdir $PWD/rpmbuild" -ba rpmbuild/SPECS/srcenv.spec
+
       - name: Checkout Homebrew Formula
         uses: actions/checkout@v4
         with:
