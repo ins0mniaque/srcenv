@@ -1,6 +1,6 @@
 # srcenv
 
-[![Tag](https://img.shields.io/github/v/tag/ins0mniaque/srcenv)](https://github.com/ins0mniaque/srcenv/tags)
+[![Version](https://img.shields.io/github/v/release/ins0mniaque/srcenv)](https://github.com/ins0mniaque/srcenv/releases)
 [![License](https://img.shields.io/github/license/ins0mniaque/srcenv)](https://github.com/ins0mniaque/srcenv/blob/master/LICENSE)
 [![CI](https://github.com/ins0mniaque/srcenv/actions/workflows/ci.yml/badge.svg)](https://github.com/ins0mniaque/srcenv/actions/workflows/ci.yml)
 [![Release](https://github.com/ins0mniaque/srcenv/actions/workflows/release.yml/badge.svg)](https://github.com/ins0mniaque/srcenv/actions/workflows/release.yml)
