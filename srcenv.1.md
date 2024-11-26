@@ -60,6 +60,10 @@ Options
 
 :   Format the output as a Fish script.
 
+\--json
+
+:   Format the output as JSON.
+
 \--ksh, \--pdksh
 
 :   Format the output as a Ksh script.

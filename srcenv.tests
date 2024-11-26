@@ -104,6 +104,27 @@ trap cleanup EXIT INT HUP TERM
 lf='
 '
 
+{ json_output=$(cat); } << 'EOF'
+{
+  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"",
+  "SRCENV_TEST_MULTILINE": "\n6\n7\n42",
+  "SRCENV_TEST_C": "42",
+  "SRCENV_TEST_B": "7",
+  "SRCENV_TEST_A": "6"
+}
+EOF
+
+{ json_backup_output=$(cat); } << 'EOF'
+{
+  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"",
+  "SRCENV_TEST_MULTILINE": "\n6\n7\n42",
+  "SRCENV_TEST_C": "42",
+  "SRCENV_TEST_B": "7",
+  "SRCENV_TEST_A": "6",
+  "SRCENV_UNDO": "{\"SRCENV_TEST_A\":null,\"SRCENV_TEST_B\":null,\"SRCENV_TEST_C\":null,\"SRCENV_TEST_ESCAPE\":null,\"SRCENV_TEST_MULTILINE\":null,\"SRCENV_UNDO\":null}"
+}
+EOF
+
 { env_output=$(cat); } << 'EOF'
 SRCENV_TEST_A='6'
 SRCENV_TEST_B='7'
@@ -269,6 +290,7 @@ test "./srcenv --nushell $env_input"    "$nu_output"
 test "./srcenv --pwsh $env_input"       "$pwsh_output"
 test "./srcenv --powershell $env_input" "$pwsh_output"
 test "./srcenv --env $env_input"        "$env_output"
+test "./srcenv --json $env_input"       "$json_output"
 
 test "./srcenv --ash --backup $env_input"        "$posix_output$lf$posix_backup_output"
 test "./srcenv --bash --backup $env_input"       "$posix_output$lf$posix_backup_output"
@@ -291,6 +313,7 @@ test "./srcenv --nushell --backup $env_input"    "$nu_output$lf$nu_backup_output
 test "./srcenv --pwsh --backup $env_input"       "$pwsh_output$lf$pwsh_backup_output"
 test "./srcenv --powershell --backup $env_input" "$pwsh_output$lf$pwsh_backup_output"
 test "./srcenv --env --backup $env_input"        "$env_output$lf$env_backup_output"
+test "./srcenv --json --backup $env_input"       "$json_backup_output"
 
 test "./srcenv --ash --local $env_input"        ""
 test "./srcenv --bash --local $env_input"       ""
@@ -313,6 +336,7 @@ test "./srcenv --nushell --local $env_input"    ""
 test "./srcenv --pwsh --local $env_input"       ""
 test "./srcenv --powershell --local $env_input" ""
 test "./srcenv --env --local $env_input"        ""
+test "./srcenv --json --local $env_input"       "{}"
 
 test "./srcenv --ash --local --backup $env_input"        ""
 test "./srcenv --bash --local --backup $env_input"       ""
@@ -335,6 +359,7 @@ test "./srcenv --nushell --local --backup $env_input"    ""
 test "./srcenv --pwsh --local --backup $env_input"       ""
 test "./srcenv --powershell --local --backup $env_input" ""
 test "./srcenv --env --local --backup $env_input"        ""
+test "./srcenv --json --local --backup $env_input"       "{}"
 
 test "./srcenv $posix_input"              "$env_output"
 # test "./srcenv --arg $(cat $posix_input)" "$env_output"  # TODO: Fix test framework arg support
@@ -361,6 +386,7 @@ test "./srcenv --nushell $posix_input"    "$nu_output"
 test "./srcenv --pwsh $posix_input"       "$pwsh_output"
 test "./srcenv --powershell $posix_input" "$pwsh_output"
 test "./srcenv --env $posix_input"        "$env_output"
+test "./srcenv --json $posix_input"       "$json_output"
 
 test "./srcenv --ash --backup $posix_input"        "$posix_output$lf$posix_backup_output"
 test "./srcenv --bash --backup $posix_input"       "$posix_output$lf$posix_backup_output"
@@ -383,6 +409,7 @@ test "./srcenv --nushell --backup $posix_input"    "$nu_output$lf$nu_backup_outp
 test "./srcenv --pwsh --backup $posix_input"       "$pwsh_output$lf$pwsh_backup_output"
 test "./srcenv --powershell --backup $posix_input" "$pwsh_output$lf$pwsh_backup_output"
 test "./srcenv --env --backup $posix_input"        "$env_output$lf$env_backup_output"
+test "./srcenv --json --backup $posix_input"       "$json_backup_output"
 
 end
 

@@ -61,6 +61,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}--elvish              ${NORMAL}Format the output as an Elvish script
   ${BOLD}--env                 ${NORMAL}Format the output as a .env file
   ${BOLD}--fish                ${NORMAL}Format the output as a Fish script
+  ${BOLD}--json                ${NORMAL}Format the output as JSON
   ${BOLD}--ksh, --pdksh        ${NORMAL}Format the output as a Ksh script
   ${BOLD}--launchctl           ${NORMAL}Format the output as a launchctl calls (macOS)
   ${BOLD}--murex               ${NORMAL}Format the output as a Murex script
@@ -184,6 +185,7 @@ while [ $# -gt 0 ]; do
         --nu|--nushell)      fmt '$env.\($k) = \(.[$k]|@sh)'   '$env.\($k) = null';  shift ;;
         --pwsh|--powershell) fmt '$Env:\($k) = \(.[$k]|@sh)'   '$Env:\($k) = $null'; shift ;;
         --env)               fmt '\($k)=\(.[$k]|@sh)'          '\($k)=';             shift ;;
+        --json)              format=.;                                               shift ;;
         --bat|--cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
                                  'set \($k)=';
                              prefix='"set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%\n" + ([';
@@ -210,7 +212,8 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-[ -n "$backup" ] && setbackup
+[ -n "$backup"  ] && setbackup
+[ "$format" = . ] && keys=.
 
 jq --argjson snapshot "$snapshot" \
    ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
