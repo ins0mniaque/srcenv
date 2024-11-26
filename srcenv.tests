@@ -41,6 +41,8 @@ unit_test() {
 
 # region Setup
 
+unset SRCENV_UNDO
+
 export SRCENV_TEST_EXISTING=1
 unset SRCENV_TEST_NOT_EXISTING
 
