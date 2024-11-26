@@ -237,7 +237,7 @@ EOF
 
 # region Tests
 
-test "./srcenv --version" "srcenv 1.2.11"
+test "./srcenv --version" "srcenv 1.2.12"
 
 test "./srcenv --invalid" "" 1
 
