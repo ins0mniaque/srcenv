@@ -11,7 +11,7 @@ version() {
 # region Help / Usage
 
 header() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
     BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
     DIM=$(tput dim 2> /dev/null || printf "\e[2m")
     ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
@@ -33,7 +33,7 @@ EOF
 }
 
 help() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
     BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
     ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
 
@@ -46,7 +46,7 @@ EOF
 }
 
 usage() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
     BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
     ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
     UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")
@@ -86,7 +86,7 @@ EOF
 }
 
 invalid() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
     BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
     ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
     UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")

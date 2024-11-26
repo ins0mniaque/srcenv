@@ -23,7 +23,7 @@ fi
 CURRENT="${1:-$CURRENT}"
 ERRORS=""
 
-NORMAL=$(tput sgr0 2> /dev/null || printf "\e[00m")
+NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
 BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
 DIM=$(tput dim 2> /dev/null || printf "\e[2m")
 RED=$(tput setaf 1 2> /dev/null || printf "\e[31m")

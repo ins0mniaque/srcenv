@@ -1,6 +1,6 @@
 # Makefile for srcenv
 
-NORMAL=$$(tput sgr0 2> /dev/null || printf "\e[00m")
+NORMAL=$$(tput sgr0 2> /dev/null || printf "\e[0m")
 BOLD=$$(tput bold 2> /dev/null || printf "\e[1m")
 GREEN=$$(tput setaf 2 2> /dev/null || printf "\e[32m")
 

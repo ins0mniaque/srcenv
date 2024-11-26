@@ -22,7 +22,7 @@ jobs:
       - name: Run ShellCheck
         run: |
           ./shellcheck --color=always srcenv srcenv.tests srcenv.version && \
-          echo "✔ ShellCheck"
+          printf "\e[32m✔\e[0m ShellCheck\n"
 
       - name: Run srcenv tests
         run: ./srcenv.tests
