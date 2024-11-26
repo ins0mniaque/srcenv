@@ -129,6 +129,7 @@ case $(ps -o comm= -p "$PPID") in
 esac
 
 prefix=
+suffix=
 format=
 export=
 backup=
@@ -185,9 +186,10 @@ while [ $# -gt 0 ]; do
         --env)               fmt '\($k)=\(.[$k]|@sh)'          '\($k)=';             shift ;;
         --bat|--cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
                                  'set \($k)=';
-                             prefix="set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%"; shift ;;
+                             prefix='"set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%\n" + ([';
+                             suffix='] | join("\n")) + "\nset LFM=\nset LF=\n"'; shift ;;
         --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
-                                 'launchctl unsetenv \($k)';                          shift ;;
+                                 'launchctl unsetenv \($k)'; shift ;;
 
         -b|--backup)   backup=1;             shift ;;
         -u|--undo)     undo='$undo | . += '; shift ;;
@@ -210,8 +212,6 @@ done
 
 [ -n "$backup" ] && setbackup
 
-[ -n "$prefix" ] && echo "$prefix"
-
 jq --argjson snapshot "$snapshot" \
    ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
-   -rn "$undo $diff $backup | $keys | $format"
+   -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
