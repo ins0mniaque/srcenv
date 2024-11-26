@@ -159,7 +159,7 @@ Repository: https://github.com/ins0mniaque/srcenv
 AUTHOR
 ======
 
-Jean-Philippe Leconte <https://github.com/ins0mniaque>
+Jean-Philippe Leconte <ins0mniaque@gmail.com>
 
 BUGS
 ====
