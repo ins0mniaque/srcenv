@@ -103,7 +103,7 @@ ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NOR
 For more information, try '${0##*/} ${BOLD}--help${NORMAL}'."
 }
 
-error() {
+err() {
     NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
     BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
     RED=$(tput setaf 1 2> /dev/null || printf '\e[31m')
@@ -113,6 +113,13 @@ error() {
     case $1 in
         "$escape"*)       printf >&2 '%s\n' "$1"; return ;;
         jq:\ *--argjson*) echo   >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}";
+                          return ;;
+        jq:\ *)           lf='
+'
+                          error=${1#jq: }
+                          error=${error#error: }
+                          error=${error%%, line 1:"$lf"*}
+                          echo   >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error";
                           return ;;
     esac
 
@@ -250,7 +257,7 @@ output=$(run "$@" 2>&1)
 exitcode=$?
 
 if [ $exitcode != 0 ]; then
-    error "$output"
+    err "$output"
     exit $exitcode
 fi
 
