@@ -16,11 +16,15 @@ header() {
     DIM=$(tput dim 2> /dev/null || printf '\e[2m')
     ITALIC=$(tput sitm 2> /dev/null || printf '\e[3m')
     UNDERLINE=$(tput smul 2> /dev/null || printf '\e[4m')
+    YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
+
+    warn=; [ -z "$jq" ] && \
+    warn="                            ${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}jq${NORMAL} not found"
 
     echo >&2 "\
 srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.
 
-${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]
+${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]$warn
               [-h|--help|-v|--version]
 
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
@@ -84,6 +88,15 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
 
 For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
 https://github.com/ins0mniaque/srcenv/."
+}
+
+nojq() {
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
+    BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
+    RED=$(tput setaf 1 2> /dev/null || printf '\e[31m')
+    YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
+
+    echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}jq${NORMAL} not found; see https://jqlang.github.io/jq/download/ for installation options"
 }
 
 invalid() {
@@ -183,7 +196,7 @@ autodetect() {
 }
 
 run() {
-    snapshot=$(jq -n 'env')
+    snapshot=$(jq -n 'env') || exit 1
 
     while [ $# -gt 0 ]; do
         case $1 in
@@ -232,6 +245,10 @@ run() {
     [ -n "$backup"  ] && setbackup
     [ "$format" = . ] && keys="$sort"
 
+    if [ -z "$jq" ]; then
+        nojq; exit 1
+    fi
+
     jq --argjson snapshot "$snapshot" \
        ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
        -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
@@ -252,6 +269,8 @@ src() {
 
     [ "$3" = --export ] && set +a
 }
+
+jq=$(command -v jq)
 
 if [ $# = 0 ]; then
     header; help; exit 0
