@@ -99,6 +99,13 @@ nojq() {
     echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}jq${NORMAL} not found; see https://jqlang.github.io/jq/download/ for installation options"
 }
 
+valid() {
+    case $2 in
+        -*|'') invalid "$1" "option requires an argument -- -"; exit 1 ;;
+        *)     printf  "%s" "$2" ;;
+    esac
+}
+
 invalid() {
     NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
     BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
@@ -107,8 +114,18 @@ invalid() {
     RED=$(tput setaf 1 2> /dev/null || printf '\e[31m')
     YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
 
+    lf='
+'
+    error="$2"
+    error="${error#getopt: }"
+    error="${error%%"$lf"*}"
+    option="${error#* -- }"
+    [ "$option" = '-' ] && option="${1#-}"
+    option="${option#-}"
+    error="${error% -- *}"
+
     echo >&2 "\
-${BOLD}${RED}error:${NORMAL} unexpected argument '${YELLOW}$1${NORMAL}' found
+${BOLD}${RED}error:${NORMAL} $error -- ${YELLOW}$option${NORMAL}
 
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]
               [-h|--help|-v|--version]
@@ -220,8 +237,8 @@ run() {
                                  suffix='] | join("\n")) + "\nset LFM=\nset LF=\n"'; shift ;;
             --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                                      'launchctl unsetenv \($k)'; shift ;;
-            -f|--format)         format="$2";      fmt "${format%\?\?*}" "${format#*\?\?}"; shift; shift ;;
-            -f=*|--format=*)     format="${1#*=}"; fmt "${format%\?\?*}" "${format#*\?\?}"; shift ;;
+            -f|--format)         format="$(valid "$@")";           fmt "${format%\?\?*}" "${format#*\?\?}"; shift; shift ;;
+            -f=*|--format=*)     format="$(valid "$1" "${1#*=}")"; fmt "${format%\?\?*}" "${format#*\?\?}"; shift ;;
 
             -b|--backup)   backup=1;             shift ;;
             -u|--undo)     undo='$undo | . += '; shift ;;
@@ -230,15 +247,18 @@ run() {
             -s|--sort)     keys='keys[] as $k';
                            sort='to_entries | sort_by(.key) | from_entries'; shift ;;
             -U|--unsorted) keys='keys_unsorted[] as $k'; sort='.';           shift ;;
+            -\?|-h|--help) header; usage; exit 0 ;;
+            -v|--version)  version;       exit 0 ;;
 
-            -\?|-h|--help) header; usage;                        exit 0 ;;
-            -v|--version)  version;                              exit 0 ;;
-            -a|--arg)      src var "$2" "$export";               shift; shift ;;
-            -a=*|--arg=*)  src var "${1#*=}" "$export";          shift ;;
-            -)             src var "$(cat)" "$export";           shift ;;
-            -*)            invalid "$1";                         exit 1 ;;
-            *.env|*.envrc) src file "$1" "${export:---export}";  shift ;;
-            *)             src file "$1" "$export";              shift ;;
+            -a|--arg)      src var "$(valid "$@")"           "$export"; shift; shift ;;
+            -a=*|--arg=*)  src var "$(valid "$1" "${1#*=}")" "$export"; shift ;;
+            -)             src var "$(cat)"                  "$export"; shift ;;
+            -*)            # shellcheck disable=SC2086
+                           opts=$(getopt "a:bef:hlsuUv" "$1" 2>&1) &&   shift && \
+                           set -- ${opts% --} "$@"                 &&   continue
+                           invalid "$1" "$opts";                        exit 1 ;;
+            *.env|*.envrc) src file "$1" "${export:---export}";         shift ;;
+            *)             src file "$1" "$export";                     shift ;;
         esac
     done
 
@@ -271,7 +291,7 @@ src() {
 }
 
 jq=$(command -v "${SRCENV_JQ:-jq}") || \
-jq=$SRCENV_JQ
+jq="$SRCENV_JQ"
 
 if [ $# = 0 ]; then
     header; help; exit 0
