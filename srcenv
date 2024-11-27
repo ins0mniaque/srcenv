@@ -5,7 +5,7 @@
 # shellcheck disable=SC2016
 
 version() {
-    echo "srcenv 1.2.17"
+    echo "srcenv 1.2.18"
 }
 
 # region Help / Usage
