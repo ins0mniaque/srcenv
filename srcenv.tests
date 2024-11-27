@@ -6,11 +6,13 @@
 
 # region Framework
 #
-# Usage: run <command> <expected output> [<expected exit code>]
+# Usage: start
+#        run <command> <expected output> [<expected exit code>]
 #        end
 
-tests_exitcode=0
 tests_sequence=0
+tests_passed=0
+tests_failed=0
 tests_filter=
 
 for filter in "$@"; do
@@ -18,8 +20,15 @@ for filter in "$@"; do
 done
 
 NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
+BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
+DIM=$(tput dim 2> /dev/null || printf '\e[2m')
 RED=$(tput setaf 1 2> /dev/null || printf '\e[31m')
 GREEN=$(tput setaf 2 2> /dev/null || printf '\e[32m')
+YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
+
+start() {
+    echo "${GREEN}✔${NORMAL} ${BOLD}srcenv tests:${NORMAL} Running..."
+}
 
 run() {
     id=$((tests_sequence + 1)); tests_sequence=$id
@@ -35,20 +44,27 @@ run() {
     expected="$2"; expected_exitcode="${3:-0}"
 
     if [ "$output" != "$expected" ]; then
-        tests_exitcode=1
-        printf "[%03s] ${RED}✖${NORMAL} %s: %s ${RED}!=${NORMAL} %s\n" \
-               "$id" "$cmd" "$output" "$expected" >&2
+        tests_failed=$((tests_failed + 1))
+        printf "${RED}✖${NORMAL} ${DIM}%3s.${NORMAL} %s: %s ${BOLD}${RED}!=${NORMAL} %s\n" \
+               "$id" "$cmd" "$output" "$expected"
     elif [ "$exitcode" != "$expected_exitcode" ]; then
-        tests_exitcode=1
-        printf "[%03s] ${RED}✖${NORMAL} %s: Exit code %s ${RED}!=${NORMAL} Exit code %s\n" \
-               "$id" "$cmd" "$exitcode" "$expected_exitcode" >&2
+        tests_failed=$((tests_failed + 1))
+        printf "${RED}✖${NORMAL} ${DIM}%3s.${NORMAL} %s: Exit code ${YELLOW}%s${NORMAL} ${BOLD}${RED}!=${NORMAL} Exit code ${YELLOW}%s${NORMAL}\n" \
+               "$id" "$cmd" "$exitcode" "$expected_exitcode"
     else
-        printf "[%03s] ${GREEN}✔${NORMAL} %s\n" "$id" "$cmd" >&2
+        tests_passed=$((tests_passed + 1))
+        printf "${GREEN}✔${NORMAL} ${DIM}%3s.${NORMAL} %s\n" "$id" "$cmd"
     fi
 }
 
 end() {
-    exit $tests_exitcode
+    if [ $tests_failed -gt 0 ]; then
+        printf "${RED}✖${NORMAL} ${BOLD}srcenv tests:${NORMAL} %s tests passed, %s tests failed\n" "$tests_passed" "$tests_failed"
+        exit 1
+    fi
+
+    printf "${GREEN}✔${NORMAL} ${BOLD}srcenv tests:${NORMAL} %s tests passed\n" "$tests_passed"
+    exit 0
 }
 
 # endregion Framework
@@ -271,6 +287,8 @@ EOF
 # endregion Outputs
 
 # region Tests
+
+start
 
 run './srcenv --version' 'srcenv 1.2.16'
 
