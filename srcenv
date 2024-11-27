@@ -104,6 +104,24 @@ For more information, try '${0##*/} ${BOLD}--help${NORMAL}'.
 EOF
 }
 
+error() {
+    escape=$(printf '\e')
+    case $1 in
+        "$escape"*) printf >&2 "%s\n" "$1"; return ;;
+    esac
+
+    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
+    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
+    RED=$(tput setaf 1 2> /dev/null || printf "\e[31m")
+
+    echo "$1" | while read -r line; do
+        line=${line#"$0": }
+        line=${line#line [0-9]*: }
+
+        echo >&2 "${BOLD}${RED}error:${NORMAL} $line"
+    done
+}
+
 # endregion Help / Usage
 
 if [ $# = 0 ]; then
@@ -161,10 +179,8 @@ src() {
     if [ "$1" = var ]; then
         eval "$2" > /dev/null || exit 1
     elif [ -f "$2" ]; then
-        set -e
         # shellcheck disable=SC1090
-        . "$2" > /dev/null
-        set +e
+        . "$2" > /dev/null || exit 1
     else
         echo >&2 "$2: No such file or directory"
         exit 1
@@ -173,53 +189,65 @@ src() {
     [ "$3" = --export ] && set +a
 }
 
-snapshot=$(jq -n 'env')
+run() {
+    snapshot=$(jq -n 'env')
 
-while [ $# -gt 0 ]; do
-    case $1 in
-        --ash|\
-        --bash|\
-        --csh|--tcsh|\
-        --dash|\
-        --ksh|--pdksh|\
-        --murex|\
-        --posix|--sh|\
-        --zsh)               fmt 'export \($k)=\(.[$k]|@sh)'   'unset \($k)';        shift ;;
-        --elvish)            fmt 'set-env $\($k) \(.[$k]|@sh)' 'unset-env $\($k)';   shift ;;
-        --fish)              fmt 'set -gx \($k) \(.[$k]|@sh)'  'set -e \($k)';       shift ;;
-        --nu|--nushell)      fmt '$env.\($k) = \(.[$k]|@sh)'   '$env.\($k) = null';  shift ;;
-        --pwsh|--powershell) fmt '$Env:\($k) = \(.[$k]|@sh)'   '$Env:\($k) = $null'; shift ;;
-        --env)               fmt '\($k)=\(.[$k]|@sh)'          '\($k)=';             shift ;;
-        --json)              format=.;                                               shift ;;
-        --bat|--cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
-                                 'set \($k)=';
-                             prefix='"set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%\n" + ([';
-                             suffix='] | join("\n")) + "\nset LFM=\nset LF=\n"'; shift ;;
-        --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
-                                 'launchctl unsetenv \($k)'; shift ;;
+    while [ $# -gt 0 ]; do
+        case $1 in
+            --ash|\
+            --bash|\
+            --csh|--tcsh|\
+            --dash|\
+            --ksh|--pdksh|\
+            --murex|\
+            --posix|--sh|\
+            --zsh)               fmt 'export \($k)=\(.[$k]|@sh)'   'unset \($k)';        shift ;;
+            --elvish)            fmt 'set-env $\($k) \(.[$k]|@sh)' 'unset-env $\($k)';   shift ;;
+            --fish)              fmt 'set -gx \($k) \(.[$k]|@sh)'  'set -e \($k)';       shift ;;
+            --nu|--nushell)      fmt '$env.\($k) = \(.[$k]|@sh)'   '$env.\($k) = null';  shift ;;
+            --pwsh|--powershell) fmt '$Env:\($k) = \(.[$k]|@sh)'   '$Env:\($k) = $null'; shift ;;
+            --env)               fmt '\($k)=\(.[$k]|@sh)'          '\($k)=';             shift ;;
+            --json)              format=.;                                               shift ;;
+            --bat|--cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
+                                     'set \($k)=';
+                                 prefix='"set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%\n" + ([';
+                                 suffix='] | join("\n")) + "\nset LFM=\nset LF=\n"'; shift ;;
+            --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
+                                     'launchctl unsetenv \($k)'; shift ;;
 
-        -b|--backup)   backup=1;             shift ;;
-        -u|--undo)     undo='$undo | . += '; shift ;;
-        -e|--export)   export=--export;      shift ;;
-        -l|--local)    export=0;             shift ;;
-        -s|--sort)     keys='keys[] as $k';
-                       sort='to_entries | sort_by(.key) | from_entries'; shift ;;
-        -U|--unsorted) keys='keys_unsorted[] as $k'; sort='.';           shift ;;
+            -b|--backup)   backup=1;             shift ;;
+            -u|--undo)     undo='$undo | . += '; shift ;;
+            -e|--export)   export=--export;      shift ;;
+            -l|--local)    export=0;             shift ;;
+            -s|--sort)     keys='keys[] as $k';
+                           sort='to_entries | sort_by(.key) | from_entries'; shift ;;
+            -U|--unsorted) keys='keys_unsorted[] as $k'; sort='.';           shift ;;
 
-        -\?|-h|--help) header; usage;                        exit 0 ;;
-        -v|--version)  version;                              exit 0 ;;
-        -a|--arg)      src var "$2" "$export";               shift; shift ;;
-        -a=*|--arg=*)  src var "${1#*=}" "$export";          shift ;;
-        -)             src var "$(cat)" "$export";           shift ;;
-        -*)            invalid "$1";                         exit 1 ;;
-        *.env|*.envrc) src file "$1" "${export:---export}";  shift ;;
-        *)             src file "$1" "$export";              shift ;;
-    esac
-done
+            -\?|-h|--help) header; usage;                        exit 0 ;;
+            -v|--version)  version;                              exit 0 ;;
+            -a|--arg)      src var "$2" "$export";               shift; shift ;;
+            -a=*|--arg=*)  src var "${1#*=}" "$export";          shift ;;
+            -)             src var "$(cat)" "$export";           shift ;;
+            -*)            invalid "$1";                         exit 1 ;;
+            *.env|*.envrc) src file "$1" "${export:---export}";  shift ;;
+            *)             src file "$1" "$export";              shift ;;
+        esac
+    done
 
-[ -n "$backup"  ] && setbackup
-[ "$format" = . ] && keys="$sort"
+    [ -n "$backup"  ] && setbackup
+    [ "$format" = . ] && keys="$sort"
 
-jq --argjson snapshot "$snapshot" \
-   ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
-   -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
+    jq --argjson snapshot "$snapshot" \
+       ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
+       -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
+}
+
+output=$(run "$@" 2>&1)
+exitcode=$?
+
+if [ $exitcode != 0 ]; then
+    error "$output"
+    exit $exitcode
+fi
+
+printf "%s\n" "$output"
