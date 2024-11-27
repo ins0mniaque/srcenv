@@ -106,21 +106,21 @@ lf='
 
 { json_output=$(cat); } << 'EOF'
 {
-  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"",
-  "SRCENV_TEST_MULTILINE": "\n6\n7\n42",
-  "SRCENV_TEST_C": "42",
+  "SRCENV_TEST_A": "6",
   "SRCENV_TEST_B": "7",
-  "SRCENV_TEST_A": "6"
+  "SRCENV_TEST_C": "42",
+  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"",
+  "SRCENV_TEST_MULTILINE": "\n6\n7\n42"
 }
 EOF
 
 { json_backup_output=$(cat); } << 'EOF'
 {
+  "SRCENV_TEST_A": "6",
+  "SRCENV_TEST_B": "7",
+  "SRCENV_TEST_C": "42",
   "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"",
   "SRCENV_TEST_MULTILINE": "\n6\n7\n42",
-  "SRCENV_TEST_C": "42",
-  "SRCENV_TEST_B": "7",
-  "SRCENV_TEST_A": "6",
   "SRCENV_UNDO": "{\"SRCENV_TEST_A\":null,\"SRCENV_TEST_B\":null,\"SRCENV_TEST_C\":null,\"SRCENV_TEST_ESCAPE\":null,\"SRCENV_TEST_MULTILINE\":null,\"SRCENV_UNDO\":null}"
 }
 EOF
