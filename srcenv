@@ -51,33 +51,36 @@ usage() {
 
     echo >&2 "\
 ${BOLD}${UNDERLINE}Options${NORMAL}:
-  ${BOLD}--ash                 ${NORMAL}Format the output as an Ash script
-  ${BOLD}--bash                ${NORMAL}Format the output as a Bash script
-  ${BOLD}--bat, --cmd          ${NORMAL}Format the output as a Windows batch script
-  ${BOLD}--csh, --tcsh         ${NORMAL}Format the output as a Csh/Tcsh script
-  ${BOLD}--dash                ${NORMAL}Format the output as a Dash script
-  ${BOLD}--elvish              ${NORMAL}Format the output as an Elvish script
-  ${BOLD}--env                 ${NORMAL}Format the output as a .env file
-  ${BOLD}--fish                ${NORMAL}Format the output as a Fish script
-  ${BOLD}--json                ${NORMAL}Format the output as JSON
-  ${BOLD}--ksh, --pdksh        ${NORMAL}Format the output as a Ksh script
-  ${BOLD}--launchctl           ${NORMAL}Format the output as a launchctl calls ${ITALIC}(macOS)${NORMAL}
-  ${BOLD}--murex               ${NORMAL}Format the output as a Murex script
-  ${BOLD}--nu, --nushell       ${NORMAL}Format the output as a Nushell script
-  ${BOLD}--posix, --sh         ${NORMAL}Format the output as a POSIX shell script
-  ${BOLD}--pwsh, --powershell  ${NORMAL}Format the output as a PowerShell script
-  ${BOLD}--zsh                 ${NORMAL}Format the output as a Zsh script
-  ${BOLD}-                     ${NORMAL}Source from STDIN
+  ${BOLD}--ash                       ${NORMAL}Format the output as an Ash script
+  ${BOLD}--bash                      ${NORMAL}Format the output as a Bash script
+  ${BOLD}--bat, --cmd                ${NORMAL}Format the output as a Windows batch script
+  ${BOLD}--csh, --tcsh               ${NORMAL}Format the output as a Csh/Tcsh script
+  ${BOLD}--dash                      ${NORMAL}Format the output as a Dash script
+  ${BOLD}--elvish                    ${NORMAL}Format the output as an Elvish script
+  ${BOLD}--env                       ${NORMAL}Format the output as a .env file
+  ${BOLD}--fish                      ${NORMAL}Format the output as a Fish script
+  ${BOLD}--json                      ${NORMAL}Format the output as JSON
+  ${BOLD}--ksh, --pdksh              ${NORMAL}Format the output as a Ksh script
+  ${BOLD}--launchctl                 ${NORMAL}Format the output as a launchctl calls ${ITALIC}(macOS)${NORMAL}
+  ${BOLD}--murex                     ${NORMAL}Format the output as a Murex script
+  ${BOLD}--nu, --nushell             ${NORMAL}Format the output as a Nushell script
+  ${BOLD}--posix, --sh               ${NORMAL}Format the output as a POSIX shell script
+  ${BOLD}--pwsh, --powershell        ${NORMAL}Format the output as a PowerShell script
+  ${BOLD}--zsh                       ${NORMAL}Format the output as a Zsh script
+  ${BOLD}-f FORMAT, --format FORMAT,
+  ${BOLD}-f=FORMAT, --format=FORMAT  ${NORMAL}Format the output as anything ${ITALIC}(jq interpolated string)${NORMAL}
+
+  ${BOLD}-                           ${NORMAL}Source from STDIN
   ${BOLD}-a ARG, --arg ARG,
-  ${BOLD}-a=ARG, --arg=ARG     ${NORMAL}Source from string value of ARG
-  ${BOLD}-b, --backup          ${NORMAL}Backup changes in SRCENV_UNDO for undo
-  ${BOLD}-u, --undo            ${NORMAL}Undo backed up changes from SRCENV_UNDO
-  ${BOLD}-e, --export          ${NORMAL}Export all variables ${ITALIC}(Default for .env/.envrc files)${NORMAL}
-  ${BOLD}-l, --local           ${NORMAL}Do not export all variables
-  ${BOLD}-s, --sort            ${NORMAL}Sort the environment variables alphabetically ${ITALIC}(Default)${NORMAL}
-  ${BOLD}-U, --unsorted        ${NORMAL}Keep the environment variables unsorted
-  ${BOLD}-h, --help            ${NORMAL}Display help and exit
-  ${BOLD}-v, --version         ${NORMAL}Display the version number and exit
+  ${BOLD}-a=ARG, --arg=ARG           ${NORMAL}Source from string value of ARG
+  ${BOLD}-b, --backup                ${NORMAL}Backup changes in SRCENV_UNDO for undo
+  ${BOLD}-u, --undo                  ${NORMAL}Undo backed up changes from SRCENV_UNDO
+  ${BOLD}-e, --export                ${NORMAL}Export all variables ${ITALIC}(Default for .env/.envrc files)${NORMAL}
+  ${BOLD}-l, --local                 ${NORMAL}Do not export all variables
+  ${BOLD}-s, --sort                  ${NORMAL}Sort the environment variables alphabetically ${ITALIC}(Default)${NORMAL}
+  ${BOLD}-U, --unsorted              ${NORMAL}Keep the environment variables unsorted
+  ${BOLD}-h, --help                  ${NORMAL}Display help and exit
+  ${BOLD}-v, --version               ${NORMAL}Display the version number and exit
 
 For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
 https://github.com/ins0mniaque/srcenv/."
@@ -213,7 +216,9 @@ run() {
                                  suffix='] | join("\n")) + "\nset LFM=\nset LF=\n"'; shift ;;
             --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                                      'launchctl unsetenv \($k)'; shift ;;
-
+            -f|--format)         format="$2";      fmt "${format%\?\?*}" "${format#*\?\?}"; shift; shift ;;
+            -f=*|--format=*)     format="${1#*=}"; fmt "${format%\?\?*}" "${format#*\?\?}"; shift ;;
+            
             -b|--backup)   backup=1;             shift ;;
             -u|--undo)     undo='$undo | . += '; shift ;;
             -e|--export)   export=--export;      shift ;;

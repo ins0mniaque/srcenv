@@ -75,6 +75,10 @@ Format the output as a PowerShell script.
 \-\-zsh
 Format the output as a Zsh script.
 .TP
+\-f FORMAT, \-f=FORMAT, \-\-format FORMAT, \-\-format=FORMAT
+Format the output as anything (jq interpolated string).
+For details, see FORMAT section below.
+.TP
 \-
 Source from STDIN.
 .TP
@@ -119,6 +123,29 @@ PowerShell:
 .TP
 Zsh:
 \f[CR]source <(srcenv \-\-zsh .env)\f[R]
+.SH FORMAT
+The format is a jq(1) interpolated string
+\f[CR]\[ga]\f[R]\[rs](\&...)\f[CR]\[ga]\f[R] where the key is
+\f[CR]\[ga]\f[R]$k\f[CR]\[ga]\f[R], and the value
+\f[CR]\[ga]\f[R].[$k]\f[CR]\[ga]\f[R].
+A second interpolated string can be appended with the
+\f[CR]\[ga]\f[R]??\f[CR]\[ga]\f[R] delimiter to format null values
+\f[I](unset environment variables)\f[R].
+.TP
+Key:
+\f[CR]\[rs]($k)\f[R]
+.TP
+Value:
+\f[CR]\[rs](.[$k])\f[R]
+.TP
+Single quoted value:
+\f[CR](.[$k]|\[at]sh)\f[R]
+.TP
+Double quoted value:
+\f[CR](.[$k]|\[at]json)\f[R]
+.TP
+Default format:
+\f[CR]\[rs]($k)=\[rs](.[$k]|\[at]sh)??\[rs]($k)=\f[R]
 .SH SEE ALSO
 Repository: https://github.com/ins0mniaque/srcenv
 .PP

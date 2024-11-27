@@ -92,6 +92,10 @@ Options
 
 :   Format the output as a Zsh script.
 
+-f FORMAT, -f=FORMAT, \--format FORMAT, \--format=FORMAT
+
+:   Format the output as anything (jq interpolated string). For details, see FORMAT section below.
+
 -
 
 :   Source from STDIN.
@@ -152,6 +156,31 @@ PowerShell:
 Zsh:
 
 :   `source <(srcenv --zsh .env)`
+
+FORMAT
+======
+
+The format is a jq(1) interpolated string `` ` ``\\(...)`` ` `` where the key is `` ` ``$k`` ` ``, and the value `` ` ``.[\$k]`` ` ``. A second interpolated string can be appended with the `` ` ``??`` ` `` delimiter to format null values _(unset environment variables)_.
+
+Key:
+
+:   `\($k)`
+
+Value:
+
+:   `\(.[$k])`
+
+Single quoted value:
+
+:   `(.[$k]|@sh)`
+
+Double quoted value:
+
+:   `(.[$k]|@json)`
+
+Default format:
+
+:   `\($k)=\(.[$k]|@sh)??\($k)=`
 
 SEE ALSO
 ========
