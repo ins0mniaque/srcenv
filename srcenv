@@ -218,7 +218,7 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$backup"  ] && setbackup
-[ "$format" = . ] && keys=.
+[ "$format" = . ] && keys="$sort"
 
 jq --argjson snapshot "$snapshot" \
    ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
