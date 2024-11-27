@@ -11,11 +11,11 @@ version() {
 # region Help / Usage
 
 header() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
-    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
-    DIM=$(tput dim 2> /dev/null || printf "\e[2m")
-    ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
-    UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
+    BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
+    DIM=$(tput dim 2> /dev/null || printf '\e[2m')
+    ITALIC=$(tput sitm 2> /dev/null || printf '\e[3m')
+    UNDERLINE=$(tput smul 2> /dev/null || printf '\e[4m')
 
     echo >&2 "\
 srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.
@@ -32,9 +32,9 @@ the snapshot, for one of the following shells:
 }
 
 help() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
-    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
-    ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
+    BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
+    ITALIC=$(tput sitm 2> /dev/null || printf '\e[3m')
 
     echo >&2 "\
 For listing the command options, use '${0##*/} ${BOLD}--help${NORMAL}'.
@@ -44,10 +44,10 @@ https://github.com/ins0mniaque/srcenv/."
 }
 
 usage() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
-    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
-    ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
-    UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
+    BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
+    ITALIC=$(tput sitm 2> /dev/null || printf '\e[3m')
+    UNDERLINE=$(tput smul 2> /dev/null || printf '\e[4m')
 
     echo >&2 "\
 ${BOLD}${UNDERLINE}Options${NORMAL}:
@@ -84,12 +84,12 @@ https://github.com/ins0mniaque/srcenv/."
 }
 
 invalid() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
-    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
-    ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
-    UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")
-    RED=$(tput setaf 1 2> /dev/null || printf "\e[31m")
-    YELLOW=$(tput setaf 3 2> /dev/null || printf "\e[33m")
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
+    BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
+    ITALIC=$(tput sitm 2> /dev/null || printf '\e[3m')
+    UNDERLINE=$(tput smul 2> /dev/null || printf '\e[4m')
+    RED=$(tput setaf 1 2> /dev/null || printf '\e[31m')
+    YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
 
     echo >&2 "\
 ${BOLD}${RED}error:${NORMAL} unexpected argument '${YELLOW}$1${NORMAL}' found
@@ -106,9 +106,9 @@ error() {
         "$escape"*) printf >&2 "%s\n" "$1"; return ;;
     esac
 
-    NORMAL=$(tput sgr0 2> /dev/null || printf "\e[0m")
-    BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
-    RED=$(tput setaf 1 2> /dev/null || printf "\e[31m")
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
+    BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
+    RED=$(tput setaf 1 2> /dev/null || printf '\e[31m')
 
     echo "$1" | while read -r line; do
         line=${line#"$0": }
