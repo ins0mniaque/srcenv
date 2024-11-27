@@ -101,16 +101,19 @@ For more information, try '${0##*/} ${BOLD}--help${NORMAL}'."
 }
 
 error() {
-    escape=$(printf '\e')
-    case $1 in
-        "$escape"*) printf >&2 "%s\n" "$1"; return ;;
-    esac
-
     NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
     BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
     RED=$(tput setaf 1 2> /dev/null || printf '\e[31m')
+    YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
 
-    echo "$1" | while read -r line; do
+    escape=$(printf '\e')
+    case $1 in
+        "$escape"*)       printf >&2 '%s\n' "$1"; return ;;
+        jq:\ *--argjson*) echo   >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}";
+                          return ;;
+    esac
+
+    printf '%s\n' "$1" | while read -r line; do
         line=${line#"$0": }
         line=${line#line [0-9]*: }
 
@@ -246,4 +249,4 @@ if [ $exitcode != 0 ]; then
     exit $exitcode
 fi
 
-printf "%s\n" "$output"
+printf '%s\n' "$output"
