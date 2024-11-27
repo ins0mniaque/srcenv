@@ -260,7 +260,12 @@ EOF
 
 test "./srcenv --version" "srcenv 1.2.13"
 
-test "./srcenv --invalid" "" 1
+test "./srcenv --invalid"              "" 1
+test "./srcenv not_a_file"             "" 1
+test "./srcenv --arg not_a_command"    "" 1
+
+# test "./srcenv --arg 'echo something'"                ""  # TODO: Fix test framework arg support
+test "./srcenv --arg 'echo something; not_a_command'" "" 1
 
 test "./srcenv $env_input"                       "$env_output"
 # test "./srcenv --export --arg $(cat $env_input)" "$env_output"  # TODO: Fix test framework arg support
