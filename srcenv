@@ -196,7 +196,7 @@ autodetect() {
 }
 
 run() {
-    snapshot=$(jq -n 'env') || exit 1
+    snapshot=$("$jq" -n 'env') || exit 1
 
     while [ $# -gt 0 ]; do
         case $1 in
@@ -249,7 +249,7 @@ run() {
         nojq; exit 1
     fi
 
-    jq --argjson snapshot "$snapshot" \
+    "$jq" --argjson snapshot "$snapshot" \
        ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
        -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
 }
@@ -270,7 +270,8 @@ src() {
     [ "$3" = --export ] && set +a
 }
 
-jq=$(command -v jq)
+jq=$(command -v "${SRCENV_JQ:-jq}") || \
+jq=$SRCENV_JQ
 
 if [ $# = 0 ]; then
     header; help; exit 0
