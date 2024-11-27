@@ -17,7 +17,7 @@ header() {
     ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
     UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")
 
-    cat >&2 << EOF
+    echo >&2 "\
 srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.
 
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]
@@ -28,8 +28,7 @@ and prints a script exporting the environment variables that have changed since
 the snapshot, for one of the following shells:
 
     ${DIM}bash, csh/tcsh, dash, elvish, fish, murex, nushell, powershell, zsh${NORMAL}
-
-EOF
+"
 }
 
 help() {
@@ -37,12 +36,11 @@ help() {
     BOLD=$(tput bold 2> /dev/null || printf "\e[1m")
     ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
 
-    cat >&2 << EOF
+    echo >&2 "\
 For listing the command options, use '${0##*/} ${BOLD}--help${NORMAL}'.
 
 For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
-https://github.com/ins0mniaque/srcenv/.
-EOF
+https://github.com/ins0mniaque/srcenv/."
 }
 
 usage() {
@@ -51,7 +49,7 @@ usage() {
     ITALIC=$(tput sitm 2> /dev/null || printf "\e[3m")
     UNDERLINE=$(tput smul 2> /dev/null || printf "\e[4m")
 
-    cat >&2 << EOF
+    echo >&2 "\
 ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}--ash                 ${NORMAL}Format the output as an Ash script
   ${BOLD}--bash                ${NORMAL}Format the output as a Bash script
@@ -82,8 +80,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-v, --version         ${NORMAL}Display the version number and exit
 
 For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
-https://github.com/ins0mniaque/srcenv/.
-EOF
+https://github.com/ins0mniaque/srcenv/."
 }
 
 invalid() {
@@ -94,14 +91,13 @@ invalid() {
     RED=$(tput setaf 1 2> /dev/null || printf "\e[31m")
     YELLOW=$(tput setaf 3 2> /dev/null || printf "\e[33m")
 
-    cat >&2 << EOF
+    echo >&2 "\
 ${BOLD}${RED}error:${NORMAL} unexpected argument '${YELLOW}$1${NORMAL}' found
 
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]
               [-h|--help|-v|--version]
 
-For more information, try '${0##*/} ${BOLD}--help${NORMAL}'.
-EOF
+For more information, try '${0##*/} ${BOLD}--help${NORMAL}'."
 }
 
 error() {
