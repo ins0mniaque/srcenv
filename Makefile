@@ -24,7 +24,7 @@ build:
 test:
 	@shellcheck --color=always srcenv srcenv.tests srcenv.version && \
 	echo "${GREEN}✔${NORMAL} ShellCheck"
-	@./srcenv.tests
+	@./srcenv.tests ${t}
 
 bump:
 	@./srcenv.version bump "${v}" "${from}"
