@@ -133,40 +133,25 @@ err() {
 
 # endregion Help / Usage
 
-if [ $# = 0 ]; then
-    header; help; exit 0
-fi
+init() {
+    prefix=
+    suffix=
+    format=
+    export=
+    backup=
+    undo=
 
-case $(ps -o comm= -p "$PPID") in
-    -ash|ash)       set -- --ash "$@" ;;
-    -bash|bash)     set -- --bash "$@" ;;
-    -csh|csh)       set -- --csh "$@" ;;
-    -tcsh|tcsh)     set -- --tcsh "$@" ;;
-    -dash|dash)     set -- --dash "$@" ;;
-    -ksh|ksh)       set -- --ksh "$@" ;;
-    -pdksh|pdksh)   set -- --pdksh "$@" ;;
-    -murex|murex)   set -- --murex "$@" ;;
-    -sh|sh)         set -- --sh "$@" ;;
-    -zsh|zsh)       set -- --zsh "$@" ;;
-    -elvish|elvish) set -- --elvish "$@" ;;
-    -fish|fish)     set -- --fish "$@" ;;
-    -nu|nu)         set -- --nu "$@" ;;
-    -pwsh|pwsh|\
-    -powershell|\
-    powershell)     set -- --pwsh "$@" ;;
-esac
+    diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+    ffid='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
+    keys='keys[] as $k'
+    sort='to_entries | sort_by(.key) | from_entries'
 
-prefix=
-suffix=
-format=
-export=
-backup=
-undo=
+    fmt '\($k)=\(.[$k]|@sh)' '\($k)='
+}
 
-diff='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
-ffid='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
-keys='keys[] as $k'
-sort='to_entries | sort_by(.key) | from_entries'
+fmt() {
+    format='if .[$k] != null then "'$1'" else "'$2'" end';
+}
 
 setbackup() {
     if [ -z "$SRCENV_UNDO" ]; then
@@ -176,26 +161,25 @@ setbackup() {
     fi
 }
 
-fmt() {
-    format='if .[$k] != null then "'$1'" else "'$2'" end';
-}
-
-fmt '\($k)=\(.[$k]|@sh)' '\($k)='
-
-src() {
-    [ "$3" = --export ] && set -a
-
-    if [ "$1" = var ]; then
-        eval "$2" > /dev/null || exit 1
-    elif [ -f "$2" ]; then
-        # shellcheck disable=SC1090
-        . "$2" > /dev/null || exit 1
-    else
-        echo >&2 "$2: No such file or directory"
-        exit 1
-    fi
-
-    [ "$3" = --export ] && set +a
+autodetect() {
+    case $(ps -o comm= -p "$PPID") in
+        -ash|ash)       set -- --ash "$@" ;;
+        -bash|bash)     set -- --bash "$@" ;;
+        -csh|csh)       set -- --csh "$@" ;;
+        -tcsh|tcsh)     set -- --tcsh "$@" ;;
+        -dash|dash)     set -- --dash "$@" ;;
+        -ksh|ksh)       set -- --ksh "$@" ;;
+        -pdksh|pdksh)   set -- --pdksh "$@" ;;
+        -murex|murex)   set -- --murex "$@" ;;
+        -sh|sh)         set -- --sh "$@" ;;
+        -zsh|zsh)       set -- --zsh "$@" ;;
+        -elvish|elvish) set -- --elvish "$@" ;;
+        -fish|fish)     set -- --fish "$@" ;;
+        -nu|nu)         set -- --nu "$@" ;;
+        -pwsh|pwsh|\
+        -powershell|\
+        powershell)     set -- --pwsh "$@" ;;
+    esac
 }
 
 run() {
@@ -225,7 +209,7 @@ run() {
                                      'launchctl unsetenv \($k)'; shift ;;
             -f|--format)         format="$2";      fmt "${format%\?\?*}" "${format#*\?\?}"; shift; shift ;;
             -f=*|--format=*)     format="${1#*=}"; fmt "${format%\?\?*}" "${format#*\?\?}"; shift ;;
-            
+
             -b|--backup)   backup=1;             shift ;;
             -u|--undo)     undo='$undo | . += '; shift ;;
             -e|--export)   export=--export;      shift ;;
@@ -253,6 +237,28 @@ run() {
        -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
 }
 
+src() {
+    [ "$3" = --export ] && set -a
+
+    if [ "$1" = var ]; then
+        eval "$2" > /dev/null || exit 1
+    elif [ -f "$2" ]; then
+        # shellcheck disable=SC1090
+        . "$2" > /dev/null || exit 1
+    else
+        echo >&2 "$2: No such file or directory"
+        exit 1
+    fi
+
+    [ "$3" = --export ] && set +a
+}
+
+if [ $# = 0 ]; then
+    header; help; exit 0
+fi
+
+autodetect
+init
 output=$(run "$@" 2>&1)
 exitcode=$?
 
