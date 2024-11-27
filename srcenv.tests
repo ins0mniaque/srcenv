@@ -1,6 +1,8 @@
 #!/bin/sh
 #
 # srcenv.tests - Test suite for srcenv
+#
+# shellcheck disable=SC2016
 
 # region Framework
 #
@@ -29,7 +31,7 @@ run() {
         esac
     fi
 
-    cmd="$1"; output=$($cmd 2> /dev/null); exitcode=$?
+    cmd="$1"; output=$(eval "$cmd" 2> /dev/null); exitcode=$?
     expected="$2"; expected_exitcode="${3:-0}"
 
     if [ "$output" != "$expected" ]; then
@@ -270,163 +272,163 @@ EOF
 
 # region Tests
 
-run "./srcenv --version" "srcenv 1.2.16"
+run './srcenv --version' 'srcenv 1.2.16'
 
-run "./srcenv --invalid"              "" 1
-run "./srcenv not_a_file"             "" 1
-run "./srcenv --arg not_a_command"    "" 1
+run './srcenv --invalid'              '' 1
+run './srcenv not_a_file'             '' 1
+run './srcenv --arg not_a_command'    '' 1
 
-# run "./srcenv --arg 'echo something'"                ""    # TODO: Fix test framework arg support
-# run "./srcenv --arg 'echo something; not_a_command'" "" 1  # TODO: Fix test returning exit code 2 on Ash
+run './srcenv --arg "echo something"'                ''
+run './srcenv --arg "echo something; not_a_command"' '' 1
 
-run "./srcenv $env_input"                       "$env_output"
-# run "./srcenv --export --arg $(cat $env_input)" "$env_output"  # TODO: Fix test framework arg support
-# run "./srcenv --export - < $env_input"          "$env_output"  # TODO: Fix test framework STDIN support
-run "./srcenv --local $env_input"               ""
-# run "./srcenv --local --arg $(cat $env_input)"  ""             # TODO: Fix test framework arg support
-# run "./srcenv - < $env_input"                   ""             # TODO: Fix test framework STDIN support
+run './srcenv '"$env_input"                           "$env_output"
+run './srcenv --export --arg "$(cat '"$env_input"')"' "$env_output"
+run './srcenv --export - < '"$env_input"''            "$env_output"
+run './srcenv --local '"$env_input"''                 ''
+run './srcenv --local --arg "$(cat '"$env_input"')"'  ''
+run './srcenv - < '"$env_input"''                     ''
 
-run "./srcenv --ash $env_input"        "$posix_output"
-run "./srcenv --bash $env_input"       "$posix_output"
-run "./srcenv --csh $env_input"        "$posix_output"
-run "./srcenv --tcsh $env_input"       "$posix_output"
-run "./srcenv --dash $env_input"       "$posix_output"
-run "./srcenv --ksh $env_input"        "$posix_output"
-run "./srcenv --pdksh $env_input"      "$posix_output"
-run "./srcenv --murex $env_input"      "$posix_output"
-run "./srcenv --posix $env_input"      "$posix_output"
-run "./srcenv --sh $env_input"         "$posix_output"
-run "./srcenv --zsh $env_input"        "$posix_output"
-run "./srcenv --bat $env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
-run "./srcenv --cmd $env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
-run "./srcenv --elvish $env_input"     "$elvish_output"
-run "./srcenv --fish $env_input"       "$fish_output"
-run "./srcenv --launchctl $env_input"  "$launchctl_output"
-run "./srcenv --nu $env_input"         "$nu_output"
-run "./srcenv --nushell $env_input"    "$nu_output"
-run "./srcenv --pwsh $env_input"       "$pwsh_output"
-run "./srcenv --powershell $env_input" "$pwsh_output"
-run "./srcenv --env $env_input"        "$env_output"
-run "./srcenv --json $env_input"       "$json_output"
+run './srcenv --ash '"$env_input"        "$posix_output"
+run './srcenv --bash '"$env_input"       "$posix_output"
+run './srcenv --csh '"$env_input"        "$posix_output"
+run './srcenv --tcsh '"$env_input"       "$posix_output"
+run './srcenv --dash '"$env_input"       "$posix_output"
+run './srcenv --ksh '"$env_input"        "$posix_output"
+run './srcenv --pdksh '"$env_input"      "$posix_output"
+run './srcenv --murex '"$env_input"      "$posix_output"
+run './srcenv --posix '"$env_input"      "$posix_output"
+run './srcenv --sh '"$env_input"         "$posix_output"
+run './srcenv --zsh '"$env_input"        "$posix_output"
+run './srcenv --bat '"$env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
+run './srcenv --cmd '"$env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
+run './srcenv --elvish '"$env_input"     "$elvish_output"
+run './srcenv --fish '"$env_input"       "$fish_output"
+run './srcenv --launchctl '"$env_input"  "$launchctl_output"
+run './srcenv --nu '"$env_input"         "$nu_output"
+run './srcenv --nushell '"$env_input"    "$nu_output"
+run './srcenv --pwsh '"$env_input"       "$pwsh_output"
+run './srcenv --powershell '"$env_input" "$pwsh_output"
+run './srcenv --env '"$env_input"        "$env_output"
+run './srcenv --json '"$env_input"       "$json_output"
 
-run "./srcenv --ash --backup $env_input"        "$posix_output$lf$posix_backup_output"
-run "./srcenv --bash --backup $env_input"       "$posix_output$lf$posix_backup_output"
-run "./srcenv --csh --backup $env_input"        "$posix_output$lf$posix_backup_output"
-run "./srcenv --tcsh --backup $env_input"       "$posix_output$lf$posix_backup_output"
-run "./srcenv --dash --backup $env_input"       "$posix_output$lf$posix_backup_output"
-run "./srcenv --ksh --backup $env_input"        "$posix_output$lf$posix_backup_output"
-run "./srcenv --pdksh --backup $env_input"      "$posix_output$lf$posix_backup_output"
-run "./srcenv --murex --backup $env_input"      "$posix_output$lf$posix_backup_output"
-run "./srcenv --posix --backup $env_input"      "$posix_output$lf$posix_backup_output"
-run "./srcenv --sh --backup $env_input"         "$posix_output$lf$posix_backup_output"
-run "./srcenv --zsh --backup $env_input"        "$posix_output$lf$posix_backup_output"
-run "./srcenv --bat --backup $env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
-run "./srcenv --cmd --backup $env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
-run "./srcenv --elvish --backup $env_input"     "$elvish_output$lf$elvish_backup_output"
-run "./srcenv --fish --backup $env_input"       "$fish_output$lf$fish_backup_output"
-run "./srcenv --launchctl --backup $env_input"  "$launchctl_output$lf$launchctl_backup_output"
-run "./srcenv --nu --backup $env_input"         "$nu_output$lf$nu_backup_output"
-run "./srcenv --nushell --backup $env_input"    "$nu_output$lf$nu_backup_output"
-run "./srcenv --pwsh --backup $env_input"       "$pwsh_output$lf$pwsh_backup_output"
-run "./srcenv --powershell --backup $env_input" "$pwsh_output$lf$pwsh_backup_output"
-run "./srcenv --env --backup $env_input"        "$env_output$lf$env_backup_output"
-run "./srcenv --json --backup $env_input"       "$json_backup_output"
+run './srcenv --ash --backup '"$env_input"        "$posix_output$lf$posix_backup_output"
+run './srcenv --bash --backup '"$env_input"       "$posix_output$lf$posix_backup_output"
+run './srcenv --csh --backup '"$env_input"        "$posix_output$lf$posix_backup_output"
+run './srcenv --tcsh --backup '"$env_input"       "$posix_output$lf$posix_backup_output"
+run './srcenv --dash --backup '"$env_input"       "$posix_output$lf$posix_backup_output"
+run './srcenv --ksh --backup '"$env_input"        "$posix_output$lf$posix_backup_output"
+run './srcenv --pdksh --backup '"$env_input"      "$posix_output$lf$posix_backup_output"
+run './srcenv --murex --backup '"$env_input"      "$posix_output$lf$posix_backup_output"
+run './srcenv --posix --backup '"$env_input"      "$posix_output$lf$posix_backup_output"
+run './srcenv --sh --backup '"$env_input"         "$posix_output$lf$posix_backup_output"
+run './srcenv --zsh --backup '"$env_input"        "$posix_output$lf$posix_backup_output"
+run './srcenv --bat --backup '"$env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
+run './srcenv --cmd --backup '"$env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
+run './srcenv --elvish --backup '"$env_input"     "$elvish_output$lf$elvish_backup_output"
+run './srcenv --fish --backup '"$env_input"       "$fish_output$lf$fish_backup_output"
+run './srcenv --launchctl --backup '"$env_input"  "$launchctl_output$lf$launchctl_backup_output"
+run './srcenv --nu --backup '"$env_input"         "$nu_output$lf$nu_backup_output"
+run './srcenv --nushell --backup '"$env_input"    "$nu_output$lf$nu_backup_output"
+run './srcenv --pwsh --backup '"$env_input"       "$pwsh_output$lf$pwsh_backup_output"
+run './srcenv --powershell --backup '"$env_input" "$pwsh_output$lf$pwsh_backup_output"
+run './srcenv --env --backup '"$env_input"        "$env_output$lf$env_backup_output"
+run './srcenv --json --backup '"$env_input"       "$json_backup_output"
 
-run "./srcenv --ash --local $env_input"        ""
-run "./srcenv --bash --local $env_input"       ""
-run "./srcenv --csh --local $env_input"        ""
-run "./srcenv --tcsh --local $env_input"       ""
-run "./srcenv --dash --local $env_input"       ""
-run "./srcenv --ksh --local $env_input"        ""
-run "./srcenv --pdksh --local $env_input"      ""
-run "./srcenv --murex --local $env_input"      ""
-run "./srcenv --posix --local $env_input"      ""
-run "./srcenv --sh --local $env_input"         ""
-run "./srcenv --zsh --local $env_input"        ""
-run "./srcenv --bat --local $env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
-run "./srcenv --cmd --local $env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
-run "./srcenv --elvish --local $env_input"     ""
-run "./srcenv --fish --local $env_input"       ""
-run "./srcenv --launchctl --local $env_input"  ""
-run "./srcenv --nu --local $env_input"         ""
-run "./srcenv --nushell --local $env_input"    ""
-run "./srcenv --pwsh --local $env_input"       ""
-run "./srcenv --powershell --local $env_input" ""
-run "./srcenv --env --local $env_input"        ""
-run "./srcenv --json --local $env_input"       "{}"
+run './srcenv --ash --local '"$env_input"        ''
+run './srcenv --bash --local '"$env_input"       ''
+run './srcenv --csh --local '"$env_input"        ''
+run './srcenv --tcsh --local '"$env_input"       ''
+run './srcenv --dash --local '"$env_input"       ''
+run './srcenv --ksh --local '"$env_input"        ''
+run './srcenv --pdksh --local '"$env_input"      ''
+run './srcenv --murex --local '"$env_input"      ''
+run './srcenv --posix --local '"$env_input"      ''
+run './srcenv --sh --local '"$env_input"         ''
+run './srcenv --zsh --local '"$env_input"        ''
+run './srcenv --bat --local '"$env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
+run './srcenv --cmd --local '"$env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
+run './srcenv --elvish --local '"$env_input"     ''
+run './srcenv --fish --local '"$env_input"       ''
+run './srcenv --launchctl --local '"$env_input"  ''
+run './srcenv --nu --local '"$env_input"         ''
+run './srcenv --nushell --local '"$env_input"    ''
+run './srcenv --pwsh --local '"$env_input"       ''
+run './srcenv --powershell --local '"$env_input" ''
+run './srcenv --env --local '"$env_input"        ''
+run './srcenv --json --local '"$env_input"       '{}'
 
-run "./srcenv --ash --local --backup $env_input"        ""
-run "./srcenv --bash --local --backup $env_input"       ""
-run "./srcenv --csh --local --backup $env_input"        ""
-run "./srcenv --tcsh --local --backup $env_input"       ""
-run "./srcenv --dash --local --backup $env_input"       ""
-run "./srcenv --ksh --local --backup $env_input"        ""
-run "./srcenv --pdksh --local --backup $env_input"      ""
-run "./srcenv --murex --local --backup $env_input"      ""
-run "./srcenv --posix --local --backup $env_input"      ""
-run "./srcenv --sh --local --backup $env_input"         ""
-run "./srcenv --zsh --local --backup $env_input"        ""
-run "./srcenv --bat --local --backup $env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
-run "./srcenv --cmd --local --backup $env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
-run "./srcenv --elvish --local --backup $env_input"     ""
-run "./srcenv --fish --local --backup $env_input"       ""
-run "./srcenv --launchctl --local --backup $env_input"  ""
-run "./srcenv --nu --local --backup $env_input"         ""
-run "./srcenv --nushell --local --backup $env_input"    ""
-run "./srcenv --pwsh --local --backup $env_input"       ""
-run "./srcenv --powershell --local --backup $env_input" ""
-run "./srcenv --env --local --backup $env_input"        ""
-run "./srcenv --json --local --backup $env_input"       "{}"
+run './srcenv --ash --local --backup '"$env_input"        ''
+run './srcenv --bash --local --backup '"$env_input"       ''
+run './srcenv --csh --local --backup '"$env_input"        ''
+run './srcenv --tcsh --local --backup '"$env_input"       ''
+run './srcenv --dash --local --backup '"$env_input"       ''
+run './srcenv --ksh --local --backup '"$env_input"        ''
+run './srcenv --pdksh --local --backup '"$env_input"      ''
+run './srcenv --murex --local --backup '"$env_input"      ''
+run './srcenv --posix --local --backup '"$env_input"      ''
+run './srcenv --sh --local --backup '"$env_input"         ''
+run './srcenv --zsh --local --backup '"$env_input"        ''
+run './srcenv --bat --local --backup '"$env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
+run './srcenv --cmd --local --backup '"$env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
+run './srcenv --elvish --local --backup '"$env_input"     ''
+run './srcenv --fish --local --backup '"$env_input"       ''
+run './srcenv --launchctl --local --backup '"$env_input"  ''
+run './srcenv --nu --local --backup '"$env_input"         ''
+run './srcenv --nushell --local --backup '"$env_input"    ''
+run './srcenv --pwsh --local --backup '"$env_input"       ''
+run './srcenv --powershell --local --backup '"$env_input" ''
+run './srcenv --env --local --backup '"$env_input"        ''
+run './srcenv --json --local --backup '"$env_input"       '{}'
 
-run "./srcenv $posix_input"              "$env_output"
-# run "./srcenv --arg $(cat $posix_input)" "$env_output"  # TODO: Fix test framework arg support
-# run "./srcenv - < $posix_input"          "$env_output"  # TODO: Fix test framework STDIN support
+run './srcenv '"$posix_input"                  "$env_output"
+run './srcenv --arg "$(cat '"$posix_input"')"' "$env_output"
+run './srcenv - < '"$posix_input"              "$env_output"
 
-run "./srcenv --ash $posix_input"        "$posix_output"
-run "./srcenv --bash $posix_input"       "$posix_output"
-run "./srcenv --csh $posix_input"        "$posix_output"
-run "./srcenv --tcsh $posix_input"       "$posix_output"
-run "./srcenv --dash $posix_input"       "$posix_output"
-run "./srcenv --ksh $posix_input"        "$posix_output"
-run "./srcenv --pdksh $posix_input"      "$posix_output"
-run "./srcenv --murex $posix_input"      "$posix_output"
-run "./srcenv --posix $posix_input"      "$posix_output"
-run "./srcenv --sh $posix_input"         "$posix_output"
-run "./srcenv --zsh $posix_input"        "$posix_output"
-run "./srcenv --bat $posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
-run "./srcenv --cmd $posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
-run "./srcenv --elvish $posix_input"     "$elvish_output"
-run "./srcenv --fish $posix_input"       "$fish_output"
-run "./srcenv --launchctl $posix_input"  "$launchctl_output"
-run "./srcenv --nu $posix_input"         "$nu_output"
-run "./srcenv --nushell $posix_input"    "$nu_output"
-run "./srcenv --pwsh $posix_input"       "$pwsh_output"
-run "./srcenv --powershell $posix_input" "$pwsh_output"
-run "./srcenv --env $posix_input"        "$env_output"
-run "./srcenv --json $posix_input"       "$json_output"
+run './srcenv --ash '"$posix_input"        "$posix_output"
+run './srcenv --bash '"$posix_input"       "$posix_output"
+run './srcenv --csh '"$posix_input"        "$posix_output"
+run './srcenv --tcsh '"$posix_input"       "$posix_output"
+run './srcenv --dash '"$posix_input"       "$posix_output"
+run './srcenv --ksh '"$posix_input"        "$posix_output"
+run './srcenv --pdksh '"$posix_input"      "$posix_output"
+run './srcenv --murex '"$posix_input"      "$posix_output"
+run './srcenv --posix '"$posix_input"      "$posix_output"
+run './srcenv --sh '"$posix_input"         "$posix_output"
+run './srcenv --zsh '"$posix_input"        "$posix_output"
+run './srcenv --bat '"$posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
+run './srcenv --cmd '"$posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
+run './srcenv --elvish '"$posix_input"     "$elvish_output"
+run './srcenv --fish '"$posix_input"       "$fish_output"
+run './srcenv --launchctl '"$posix_input"  "$launchctl_output"
+run './srcenv --nu '"$posix_input"         "$nu_output"
+run './srcenv --nushell '"$posix_input"    "$nu_output"
+run './srcenv --pwsh '"$posix_input"       "$pwsh_output"
+run './srcenv --powershell '"$posix_input" "$pwsh_output"
+run './srcenv --env '"$posix_input"        "$env_output"
+run './srcenv --json '"$posix_input"       "$json_output"
 
-run "./srcenv --ash --backup $posix_input"        "$posix_output$lf$posix_backup_output"
-run "./srcenv --bash --backup $posix_input"       "$posix_output$lf$posix_backup_output"
-run "./srcenv --csh --backup $posix_input"        "$posix_output$lf$posix_backup_output"
-run "./srcenv --tcsh --backup $posix_input"       "$posix_output$lf$posix_backup_output"
-run "./srcenv --dash --backup $posix_input"       "$posix_output$lf$posix_backup_output"
-run "./srcenv --ksh --backup $posix_input"        "$posix_output$lf$posix_backup_output"
-run "./srcenv --pdksh --backup $posix_input"      "$posix_output$lf$posix_backup_output"
-run "./srcenv --murex --backup $posix_input"      "$posix_output$lf$posix_backup_output"
-run "./srcenv --posix --backup $posix_input"      "$posix_output$lf$posix_backup_output"
-run "./srcenv --sh --backup $posix_input"         "$posix_output$lf$posix_backup_output"
-run "./srcenv --zsh --backup $posix_input"        "$posix_output$lf$posix_backup_output"
-run "./srcenv --bat --backup $posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
-run "./srcenv --cmd --backup $posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
-run "./srcenv --elvish --backup $posix_input"     "$elvish_output$lf$elvish_backup_output"
-run "./srcenv --fish --backup $posix_input"       "$fish_output$lf$fish_backup_output"
-run "./srcenv --launchctl --backup $posix_input"  "$launchctl_output$lf$launchctl_backup_output"
-run "./srcenv --nu --backup $posix_input"         "$nu_output$lf$nu_backup_output"
-run "./srcenv --nushell --backup $posix_input"    "$nu_output$lf$nu_backup_output"
-run "./srcenv --pwsh --backup $posix_input"       "$pwsh_output$lf$pwsh_backup_output"
-run "./srcenv --powershell --backup $posix_input" "$pwsh_output$lf$pwsh_backup_output"
-run "./srcenv --env --backup $posix_input"        "$env_output$lf$env_backup_output"
-run "./srcenv --json --backup $posix_input"       "$json_backup_output"
+run './srcenv --ash --backup '"$posix_input"        "$posix_output$lf$posix_backup_output"
+run './srcenv --bash --backup '"$posix_input"       "$posix_output$lf$posix_backup_output"
+run './srcenv --csh --backup '"$posix_input"        "$posix_output$lf$posix_backup_output"
+run './srcenv --tcsh --backup '"$posix_input"       "$posix_output$lf$posix_backup_output"
+run './srcenv --dash --backup '"$posix_input"       "$posix_output$lf$posix_backup_output"
+run './srcenv --ksh --backup '"$posix_input"        "$posix_output$lf$posix_backup_output"
+run './srcenv --pdksh --backup '"$posix_input"      "$posix_output$lf$posix_backup_output"
+run './srcenv --murex --backup '"$posix_input"      "$posix_output$lf$posix_backup_output"
+run './srcenv --posix --backup '"$posix_input"      "$posix_output$lf$posix_backup_output"
+run './srcenv --sh --backup '"$posix_input"         "$posix_output$lf$posix_backup_output"
+run './srcenv --zsh --backup '"$posix_input"        "$posix_output$lf$posix_backup_output"
+run './srcenv --bat --backup '"$posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
+run './srcenv --cmd --backup '"$posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
+run './srcenv --elvish --backup '"$posix_input"     "$elvish_output$lf$elvish_backup_output"
+run './srcenv --fish --backup '"$posix_input"       "$fish_output$lf$fish_backup_output"
+run './srcenv --launchctl --backup '"$posix_input"  "$launchctl_output$lf$launchctl_backup_output"
+run './srcenv --nu --backup '"$posix_input"         "$nu_output$lf$nu_backup_output"
+run './srcenv --nushell --backup '"$posix_input"    "$nu_output$lf$nu_backup_output"
+run './srcenv --pwsh --backup '"$posix_input"       "$pwsh_output$lf$pwsh_backup_output"
+run './srcenv --powershell --backup '"$posix_input" "$pwsh_output$lf$pwsh_backup_output"
+run './srcenv --env --backup '"$posix_input"        "$env_output$lf$env_backup_output"
+run './srcenv --json --backup '"$posix_input"       "$json_backup_output"
 
 end
 
