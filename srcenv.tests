@@ -71,6 +71,11 @@ end() {
 
 # region Setup
 
+unset SRCENV_TEST_A
+unset SRCENV_TEST_B
+unset SRCENV_TEST_C
+unset SRCENV_TEST_ESCAPE
+unset SRCENV_TEST_MULTILINE
 unset SRCENV_UNDO
 
 export SRCENV_TEST_EXISTING=1
