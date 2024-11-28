@@ -29,7 +29,7 @@ GREEN=$(tput setaf 2 2> /dev/null || printf '\e[32m')
 YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
 
 start() {
-    echo "${GREEN}✔${NORMAL} ${BOLD}srcenv tests:${NORMAL} Running..."
+    msg "Running..."
 }
 
 run() {
@@ -43,8 +43,7 @@ run() {
 
     case "$1" in
         0) tests_skipped=$((tests_skipped + 1))
-           printf "${YELLOW}▲${NORMAL} ${DIM}%3s.${NORMAL} %s: ${YELLOW}Skipped${NORMAL}\n" \
-                  "$id" "$cmd"
+           msg test warn "$id" "$cmd" "${YELLOW}Skipped${NORMAL}"
            return ;;
         1) shift  ;;
     esac
@@ -54,39 +53,42 @@ run() {
 
     if [ "$output" != "$expected" ]; then
         tests_failed=$((tests_failed + 1))
-        printf "${RED}✖${NORMAL} ${DIM}%3s.${NORMAL} %s: %s ${BOLD}${RED}!=${NORMAL} %s\n" \
-               "$id" "$cmd" "$output" "$expected"
+        msg test err "$id" "$cmd" "$output ${BOLD}${RED}!=${NORMAL} $expected"
     elif [ "$exitcode" != "$expected_exitcode" ]; then
         tests_failed=$((tests_failed + 1))
-        printf "${RED}✖${NORMAL} ${DIM}%3s.${NORMAL} %s: Exit code ${YELLOW}%s${NORMAL} ${BOLD}${RED}!=${NORMAL} Exit code ${YELLOW}%s${NORMAL}\n" \
-               "$id" "$cmd" "$exitcode" "$expected_exitcode"
+        msg test err "$id" "$cmd" "Exit code ${YELLOW}$exitcode${NORMAL} ${BOLD}${RED}!=${NORMAL} Exit code ${YELLOW}$expected_exitcode${NORMAL}"
     else
         tests_passed=$((tests_passed + 1))
-        printf "${GREEN}✔${NORMAL} ${DIM}%3s.${NORMAL} %s\n" "$id" "$cmd"
+        msg test "$id" "$cmd"
     fi
-}
-
-msg() {
-    case "$1" in
-        err)  echo "${RED}✖${NORMAL} ${BOLD}srcenv tests:${NORMAL} $2"    ;;
-        warn) echo "${YELLOW}▲${NORMAL} ${BOLD}srcenv tests:${NORMAL} $2" ;;
-        *)    echo "${GREEN}✔${NORMAL} ${BOLD}srcenv tests:${NORMAL} $1"  ;;
-    esac
 }
 
 end() {
     if [ $tests_failed -gt 0 ]; then
-        printf "${RED}✖${NORMAL} ${BOLD}srcenv tests:${NORMAL} ${GREEN}%s${NORMAL} tests passed, ${RED}%s${NORMAL} tests failed, ${YELLOW}%s${NORMAL} tests skipped\n" "$tests_passed" "$tests_failed" "$tests_skipped"
+        msg err "$(printf "${GREEN}%s${NORMAL} tests passed, ${RED}%s${NORMAL} tests failed, ${YELLOW}%s${NORMAL} tests skipped\n" "$tests_passed" "$tests_failed" "$tests_skipped")"
         exit 1
     fi
 
     if [ $tests_skipped -gt 0 ]; then
-        printf "${YELLOW}▲${NORMAL} ${BOLD}srcenv tests:${NORMAL} ${GREEN}%s${NORMAL} tests passed, ${YELLOW}%s${NORMAL} tests skipped\n" "$tests_passed" "$tests_skipped"
+        msg warn "$(printf "${GREEN}%s${NORMAL} tests passed, ${YELLOW}%s${NORMAL} tests skipped\n" "$tests_passed" "$tests_skipped")"
         exit 0
     fi
 
-    printf "${GREEN}✔${NORMAL} ${BOLD}srcenv tests:${NORMAL} ${GREEN}%s${NORMAL} tests passed\n" "$tests_passed"
+    msg "$(printf "${GREEN}%s${NORMAL} tests passed\n" "$tests_passed")"  
     exit 0
+}
+
+msg() {
+    case "$1" in
+        test) case "$2" in
+                  err)  printf "${RED}✖${NORMAL} ${DIM}%3s.${NORMAL} %s: %s\n"    "$3" "$4" "$5" ;;
+                  warn) printf "${YELLOW}▲${NORMAL} ${DIM}%3s.${NORMAL} %s: %s\n" "$3" "$4" "$5" ;;
+                  *)    printf "${GREEN}✔${NORMAL} ${DIM}%3s.${NORMAL} %s\n"      "$2" "$3"      ;;
+              esac ;;
+        err)  echo "${RED}✖${NORMAL} ${BOLD}srcenv tests:${NORMAL} $2"    ;;
+        warn) echo "${YELLOW}▲${NORMAL} ${BOLD}srcenv tests:${NORMAL} $2" ;;
+        *)    echo "${GREEN}✔${NORMAL} ${BOLD}srcenv tests:${NORMAL} $1"  ;;
+    esac
 }
 
 # endregion Framework
