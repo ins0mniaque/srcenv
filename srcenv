@@ -116,11 +116,11 @@ invalid() {
     RED=$(tput setaf 1 2> /dev/null || printf '\e[31m')
     YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
 
-    lf='
+    LF='
 '
     error="$2"
     error="${error#getopt: }"
-    error="${error%%"$lf"*}"
+    error="${error%%"${LF}"*}"
     option="${error#* -- }"
     [ "$option" = '-' ] && option="${1#-}"
     option="${option#-}"
@@ -146,11 +146,11 @@ err() {
         "$escape"*)        printf >&2 '%s\n' "$1"; return ;;
         $jq:\ *--argjson*) echo   >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}";
                            return ;;
-        $jq:\ *)           lf='
+        $jq:\ *)           LF='
 '
                            error=${1#"$jq": }
                            error=${error#error: }
-                           error=${error%%, line 1:"$lf"*}
+                           error=${error%%, line 1:"${LF}"*}
                            echo   >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error";
                            return ;;
     esac
