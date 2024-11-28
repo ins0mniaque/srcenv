@@ -184,13 +184,14 @@ EOF
 
 { nu_setup_script="$(cat) $env_input"; } << 'EOF'
 ./srcenv %s | save -f test.nu.env
-let temp = "%s"
+let filter = "%s"
 ./srcenv --json
 EOF
 
 { nu_script="$(cat) $diff"; } << 'EOF'
 let snapshot = (jq -n env); source test.nu.env
 rm -f test.nu.env
+let temp = "%s"
 jq --argjson snapshot $snapshot -n
 EOF
 
@@ -344,18 +345,18 @@ launchctl setenv SRCENV_UNDO '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV
 EOF
 
 { nu_output=$(cat); } << 'EOF'
-$env.SRCENV_TEST_A = '6'
-$env.SRCENV_TEST_B = '7'
-$env.SRCENV_TEST_C = '42'
-$env.SRCENV_TEST_ESCAPE = '$NOT_EXPANDED\t\r\n'\''"'
-$env.SRCENV_TEST_MULTILINE = '
+$env.SRCENV_TEST_A = r#'6'#
+$env.SRCENV_TEST_B = r#'7'#
+$env.SRCENV_TEST_C = r#'42'#
+$env.SRCENV_TEST_ESCAPE = r#'$NOT_EXPANDED\t\r\n'"'#
+$env.SRCENV_TEST_MULTILINE = r#'
 6
 7
-42'
+42'#
 EOF
 
 { nu_backup_output=$(cat); } << 'EOF'
-$env.SRCENV_UNDO = '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}'
+$env.SRCENV_UNDO = r#'{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}'#
 EOF
 
 { pwsh_output=$(cat); } << 'EOF'
@@ -595,7 +596,7 @@ run_script "$fish" 'fish -c' "$fish_script" '--fish test.env.sh'
 run_script "$fish" 'fish -c' "$fish_script" 'test.env'
 run_script "$fish" 'fish -c' "$fish_script" 'test.env.sh'
 
-nu="$(detect nu)" || msg warn "NuShell not found; skipping tests..."
+nu="$(detect nu)" || msg warn "Nushell not found; skipping tests..."
 run_script "$nu" 'nu -c' "$nu_json_script"  '--json test.env'
 run_script "$nu" 'nu -c' "$nu_json_script"  '--json test.env.sh'
 run_script "$nu" 'nu -c' "$nu_setup_script" '--nu test.env'
