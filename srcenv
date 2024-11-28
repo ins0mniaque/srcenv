@@ -18,13 +18,14 @@ header() {
     UNDERLINE=$(tput smul 2> /dev/null || printf '\e[4m')
     YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
 
-    warn=; [ -z "$jq" ] && \
-    warn="                            ${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}jq${NORMAL} not found"
+    warn=; command -v "$jq" > /dev/null || \
+    warn=$(printf "%$((40 + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
+                  "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
 
     echo >&2 "\
 srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.
 
-${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]$warn
+${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
               [-h|--help|-v|--version]
 
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
@@ -94,8 +95,11 @@ nojq() {
     NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
     BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
     RED=$(tput setaf 1 2> /dev/null || printf '\e[31m')
+    GREEN=$(tput setaf 2 2> /dev/null || printf '\e[32m')
     YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
 
+    [ "$jq" != jq ] && \
+    echo >&2 "${BOLD}${YELLOW}warn: ${NORMAL} ${YELLOW}jq${NORMAL} is set to ${GREEN}$jq${NORMAL}; unset ${YELLOW}SRCENV_JQ${NORMAL} to revert to ${GREEN}jq${NORMAL}"
     echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}jq${NORMAL} not found; see https://jqlang.github.io/jq/download/ for installation options"
 }
 
@@ -141,16 +145,16 @@ err() {
 
     escape=$(printf '\e')
     case $1 in
-        "$escape"*)       printf >&2 '%s\n' "$1"; return ;;
-        jq:\ *--argjson*) echo   >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}";
-                          return ;;
-        jq:\ *)           lf='
+        "$escape"*)        printf >&2 '%s\n' "$1"; return ;;
+        $jq:\ *--argjson*) echo   >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}";
+                           return ;;
+        $jq:\ *)           lf='
 '
-                          error=${1#jq: }
-                          error=${error#error: }
-                          error=${error%%, line 1:"$lf"*}
-                          echo   >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error";
-                          return ;;
+                           error=${1#"$jq": }
+                           error=${error#error: }
+                           error=${error%%, line 1:"$lf"*}
+                           echo   >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error";
+                           return ;;
     esac
 
     printf '%s\n' "$1" | while read -r line; do
@@ -213,7 +217,11 @@ autodetect() {
 }
 
 run() {
-    snapshot=$("$jq" -n 'env') || exit 1
+    if ! command -v "$jq" > /dev/null; then
+        nojq; exit 1
+    fi
+
+    snapshot=$("$jq" -n env) || exit 1
 
     while [ $# -gt 0 ]; do
         case $1 in
@@ -265,10 +273,6 @@ run() {
     [ -n "$backup"  ] && setbackup
     [ "$format" = . ] && keys="$sort"
 
-    if [ -z "$jq" ]; then
-        nojq; exit 1
-    fi
-
     "$jq" --argjson snapshot "$snapshot" \
        ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
        -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
@@ -290,8 +294,7 @@ src() {
     [ "$3" = --export ] && set +a
 }
 
-jq=$(command -v "${SRCENV_JQ:-jq}") || \
-jq="$SRCENV_JQ"
+jq="${SRCENV_JQ:-jq}"
 
 if [ $# = 0 ]; then
     header; help; exit 0
