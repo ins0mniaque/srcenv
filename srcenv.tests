@@ -209,6 +209,21 @@ EOF
 set "SRCENV_UNDO={^"SRCENV_TEST_A^":null,^"SRCENV_TEST_B^":null,^"SRCENV_TEST_C^":null,^"SRCENV_TEST_ESCAPE^":null,^"SRCENV_TEST_MULTILINE^":null,^"SRCENV_UNDO^":null}"
 EOF
 
+{ csh_output=$(cat); } << 'EOF'
+setenv SRCENV_TEST_A '6'
+setenv SRCENV_TEST_B '7'
+setenv SRCENV_TEST_C '42'
+setenv SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"'
+setenv SRCENV_TEST_MULTILINE '
+6
+7
+42'
+EOF
+
+{ csh_backup_output=$(cat); } << 'EOF'
+setenv SRCENV_UNDO '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}'
+EOF
+
 { elvish_output=$(cat); } << 'EOF'
 set-env $SRCENV_TEST_A '6'
 set-env $SRCENV_TEST_B '7'
@@ -308,8 +323,6 @@ run './srcenv - < '"$env_input"''                     ''
 
 run './srcenv --ash '"$env_input"        "$posix_output"
 run './srcenv --bash '"$env_input"       "$posix_output"
-run './srcenv --csh '"$env_input"        "$posix_output"
-run './srcenv --tcsh '"$env_input"       "$posix_output"
 run './srcenv --dash '"$env_input"       "$posix_output"
 run './srcenv --ksh '"$env_input"        "$posix_output"
 run './srcenv --pdksh '"$env_input"      "$posix_output"
@@ -319,6 +332,8 @@ run './srcenv --sh '"$env_input"         "$posix_output"
 run './srcenv --zsh '"$env_input"        "$posix_output"
 run './srcenv --bat '"$env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
 run './srcenv --cmd '"$env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
+run './srcenv --csh '"$env_input"        "$csh_output"
+run './srcenv --tcsh '"$env_input"       "$csh_output"
 run './srcenv --elvish '"$env_input"     "$elvish_output"
 run './srcenv --fish '"$env_input"       "$fish_output"
 run './srcenv --launchctl '"$env_input"  "$launchctl_output"
@@ -331,8 +346,6 @@ run './srcenv --json '"$env_input"       "$json_output"
 
 run './srcenv --ash --backup '"$env_input"        "$posix_output$lf$posix_backup_output"
 run './srcenv --bash --backup '"$env_input"       "$posix_output$lf$posix_backup_output"
-run './srcenv --csh --backup '"$env_input"        "$posix_output$lf$posix_backup_output"
-run './srcenv --tcsh --backup '"$env_input"       "$posix_output$lf$posix_backup_output"
 run './srcenv --dash --backup '"$env_input"       "$posix_output$lf$posix_backup_output"
 run './srcenv --ksh --backup '"$env_input"        "$posix_output$lf$posix_backup_output"
 run './srcenv --pdksh --backup '"$env_input"      "$posix_output$lf$posix_backup_output"
@@ -342,6 +355,8 @@ run './srcenv --sh --backup '"$env_input"         "$posix_output$lf$posix_backup
 run './srcenv --zsh --backup '"$env_input"        "$posix_output$lf$posix_backup_output"
 run './srcenv --bat --backup '"$env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
 run './srcenv --cmd --backup '"$env_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
+run './srcenv --csh --backup '"$env_input"        "$csh_output$lf$csh_backup_output"
+run './srcenv --tcsh --backup '"$env_input"       "$csh_output$lf$csh_backup_output"
 run './srcenv --elvish --backup '"$env_input"     "$elvish_output$lf$elvish_backup_output"
 run './srcenv --fish --backup '"$env_input"       "$fish_output$lf$fish_backup_output"
 run './srcenv --launchctl --backup '"$env_input"  "$launchctl_output$lf$launchctl_backup_output"
@@ -354,8 +369,6 @@ run './srcenv --json --backup '"$env_input"       "$json_backup_output"
 
 run './srcenv --ash --local '"$env_input"        ''
 run './srcenv --bash --local '"$env_input"       ''
-run './srcenv --csh --local '"$env_input"        ''
-run './srcenv --tcsh --local '"$env_input"       ''
 run './srcenv --dash --local '"$env_input"       ''
 run './srcenv --ksh --local '"$env_input"        ''
 run './srcenv --pdksh --local '"$env_input"      ''
@@ -365,6 +378,8 @@ run './srcenv --sh --local '"$env_input"         ''
 run './srcenv --zsh --local '"$env_input"        ''
 run './srcenv --bat --local '"$env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
 run './srcenv --cmd --local '"$env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
+run './srcenv --csh --local '"$env_input"        ''
+run './srcenv --tcsh --local '"$env_input"       ''
 run './srcenv --elvish --local '"$env_input"     ''
 run './srcenv --fish --local '"$env_input"       ''
 run './srcenv --launchctl --local '"$env_input"  ''
@@ -377,8 +392,6 @@ run './srcenv --json --local '"$env_input"       '{}'
 
 run './srcenv --ash --local --backup '"$env_input"        ''
 run './srcenv --bash --local --backup '"$env_input"       ''
-run './srcenv --csh --local --backup '"$env_input"        ''
-run './srcenv --tcsh --local --backup '"$env_input"       ''
 run './srcenv --dash --local --backup '"$env_input"       ''
 run './srcenv --ksh --local --backup '"$env_input"        ''
 run './srcenv --pdksh --local --backup '"$env_input"      ''
@@ -388,6 +401,8 @@ run './srcenv --sh --local --backup '"$env_input"         ''
 run './srcenv --zsh --local --backup '"$env_input"        ''
 run './srcenv --bat --local --backup '"$env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
 run './srcenv --cmd --local --backup '"$env_input"        "$cmd_output_prefix$lf$lf$cmd_output_suffix"
+run './srcenv --csh --local --backup '"$env_input"        ''
+run './srcenv --tcsh --local --backup '"$env_input"       ''
 run './srcenv --elvish --local --backup '"$env_input"     ''
 run './srcenv --fish --local --backup '"$env_input"       ''
 run './srcenv --launchctl --local --backup '"$env_input"  ''
@@ -404,8 +419,6 @@ run './srcenv - < '"$posix_input"              "$env_output"
 
 run './srcenv --ash '"$posix_input"        "$posix_output"
 run './srcenv --bash '"$posix_input"       "$posix_output"
-run './srcenv --csh '"$posix_input"        "$posix_output"
-run './srcenv --tcsh '"$posix_input"       "$posix_output"
 run './srcenv --dash '"$posix_input"       "$posix_output"
 run './srcenv --ksh '"$posix_input"        "$posix_output"
 run './srcenv --pdksh '"$posix_input"      "$posix_output"
@@ -415,6 +428,8 @@ run './srcenv --sh '"$posix_input"         "$posix_output"
 run './srcenv --zsh '"$posix_input"        "$posix_output"
 run './srcenv --bat '"$posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
 run './srcenv --cmd '"$posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_output_suffix"
+run './srcenv --csh '"$posix_input"        "$csh_output"
+run './srcenv --tcsh '"$posix_input"       "$csh_output"
 run './srcenv --elvish '"$posix_input"     "$elvish_output"
 run './srcenv --fish '"$posix_input"       "$fish_output"
 run './srcenv --launchctl '"$posix_input"  "$launchctl_output"
@@ -427,8 +442,6 @@ run './srcenv --json '"$posix_input"       "$json_output"
 
 run './srcenv --ash --backup '"$posix_input"        "$posix_output$lf$posix_backup_output"
 run './srcenv --bash --backup '"$posix_input"       "$posix_output$lf$posix_backup_output"
-run './srcenv --csh --backup '"$posix_input"        "$posix_output$lf$posix_backup_output"
-run './srcenv --tcsh --backup '"$posix_input"       "$posix_output$lf$posix_backup_output"
 run './srcenv --dash --backup '"$posix_input"       "$posix_output$lf$posix_backup_output"
 run './srcenv --ksh --backup '"$posix_input"        "$posix_output$lf$posix_backup_output"
 run './srcenv --pdksh --backup '"$posix_input"      "$posix_output$lf$posix_backup_output"
@@ -438,6 +451,8 @@ run './srcenv --sh --backup '"$posix_input"         "$posix_output$lf$posix_back
 run './srcenv --zsh --backup '"$posix_input"        "$posix_output$lf$posix_backup_output"
 run './srcenv --bat --backup '"$posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
 run './srcenv --cmd --backup '"$posix_input"        "$cmd_output_prefix$lf$cmd_output$lf$cmd_backup_output$lf$cmd_output_suffix"
+run './srcenv --csh --backup '"$posix_input"        "$csh_output$lf$csh_backup_output"
+run './srcenv --tcsh --backup '"$posix_input"       "$csh_output$lf$csh_backup_output"
 run './srcenv --elvish --backup '"$posix_input"     "$elvish_output$lf$elvish_backup_output"
 run './srcenv --fish --backup '"$posix_input"       "$fish_output$lf$fish_backup_output"
 run './srcenv --launchctl --backup '"$posix_input"  "$launchctl_output$lf$launchctl_backup_output"
