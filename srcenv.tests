@@ -7,10 +7,12 @@
 # region Framework
 #
 # Usage: start
-#        run <command> <expected output> [<expected exit code>]
+#        run [<skip>] <command> <expected output> [<expected exit code>]
+#        msg [err|warn] <message>
 #        end
 
 tests_sequence=0
+tests_skipped=0
 tests_passed=0
 tests_failed=0
 tests_filter=
@@ -33,12 +35,19 @@ start() {
 run() {
     id=$((tests_sequence + 1)); tests_sequence=$id
 
-    if [ -n "$tests_filter" ]; then
-        case "$tests_filter" in
-            *\ $id\ *) ;;
-            *) return ;;
-        esac
-    fi
+    case "$tests_filter" in
+        *\ $id\ *) ;;
+        '')        ;;
+        *) return  ;;
+    esac
+
+    case "$1" in
+        0) tests_skipped=$((tests_skipped + 1))
+           printf "${YELLOW}▲${NORMAL} ${DIM}%3s.${NORMAL} %s: ${YELLOW}Skipped${NORMAL}\n" \
+                  "$id" "$cmd"
+           return ;;
+        1) shift  ;;
+    esac
 
     cmd="$1"; output=$(eval "$cmd" 2> /dev/null); exitcode=$?
     expected="$2"; expected_exitcode="${3:-0}"
@@ -57,13 +66,26 @@ run() {
     fi
 }
 
+msg() {
+    case "$1" in
+        err)  echo "${RED}✖${NORMAL} ${BOLD}srcenv tests:${NORMAL} $2"    ;;
+        warn) echo "${YELLOW}▲${NORMAL} ${BOLD}srcenv tests:${NORMAL} $2" ;;
+        *)    echo "${GREEN}✔${NORMAL} ${BOLD}srcenv tests:${NORMAL} $1"  ;;
+    esac
+}
+
 end() {
     if [ $tests_failed -gt 0 ]; then
-        printf "${RED}✖${NORMAL} ${BOLD}srcenv tests:${NORMAL} %s tests passed, %s tests failed\n" "$tests_passed" "$tests_failed"
+        printf "${RED}✖${NORMAL} ${BOLD}srcenv tests:${NORMAL} ${GREEN}%s${NORMAL} tests passed, ${RED}%s${NORMAL} tests failed, ${YELLOW}%s${NORMAL} tests skipped\n" "$tests_passed" "$tests_failed" "$tests_skipped"
         exit 1
     fi
 
-    printf "${GREEN}✔${NORMAL} ${BOLD}srcenv tests:${NORMAL} %s tests passed\n" "$tests_passed"
+    if [ $tests_skipped -gt 0 ]; then
+        printf "${YELLOW}▲${NORMAL} ${BOLD}srcenv tests:${NORMAL} ${GREEN}%s${NORMAL} tests passed, ${YELLOW}%s${NORMAL} tests skipped\n" "$tests_passed" "$tests_skipped"
+        exit 0
+    fi
+
+    printf "${GREEN}✔${NORMAL} ${BOLD}srcenv tests:${NORMAL} ${GREEN}%s${NORMAL} tests passed\n" "$tests_passed"
     exit 0
 }
 
