@@ -197,22 +197,23 @@ setbackup() {
 
 autodetect() {
     case $(ps -o comm= -p "$PPID") in
-        -ash|ash)       set -- --ash "$@" ;;
-        -bash|bash)     set -- --bash "$@" ;;
-        -csh|csh)       set -- --csh "$@" ;;
-        -tcsh|tcsh)     set -- --tcsh "$@" ;;
-        -dash|dash)     set -- --dash "$@" ;;
-        -ksh|ksh)       set -- --ksh "$@" ;;
-        -pdksh|pdksh)   set -- --pdksh "$@" ;;
-        -murex|murex)   set -- --murex "$@" ;;
-        -sh|sh)         set -- --sh "$@" ;;
-        -zsh|zsh)       set -- --zsh "$@" ;;
-        -elvish|elvish) set -- --elvish "$@" ;;
-        -fish|fish)     set -- --fish "$@" ;;
-        -nu|nu)         set -- --nu "$@" ;;
+        -ash|ash)       auto=--ash    ;;
+        -bash|bash)     auto=--bash   ;;
+        -csh|csh)       auto=--csh    ;;
+        -tcsh|tcsh)     auto=--tcsh   ;;
+        -dash|dash)     auto=--dash   ;;
+        -ksh|ksh)       auto=--ksh    ;;
+        -pdksh|pdksh)   auto=--pdksh  ;;
+        -murex|murex)   auto=--murex  ;;
+        -sh|sh)         auto=--sh     ;;
+        -zsh|zsh)       auto=--zsh    ;;
+        -elvish|elvish) auto=--elvish ;;
+        -fish|fish)     auto=--fish   ;;
+        -nu|nu)         auto=--nu     ;;
         -pwsh|pwsh|\
         -powershell|\
-        powershell)     set -- --pwsh "$@" ;;
+        powershell)     auto=--pwsh   ;;
+        *)              auto=         ;;
     esac
 }
 
@@ -300,9 +301,9 @@ if [ $# = 0 ]; then
     header; help; exit 0
 fi
 
-autodetect
 init
-output=$(run "$@" 2>&1)
+autodetect
+output=$(run ${auto:+"$auto"} "$@" 2>&1)
 exitcode=$?
 
 if [ $exitcode != 0 ]; then
