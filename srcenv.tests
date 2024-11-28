@@ -219,9 +219,9 @@ setenv SRCENV_TEST_A '6'
 setenv SRCENV_TEST_B '7'
 setenv SRCENV_TEST_C '42'
 setenv SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"'
-setenv SRCENV_TEST_MULTILINE '
-6
-7
+setenv SRCENV_TEST_MULTILINE '\
+6\
+7\
 42'
 EOF
 

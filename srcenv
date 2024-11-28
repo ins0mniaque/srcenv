@@ -233,7 +233,8 @@ run() {
             --murex|\
             --posix|--sh|\
             --zsh)               fmt 'export \($k)=\(.[$k]|@sh)'   'unset \($k)';        shift ;;
-            --csh|--tcsh)        fmt 'setenv \($k) \(.[$k]|@sh)'   'unsetenv \($k)';     shift ;;
+            --csh|--tcsh)        fmt 'setenv \($k) \(.[$k]|@sh|gsub("\\n"; "\\\n"))' \
+                                     'unsetenv \($k)';                                   shift ;;
             --elvish)            fmt 'set-env $\($k) \(.[$k]|@sh)' 'unset-env $\($k)';   shift ;;
             --fish)              fmt 'set -gx \($k) \(.[$k]|@sh)'  'set -e \($k)';       shift ;;
             --nu|--nushell)      fmt '$env.\($k) = \(.[$k]|@sh)'   '$env.\($k) = null';  shift ;;
