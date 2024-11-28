@@ -48,20 +48,28 @@ run() {
         1)    shift  ;;
     esac
 
-    cmd="$1"; output=$(eval "$cmd" 2> /dev/null); exitcode=$?
+    cmd="$1"; output=$(eval "$cmd" 2> test.stderr); exitcode=$?
     expected="$2"; expected_exitcode="${3:-0}"
+    error="$(cat test.stderr 2>&1)"; rm -f test.stderr
 
     cmd="${cmd%%"${LF}"*}"
 
-    if [ "$output" != "$expected" ]; then
-        tests_failed=$((tests_failed + 1))
-        msg test err "$id" "$cmd" "$output ${BOLD}${RED}!=${NORMAL} $expected"
-    elif [ "$exitcode" != "$expected_exitcode" ]; then
+    if [ "$exitcode" != "$expected_exitcode" ]; then
         tests_failed=$((tests_failed + 1))
         msg test err "$id" "$cmd" "Exit code ${YELLOW}$exitcode${NORMAL} ${BOLD}${RED}!=${NORMAL} Exit code ${YELLOW}$expected_exitcode${NORMAL}"
+    elif [ "$output" != "$expected" ]; then
+        tests_failed=$((tests_failed + 1))
+        msg test err "$id" "$cmd"
     else
         tests_passed=$((tests_passed + 1))
         msg test "$id" "$cmd"
+    fi
+
+    [ -n "$error" ] && [ "$expected_exitcode" = 0 ] && \
+    msg test err "$id" "${BOLD}${RED}error" "${NORMAL}${error#"${BOLD}${RED}error:${NORMAL} "}"
+
+    if [ "$output" != "$expected" ]; then
+        msg test err "$id" "${BOLD}${RED}mismatch" "${NORMAL}$output ${BOLD}${RED}!=${NORMAL} $expected"
     fi
 }
 
