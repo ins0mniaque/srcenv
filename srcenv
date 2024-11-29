@@ -101,6 +101,14 @@ nojq() {
     echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}jq${NORMAL} not found; see https://jqlang.github.io/jq/download/ for installation options"
 }
 
+noformat() {
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\e[0m')
+    BOLD=$(tput bold 2> /dev/null || printf '\e[1m')
+    YELLOW=$(tput setaf 3 2> /dev/null || printf '\e[33m')
+
+    echo >&2 "${BOLD}${YELLOW}warn:${NORMAL} Unknown shell ${YELLOW}$pcmd${NORMAL}; defaulting to POSIX format"
+}
+
 valid() {
     case $2 in
         -*|'') invalid "$1" "option requires an argument -- -"; exit 1 ;;
@@ -177,8 +185,6 @@ init() {
     ffid='reduce (env|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
     keys='keys[] as $k'
     sort='to_entries | sort_by(.key) | from_entries'
-
-    fmt '\($k)=\(.[$k]|@sh)' '\($k)='
 }
 
 fmt() { format='if .[$k] != null then "'$1'" else "'$2'" end'; }
@@ -193,8 +199,9 @@ setbackup() {
 
 autodetect() {
     pcmd="$(ps -o comm= -p "$PPID")"
+    pcmd="${pcmd##*/}"
 
-    case "${pcmd##*/}" in
+    case "$pcmd" in
         -ash|ash)       auto=--ash    ;;
         -bash|bash)     auto=--bash   ;;
         -csh|csh)       auto=--csh    ;;
@@ -273,6 +280,7 @@ run() {
     done
 
     [ -n "$backup"  ] && setbackup
+    [ -z "$format"  ] && noformat && fmt 'export \($k)=\(.[$k]|@sh)' 'unset \($k)'
     [ "$format" = . ] && keys="$sort"
 
     "$jq" --argjson snapshot "$snapshot" \
