@@ -397,9 +397,9 @@ run 'sh srcenv --arg not_a_command'    '' 1
 run 'sh srcenv --arg "echo something"'                ''
 run 'sh srcenv --arg "echo something; not_a_command"' '' 1
 
-run 'sh srcenv '"$env_input"                           "$env_output"
-run 'sh srcenv --export --arg "$(cat '"$env_input"')"' "$env_output"
-run 'sh srcenv --export - < '"$env_input"''            "$env_output"
+run 'sh srcenv '"$env_input"                           "$posix_output"
+run 'sh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
+run 'sh srcenv --export - < '"$env_input"''            "$posix_output"
 run 'sh srcenv --local '"$env_input"''                 ''
 run 'sh srcenv --local --arg "$(cat '"$env_input"')"'  ''
 run 'sh srcenv - < '"$env_input"''                     ''
@@ -496,9 +496,9 @@ run 'sh srcenv --powershell --local --backup '"$env_input" ''
 run 'sh srcenv --env --local --backup '"$env_input"        ''
 run 'sh srcenv --json --local --backup '"$env_input"       '{}'
 
-run 'sh srcenv '"$posix_input"                  "$env_output"
-run 'sh srcenv --arg "$(cat '"$posix_input"')"' "$env_output"
-run 'sh srcenv - < '"$posix_input"              "$env_output"
+run 'sh srcenv '"$posix_input"                  "$posix_output"
+run 'sh srcenv --arg "$(cat '"$posix_input"')"' "$posix_output"
+run 'sh srcenv - < '"$posix_input"              "$posix_output"
 
 run 'sh srcenv --ash '"$posix_input"        "$posix_output"
 run 'sh srcenv --bash '"$posix_input"       "$posix_output"
