@@ -557,30 +557,45 @@ run_script() {
 }
 
 sh="$(detect sh)" || msg warn "sh not found; skipping tests..."
+run "$sh" 'sh srcenv '"$env_input"                           "$posix_output"
+run "$sh" 'sh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
+run "$sh" 'sh srcenv --export - < '"$env_input"''            "$posix_output"
 run_script "$sh" 'sh -c' "$posix_script" '--sh test.env'
 run_script "$sh" 'sh -c' "$posix_script" '--sh test.env.sh'
 run_script "$sh" 'sh -c' "$posix_script" 'test.env'
 run_script "$sh" 'sh -c' "$posix_script" 'test.env.sh'
 
 bash="$(detect bash)" || msg warn "Bash not found; skipping tests..."
+run "$bash" 'bash srcenv '"$env_input"                           "$posix_output"
+run "$bash" 'bash srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
+run "$bash" 'bash srcenv --export - < '"$env_input"''            "$posix_output"
 run_script "$bash" 'bash -c' "$posix_script" '--bash test.env'
 run_script "$bash" 'bash -c' "$posix_script" '--bash test.env.sh'
 run_script "$bash" 'bash -c' "$posix_script" 'test.env'
 run_script "$bash" 'bash -c' "$posix_script" 'test.env.sh'
 
 dash="$(detect dash)" || msg warn "Dash not found; skipping tests..."
+run "$dash" 'dash srcenv '"$env_input"                           "$posix_output"
+run "$dash" 'dash srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
+run "$dash" 'dash srcenv --export - < '"$env_input"''            "$posix_output"
 run_script "$dash" 'dash -c' "$posix_script" '--dash test.env'
 run_script "$dash" 'dash -c' "$posix_script" '--dash test.env.sh'
 run_script "$dash" 'dash -c' "$posix_script" 'test.env'
 run_script "$dash" 'dash -c' "$posix_script" 'test.env.sh'
 
 ksh="$(detect ksh)" || msg warn "Ksh not found; skipping tests..."
+run "$ksh" 'ksh srcenv '"$env_input"                           "$posix_output"
+run "$ksh" 'ksh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
+run "$ksh" 'ksh srcenv --export - < '"$env_input"''            "$posix_output"
 run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env'    'del(._)'
 run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env.sh' 'del(._)'
 run_script "$ksh" 'ksh -c' "$posix_script" 'test.env'          'del(._)'
 run_script "$ksh" 'ksh -c' "$posix_script" 'test.env.sh'       'del(._)'
 
 zsh="$(detect zsh)" || msg warn "Zsh not found; skipping tests..."
+run "$zsh" 'zsh srcenv '"$env_input"                           "$posix_output"
+run "$zsh" 'zsh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
+run "$zsh" 'zsh srcenv --export - < '"$env_input"''            "$posix_output"
 run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env'    'del(.SHLVL)'
 run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env.sh' 'del(.SHLVL)'
 run_script "$zsh" 'zsh -c' "$posix_script" 'test.env'          'del(.SHLVL)'
