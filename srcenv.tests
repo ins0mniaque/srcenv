@@ -115,8 +115,8 @@ unset SRCENV_UNDO
 export SRCENV_TEST_EXISTING=1
 unset SRCENV_TEST_NOT_EXISTING
 
-env_input=./test.env
-posix_input=./test.env.sh
+env_input=test.env
+posix_input=test.env.sh
 
 tee "$env_input" > /dev/null << 'EOF'
 # Interpolation tests
@@ -173,12 +173,12 @@ trap cleanup EXIT INT HUP TERM
 diff=\''reduce (env|%s|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'\'
 
 { posix_script="$(cat) $diff"; } << 'EOF'
-snapshot="$(jq -n env)"; eval "$(./srcenv %s)"
+snapshot="$(jq -n env)"; eval "$(sh srcenv %s)"
 jq --argjson snapshot "$snapshot" -n
 EOF
 
 { csh_script="$(cat) $diff"; } << 'EOF'
-set snapshot = "`jq -n env`"; set sourced = "`./srcenv %s`"
+set snapshot = "`jq -n env`"; set sourced = "`sh srcenv %s`"
 printf "%%s\\n" $sourced:q > test.csh.env
 source test.csh.env
 rm -f test.csh.env
@@ -186,14 +186,14 @@ jq --argjson snapshot "$snapshot:q" -n
 EOF
 
 { fish_script="$(cat) $diff"; } << 'EOF'
-set snapshot "$(jq -n env)"; ./srcenv %s | source
+set snapshot "$(jq -n env)"; sh srcenv %s | source
 jq --argjson snapshot "$snapshot" -n
 EOF
 
 { nu_setup_script="$(cat) $env_input"; } << 'EOF'
-./srcenv %s | save -f test.nu.env
+sh srcenv %s | save -f test.nu.env
 let filter = "%s"
-./srcenv --json
+sh srcenv --json
 EOF
 
 { nu_script="$(cat) $diff"; } << 'EOF'
@@ -204,12 +204,12 @@ jq --argjson snapshot $snapshot -n
 EOF
 
 { nu_json_script="$(cat) $diff"; } << 'EOF'
-let snapshot = (jq -n env); ./srcenv %s | from json | load-env
+let snapshot = (jq -n env); sh srcenv %s | from json | load-env
 jq --argjson snapshot $snapshot -n
 EOF
 
 { pwsh_script="$(cat) $diff"; } << 'EOF'
-$snapshot="$(jq -n env)"; Invoke-Expression ((&./srcenv %s) -join "`n")
+$snapshot="$(jq -n env)"; Invoke-Expression ((&sh srcenv %s) -join "`n")
 jq --argjson snapshot "$snapshot" -n
 EOF
 
@@ -388,163 +388,163 @@ EOF
 
 start
 
-run './srcenv --version' 'srcenv 1.3.3'
+run 'sh srcenv --version' 'srcenv 1.3.3'
 
-run './srcenv --invalid'              '' 1
-run './srcenv not_a_file'             '' 1
-run './srcenv --arg not_a_command'    '' 1
+run 'sh srcenv --invalid'              '' 1
+run 'sh srcenv not_a_file'             '' 1
+run 'sh srcenv --arg not_a_command'    '' 1
 
-run './srcenv --arg "echo something"'                ''
-run './srcenv --arg "echo something; not_a_command"' '' 1
+run 'sh srcenv --arg "echo something"'                ''
+run 'sh srcenv --arg "echo something; not_a_command"' '' 1
 
-run './srcenv '"$env_input"                           "$env_output"
-run './srcenv --export --arg "$(cat '"$env_input"')"' "$env_output"
-run './srcenv --export - < '"$env_input"''            "$env_output"
-run './srcenv --local '"$env_input"''                 ''
-run './srcenv --local --arg "$(cat '"$env_input"')"'  ''
-run './srcenv - < '"$env_input"''                     ''
+run 'sh srcenv '"$env_input"                           "$env_output"
+run 'sh srcenv --export --arg "$(cat '"$env_input"')"' "$env_output"
+run 'sh srcenv --export - < '"$env_input"''            "$env_output"
+run 'sh srcenv --local '"$env_input"''                 ''
+run 'sh srcenv --local --arg "$(cat '"$env_input"')"'  ''
+run 'sh srcenv - < '"$env_input"''                     ''
 
-run './srcenv --ash '"$env_input"        "$posix_output"
-run './srcenv --bash '"$env_input"       "$posix_output"
-run './srcenv --dash '"$env_input"       "$posix_output"
-run './srcenv --ksh '"$env_input"        "$posix_output"
-run './srcenv --pdksh '"$env_input"      "$posix_output"
-run './srcenv --murex '"$env_input"      "$posix_output"
-run './srcenv --posix '"$env_input"      "$posix_output"
-run './srcenv --sh '"$env_input"         "$posix_output"
-run './srcenv --zsh '"$env_input"        "$posix_output"
-run './srcenv --bat '"$env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
-run './srcenv --cmd '"$env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
-run './srcenv --csh '"$env_input"        "$csh_output"
-run './srcenv --tcsh '"$env_input"       "$csh_output"
-run './srcenv --elvish '"$env_input"     "$elvish_output"
-run './srcenv --fish '"$env_input"       "$fish_output"
-run './srcenv --launchctl '"$env_input"  "$launchctl_output"
-run './srcenv --nu '"$env_input"         "$nu_output"
-run './srcenv --nushell '"$env_input"    "$nu_output"
-run './srcenv --pwsh '"$env_input"       "$pwsh_output"
-run './srcenv --powershell '"$env_input" "$pwsh_output"
-run './srcenv --env '"$env_input"        "$env_output"
-run './srcenv --json '"$env_input"       "$json_output"
+run 'sh srcenv --ash '"$env_input"        "$posix_output"
+run 'sh srcenv --bash '"$env_input"       "$posix_output"
+run 'sh srcenv --dash '"$env_input"       "$posix_output"
+run 'sh srcenv --ksh '"$env_input"        "$posix_output"
+run 'sh srcenv --pdksh '"$env_input"      "$posix_output"
+run 'sh srcenv --murex '"$env_input"      "$posix_output"
+run 'sh srcenv --posix '"$env_input"      "$posix_output"
+run 'sh srcenv --sh '"$env_input"         "$posix_output"
+run 'sh srcenv --zsh '"$env_input"        "$posix_output"
+run 'sh srcenv --bat '"$env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+run 'sh srcenv --cmd '"$env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+run 'sh srcenv --csh '"$env_input"        "$csh_output"
+run 'sh srcenv --tcsh '"$env_input"       "$csh_output"
+run 'sh srcenv --elvish '"$env_input"     "$elvish_output"
+run 'sh srcenv --fish '"$env_input"       "$fish_output"
+run 'sh srcenv --launchctl '"$env_input"  "$launchctl_output"
+run 'sh srcenv --nu '"$env_input"         "$nu_output"
+run 'sh srcenv --nushell '"$env_input"    "$nu_output"
+run 'sh srcenv --pwsh '"$env_input"       "$pwsh_output"
+run 'sh srcenv --powershell '"$env_input" "$pwsh_output"
+run 'sh srcenv --env '"$env_input"        "$env_output"
+run 'sh srcenv --json '"$env_input"       "$json_output"
 
-run './srcenv --ash --backup '"$env_input"        "$posix_output${LF}$posix_backup_output"
-run './srcenv --bash --backup '"$env_input"       "$posix_output${LF}$posix_backup_output"
-run './srcenv --dash --backup '"$env_input"       "$posix_output${LF}$posix_backup_output"
-run './srcenv --ksh --backup '"$env_input"        "$posix_output${LF}$posix_backup_output"
-run './srcenv --pdksh --backup '"$env_input"      "$posix_output${LF}$posix_backup_output"
-run './srcenv --murex --backup '"$env_input"      "$posix_output${LF}$posix_backup_output"
-run './srcenv --posix --backup '"$env_input"      "$posix_output${LF}$posix_backup_output"
-run './srcenv --sh --backup '"$env_input"         "$posix_output${LF}$posix_backup_output"
-run './srcenv --zsh --backup '"$env_input"        "$posix_output${LF}$posix_backup_output"
-run './srcenv --bat --backup '"$env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
-run './srcenv --cmd --backup '"$env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
-run './srcenv --csh --backup '"$env_input"        "$csh_output${LF}$csh_backup_output"
-run './srcenv --tcsh --backup '"$env_input"       "$csh_output${LF}$csh_backup_output"
-run './srcenv --elvish --backup '"$env_input"     "$elvish_output${LF}$elvish_backup_output"
-run './srcenv --fish --backup '"$env_input"       "$fish_output${LF}$fish_backup_output"
-run './srcenv --launchctl --backup '"$env_input"  "$launchctl_output${LF}$launchctl_backup_output"
-run './srcenv --nu --backup '"$env_input"         "$nu_output${LF}$nu_backup_output"
-run './srcenv --nushell --backup '"$env_input"    "$nu_output${LF}$nu_backup_output"
-run './srcenv --pwsh --backup '"$env_input"       "$pwsh_output${LF}$pwsh_backup_output"
-run './srcenv --powershell --backup '"$env_input" "$pwsh_output${LF}$pwsh_backup_output"
-run './srcenv --env --backup '"$env_input"        "$env_output${LF}$env_backup_output"
-run './srcenv --json --backup '"$env_input"       "$json_backup_output"
+run 'sh srcenv --ash --backup '"$env_input"        "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --bash --backup '"$env_input"       "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --dash --backup '"$env_input"       "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --ksh --backup '"$env_input"        "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --pdksh --backup '"$env_input"      "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --murex --backup '"$env_input"      "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --posix --backup '"$env_input"      "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --sh --backup '"$env_input"         "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --zsh --backup '"$env_input"        "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --bat --backup '"$env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
+run 'sh srcenv --cmd --backup '"$env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
+run 'sh srcenv --csh --backup '"$env_input"        "$csh_output${LF}$csh_backup_output"
+run 'sh srcenv --tcsh --backup '"$env_input"       "$csh_output${LF}$csh_backup_output"
+run 'sh srcenv --elvish --backup '"$env_input"     "$elvish_output${LF}$elvish_backup_output"
+run 'sh srcenv --fish --backup '"$env_input"       "$fish_output${LF}$fish_backup_output"
+run 'sh srcenv --launchctl --backup '"$env_input"  "$launchctl_output${LF}$launchctl_backup_output"
+run 'sh srcenv --nu --backup '"$env_input"         "$nu_output${LF}$nu_backup_output"
+run 'sh srcenv --nushell --backup '"$env_input"    "$nu_output${LF}$nu_backup_output"
+run 'sh srcenv --pwsh --backup '"$env_input"       "$pwsh_output${LF}$pwsh_backup_output"
+run 'sh srcenv --powershell --backup '"$env_input" "$pwsh_output${LF}$pwsh_backup_output"
+run 'sh srcenv --env --backup '"$env_input"        "$env_output${LF}$env_backup_output"
+run 'sh srcenv --json --backup '"$env_input"       "$json_backup_output"
 
-run './srcenv --ash --local '"$env_input"        ''
-run './srcenv --bash --local '"$env_input"       ''
-run './srcenv --dash --local '"$env_input"       ''
-run './srcenv --ksh --local '"$env_input"        ''
-run './srcenv --pdksh --local '"$env_input"      ''
-run './srcenv --murex --local '"$env_input"      ''
-run './srcenv --posix --local '"$env_input"      ''
-run './srcenv --sh --local '"$env_input"         ''
-run './srcenv --zsh --local '"$env_input"        ''
-run './srcenv --bat --local '"$env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
-run './srcenv --cmd --local '"$env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
-run './srcenv --csh --local '"$env_input"        ''
-run './srcenv --tcsh --local '"$env_input"       ''
-run './srcenv --elvish --local '"$env_input"     ''
-run './srcenv --fish --local '"$env_input"       ''
-run './srcenv --launchctl --local '"$env_input"  ''
-run './srcenv --nu --local '"$env_input"         ''
-run './srcenv --nushell --local '"$env_input"    ''
-run './srcenv --pwsh --local '"$env_input"       ''
-run './srcenv --powershell --local '"$env_input" ''
-run './srcenv --env --local '"$env_input"        ''
-run './srcenv --json --local '"$env_input"       '{}'
+run 'sh srcenv --ash --local '"$env_input"        ''
+run 'sh srcenv --bash --local '"$env_input"       ''
+run 'sh srcenv --dash --local '"$env_input"       ''
+run 'sh srcenv --ksh --local '"$env_input"        ''
+run 'sh srcenv --pdksh --local '"$env_input"      ''
+run 'sh srcenv --murex --local '"$env_input"      ''
+run 'sh srcenv --posix --local '"$env_input"      ''
+run 'sh srcenv --sh --local '"$env_input"         ''
+run 'sh srcenv --zsh --local '"$env_input"        ''
+run 'sh srcenv --bat --local '"$env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+run 'sh srcenv --cmd --local '"$env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+run 'sh srcenv --csh --local '"$env_input"        ''
+run 'sh srcenv --tcsh --local '"$env_input"       ''
+run 'sh srcenv --elvish --local '"$env_input"     ''
+run 'sh srcenv --fish --local '"$env_input"       ''
+run 'sh srcenv --launchctl --local '"$env_input"  ''
+run 'sh srcenv --nu --local '"$env_input"         ''
+run 'sh srcenv --nushell --local '"$env_input"    ''
+run 'sh srcenv --pwsh --local '"$env_input"       ''
+run 'sh srcenv --powershell --local '"$env_input" ''
+run 'sh srcenv --env --local '"$env_input"        ''
+run 'sh srcenv --json --local '"$env_input"       '{}'
 
-run './srcenv --ash --local --backup '"$env_input"        ''
-run './srcenv --bash --local --backup '"$env_input"       ''
-run './srcenv --dash --local --backup '"$env_input"       ''
-run './srcenv --ksh --local --backup '"$env_input"        ''
-run './srcenv --pdksh --local --backup '"$env_input"      ''
-run './srcenv --murex --local --backup '"$env_input"      ''
-run './srcenv --posix --local --backup '"$env_input"      ''
-run './srcenv --sh --local --backup '"$env_input"         ''
-run './srcenv --zsh --local --backup '"$env_input"        ''
-run './srcenv --bat --local --backup '"$env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
-run './srcenv --cmd --local --backup '"$env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
-run './srcenv --csh --local --backup '"$env_input"        ''
-run './srcenv --tcsh --local --backup '"$env_input"       ''
-run './srcenv --elvish --local --backup '"$env_input"     ''
-run './srcenv --fish --local --backup '"$env_input"       ''
-run './srcenv --launchctl --local --backup '"$env_input"  ''
-run './srcenv --nu --local --backup '"$env_input"         ''
-run './srcenv --nushell --local --backup '"$env_input"    ''
-run './srcenv --pwsh --local --backup '"$env_input"       ''
-run './srcenv --powershell --local --backup '"$env_input" ''
-run './srcenv --env --local --backup '"$env_input"        ''
-run './srcenv --json --local --backup '"$env_input"       '{}'
+run 'sh srcenv --ash --local --backup '"$env_input"        ''
+run 'sh srcenv --bash --local --backup '"$env_input"       ''
+run 'sh srcenv --dash --local --backup '"$env_input"       ''
+run 'sh srcenv --ksh --local --backup '"$env_input"        ''
+run 'sh srcenv --pdksh --local --backup '"$env_input"      ''
+run 'sh srcenv --murex --local --backup '"$env_input"      ''
+run 'sh srcenv --posix --local --backup '"$env_input"      ''
+run 'sh srcenv --sh --local --backup '"$env_input"         ''
+run 'sh srcenv --zsh --local --backup '"$env_input"        ''
+run 'sh srcenv --bat --local --backup '"$env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+run 'sh srcenv --cmd --local --backup '"$env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+run 'sh srcenv --csh --local --backup '"$env_input"        ''
+run 'sh srcenv --tcsh --local --backup '"$env_input"       ''
+run 'sh srcenv --elvish --local --backup '"$env_input"     ''
+run 'sh srcenv --fish --local --backup '"$env_input"       ''
+run 'sh srcenv --launchctl --local --backup '"$env_input"  ''
+run 'sh srcenv --nu --local --backup '"$env_input"         ''
+run 'sh srcenv --nushell --local --backup '"$env_input"    ''
+run 'sh srcenv --pwsh --local --backup '"$env_input"       ''
+run 'sh srcenv --powershell --local --backup '"$env_input" ''
+run 'sh srcenv --env --local --backup '"$env_input"        ''
+run 'sh srcenv --json --local --backup '"$env_input"       '{}'
 
-run './srcenv '"$posix_input"                  "$env_output"
-run './srcenv --arg "$(cat '"$posix_input"')"' "$env_output"
-run './srcenv - < '"$posix_input"              "$env_output"
+run 'sh srcenv '"$posix_input"                  "$env_output"
+run 'sh srcenv --arg "$(cat '"$posix_input"')"' "$env_output"
+run 'sh srcenv - < '"$posix_input"              "$env_output"
 
-run './srcenv --ash '"$posix_input"        "$posix_output"
-run './srcenv --bash '"$posix_input"       "$posix_output"
-run './srcenv --dash '"$posix_input"       "$posix_output"
-run './srcenv --ksh '"$posix_input"        "$posix_output"
-run './srcenv --pdksh '"$posix_input"      "$posix_output"
-run './srcenv --murex '"$posix_input"      "$posix_output"
-run './srcenv --posix '"$posix_input"      "$posix_output"
-run './srcenv --sh '"$posix_input"         "$posix_output"
-run './srcenv --zsh '"$posix_input"        "$posix_output"
-run './srcenv --bat '"$posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
-run './srcenv --cmd '"$posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
-run './srcenv --csh '"$posix_input"        "$csh_output"
-run './srcenv --tcsh '"$posix_input"       "$csh_output"
-run './srcenv --elvish '"$posix_input"     "$elvish_output"
-run './srcenv --fish '"$posix_input"       "$fish_output"
-run './srcenv --launchctl '"$posix_input"  "$launchctl_output"
-run './srcenv --nu '"$posix_input"         "$nu_output"
-run './srcenv --nushell '"$posix_input"    "$nu_output"
-run './srcenv --pwsh '"$posix_input"       "$pwsh_output"
-run './srcenv --powershell '"$posix_input" "$pwsh_output"
-run './srcenv --env '"$posix_input"        "$env_output"
-run './srcenv --json '"$posix_input"       "$json_output"
+run 'sh srcenv --ash '"$posix_input"        "$posix_output"
+run 'sh srcenv --bash '"$posix_input"       "$posix_output"
+run 'sh srcenv --dash '"$posix_input"       "$posix_output"
+run 'sh srcenv --ksh '"$posix_input"        "$posix_output"
+run 'sh srcenv --pdksh '"$posix_input"      "$posix_output"
+run 'sh srcenv --murex '"$posix_input"      "$posix_output"
+run 'sh srcenv --posix '"$posix_input"      "$posix_output"
+run 'sh srcenv --sh '"$posix_input"         "$posix_output"
+run 'sh srcenv --zsh '"$posix_input"        "$posix_output"
+run 'sh srcenv --bat '"$posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+run 'sh srcenv --cmd '"$posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+run 'sh srcenv --csh '"$posix_input"        "$csh_output"
+run 'sh srcenv --tcsh '"$posix_input"       "$csh_output"
+run 'sh srcenv --elvish '"$posix_input"     "$elvish_output"
+run 'sh srcenv --fish '"$posix_input"       "$fish_output"
+run 'sh srcenv --launchctl '"$posix_input"  "$launchctl_output"
+run 'sh srcenv --nu '"$posix_input"         "$nu_output"
+run 'sh srcenv --nushell '"$posix_input"    "$nu_output"
+run 'sh srcenv --pwsh '"$posix_input"       "$pwsh_output"
+run 'sh srcenv --powershell '"$posix_input" "$pwsh_output"
+run 'sh srcenv --env '"$posix_input"        "$env_output"
+run 'sh srcenv --json '"$posix_input"       "$json_output"
 
-run './srcenv --ash --backup '"$posix_input"        "$posix_output${LF}$posix_backup_output"
-run './srcenv --bash --backup '"$posix_input"       "$posix_output${LF}$posix_backup_output"
-run './srcenv --dash --backup '"$posix_input"       "$posix_output${LF}$posix_backup_output"
-run './srcenv --ksh --backup '"$posix_input"        "$posix_output${LF}$posix_backup_output"
-run './srcenv --pdksh --backup '"$posix_input"      "$posix_output${LF}$posix_backup_output"
-run './srcenv --murex --backup '"$posix_input"      "$posix_output${LF}$posix_backup_output"
-run './srcenv --posix --backup '"$posix_input"      "$posix_output${LF}$posix_backup_output"
-run './srcenv --sh --backup '"$posix_input"         "$posix_output${LF}$posix_backup_output"
-run './srcenv --zsh --backup '"$posix_input"        "$posix_output${LF}$posix_backup_output"
-run './srcenv --bat --backup '"$posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
-run './srcenv --cmd --backup '"$posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
-run './srcenv --csh --backup '"$posix_input"        "$csh_output${LF}$csh_backup_output"
-run './srcenv --tcsh --backup '"$posix_input"       "$csh_output${LF}$csh_backup_output"
-run './srcenv --elvish --backup '"$posix_input"     "$elvish_output${LF}$elvish_backup_output"
-run './srcenv --fish --backup '"$posix_input"       "$fish_output${LF}$fish_backup_output"
-run './srcenv --launchctl --backup '"$posix_input"  "$launchctl_output${LF}$launchctl_backup_output"
-run './srcenv --nu --backup '"$posix_input"         "$nu_output${LF}$nu_backup_output"
-run './srcenv --nushell --backup '"$posix_input"    "$nu_output${LF}$nu_backup_output"
-run './srcenv --pwsh --backup '"$posix_input"       "$pwsh_output${LF}$pwsh_backup_output"
-run './srcenv --powershell --backup '"$posix_input" "$pwsh_output${LF}$pwsh_backup_output"
-run './srcenv --env --backup '"$posix_input"        "$env_output${LF}$env_backup_output"
-run './srcenv --json --backup '"$posix_input"       "$json_backup_output"
+run 'sh srcenv --ash --backup '"$posix_input"        "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --bash --backup '"$posix_input"       "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --dash --backup '"$posix_input"       "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --ksh --backup '"$posix_input"        "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --pdksh --backup '"$posix_input"      "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --murex --backup '"$posix_input"      "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --posix --backup '"$posix_input"      "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --sh --backup '"$posix_input"         "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --zsh --backup '"$posix_input"        "$posix_output${LF}$posix_backup_output"
+run 'sh srcenv --bat --backup '"$posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
+run 'sh srcenv --cmd --backup '"$posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
+run 'sh srcenv --csh --backup '"$posix_input"        "$csh_output${LF}$csh_backup_output"
+run 'sh srcenv --tcsh --backup '"$posix_input"       "$csh_output${LF}$csh_backup_output"
+run 'sh srcenv --elvish --backup '"$posix_input"     "$elvish_output${LF}$elvish_backup_output"
+run 'sh srcenv --fish --backup '"$posix_input"       "$fish_output${LF}$fish_backup_output"
+run 'sh srcenv --launchctl --backup '"$posix_input"  "$launchctl_output${LF}$launchctl_backup_output"
+run 'sh srcenv --nu --backup '"$posix_input"         "$nu_output${LF}$nu_backup_output"
+run 'sh srcenv --nushell --backup '"$posix_input"    "$nu_output${LF}$nu_backup_output"
+run 'sh srcenv --pwsh --backup '"$posix_input"       "$pwsh_output${LF}$pwsh_backup_output"
+run 'sh srcenv --powershell --backup '"$posix_input" "$pwsh_output${LF}$pwsh_backup_output"
+run 'sh srcenv --env --backup '"$posix_input"        "$env_output${LF}$env_backup_output"
+run 'sh srcenv --json --backup '"$posix_input"       "$json_backup_output"
 
 detect() { command -v "$1" > /dev/null && echo 1; }
 escape() { printf "'%s'\\n" "$(printf '%s' "$1" | sed -e "s/'/'\\\\''/g")"; }

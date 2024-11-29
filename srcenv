@@ -190,7 +190,7 @@ setbackup() {
         backup='| . += { SRCENV_UNDO: ('$ffid' | . += { SRCENV_UNDO: null } | '$sort' | tostring) }'
     fi
 }
-
+ps -o comm= -p "$PPID"
 autodetect() {
     case $(ps -o comm= -p "$PPID") in
         -ash|ash)       auto=--ash    ;;

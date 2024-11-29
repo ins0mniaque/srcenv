@@ -25,4 +25,4 @@ jobs:
           printf "\e[32m✔\e[0m ShellCheck\n"
 
       - name: Run srcenv tests
-        run: ./srcenv.tests
+        run: sh srcenv.tests
