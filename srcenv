@@ -287,7 +287,10 @@ src() {
         eval "$2" > /dev/null || exit 1
     elif [ -f "$2" ]; then
         # shellcheck disable=SC1090
-        . "$2" > /dev/null || exit 1
+        case "$2" in
+            .*|/*) .   "$2" > /dev/null || exit 1 ;;
+            *)     . "./$2" > /dev/null || exit 1 ;;
+        esac
     else
         echo >&2 "$2: No such file or directory"
         exit 1
