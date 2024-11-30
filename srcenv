@@ -137,10 +137,10 @@ invalid() {
                   error="$error -- ${YELLOW}$option${NORMAL}" ;;
         *'`'*\'*) option="${error#*\`}";
                   option="${option%\'*}";
-                  error="${error%\`*}'${YELLOW}$option${NORMAL}'${error#*\'}" ;;
+                  error="${error%%\`*}'${YELLOW}$option${NORMAL}'${error##*\'}" ;;
         *\'*\'*)  option="${error#*\'}";
                   option="${option%\'*}";
-                  error="${error%\'*}'${YELLOW}$option${NORMAL}'${error#*\'}" ;;
+                  error="${error%%\'*}'${YELLOW}$option${NORMAL}'${error##*\'}" ;;
     esac
 
     echo >&2 "\
