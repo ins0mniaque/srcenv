@@ -42,7 +42,6 @@ capture() {
     stdout="${stdout#*"${DLM}"}"
     stdout="${stdout%"${DLM}"*"${DLM}"}"
     stdout="${stdout%"${LF}"}"
-    stdout="${stdout%"${LF}"}"
 
     return "$exitcode"
 }

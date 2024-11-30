@@ -251,7 +251,7 @@ run() {
             --bat|--cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
                                      'set \($k)=';
                                  prefix='"set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%\n" + ([';
-                                 suffix='] | join("\n")) + "\nset LFM=\nset LF=\n"'; shift ;;
+                                 suffix='] | join("\n")) + "\nset LFM=\nset LF="'; shift ;;
             --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                                      'launchctl unsetenv \($k)'; shift ;;
             -f|--format)         format="$(valid "$@")";           fmt "${format%\?\?*}" "${format#*\?\?}"; shift; shift ;;
@@ -325,7 +325,6 @@ capture() {
     stderr="${stderr%"${LF}"}"
     stdout="${stdout#*"${DLM}"}"
     stdout="${stdout%"${DLM}"*"${DLM}"}"
-    stdout="${stdout%"${LF}"}"
     stdout="${stdout%"${LF}"}"
 
     return "$exitcode"
