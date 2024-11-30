@@ -145,6 +145,10 @@ For more information, try '${0##*/} ${BOLD}--help${NORMAL}'."
 }
 
 err() {
+    if [ "$2" = "0" ]; then
+        printf >&2 '%s\n' "$1"; return
+    fi
+
     NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
     BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
     RED=$(tput setaf 1 2> /dev/null || printf '\033[31m')
@@ -333,11 +337,7 @@ init
 autodetect
 capture run ${auto:+"$auto"} "$@"
 
-if [ "$exitcode" != "0" ]; then
-    err "$stderr"
-else
-    printf >&2 '%s\n' "$stderr"
-fi
+[ -n "$stderr" ] && err "$stderr" "$exitcode"
+[ -n "$stdout" ] && printf '%s\n' "$stdout"
 
-printf '%s\n' "$stdout"
 exit "$exitcode"
