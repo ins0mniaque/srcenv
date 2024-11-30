@@ -318,17 +318,14 @@ LF='
 '
 
 capture() {
-    case "$1" in
-        eval) stdout="$( (printf "${DLM}%s${DLM}" "$("$@"; printf "${DLM}%d" "$?")" 1>&2) 2>&1 )" ;;
-        *)    stdout="$( (printf "${DLM}%s${DLM}%d${DLM}" "$("$@")" "${?}" 1>&2) 2>&1 )" ;;
-    esac
-
+    stdout="$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )"
     exitcode="${stdout%"${DLM}"}"
     exitcode="${exitcode##*"${DLM}"}"
     stderr="${stdout%%"${DLM}"*}"
     stderr="${stderr%"${LF}"}"
     stdout="${stdout#*"${DLM}"}"
     stdout="${stdout%"${DLM}"*"${DLM}"}"
+    stdout="${stdout%"${LF}"}"
     stdout="${stdout%"${LF}"}"
 
     return "$exitcode"
