@@ -265,7 +265,7 @@ run() {
                                  suffix='] | join("\n")) + "\nset LFM=\nset LF="'; shift ;;
             --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                                      'launchctl unsetenv \($k)'; shift ;;
-            -f|--format)         format="$(valid "$@")";           fmt "${format%\?\?*}" "${format#*\?\?}"; shift; shift ;;
+            -f|--format)         format="$(valid "$@")";           fmt "${format%\?\?*}" "${format#*\?\?}"; shift; [ $# -gt 0 ] && shift ;;
             -f=*|--format=*)     format="$(valid "$1" "${1#*=}")"; fmt "${format%\?\?*}" "${format#*\?\?}"; shift ;;
 
             -b|--backup)   backup=1;             shift ;;
@@ -278,7 +278,7 @@ run() {
             -\?|-h|--help) header; usage; exit 0 ;;
             -v|--version)  version;       exit 0 ;;
 
-            -a|--arg)      src var "$(valid "$@")"           "$export"; shift; shift ;;
+            -a|--arg)      src var "$(valid "$@")"           "$export"; shift; [ $# -gt 0 ] && shift ;;
             -a=*|--arg=*)  src var "$(valid "$1" "${1#*=}")" "$export"; shift ;;
             -)             src var "$(cat)"                  "$export"; shift ;;
             -*)            # shellcheck disable=SC2086
