@@ -107,7 +107,7 @@ noformat() {
     BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
     YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
 
-    echo >&2 "${BOLD}${YELLOW}warn:${NORMAL} Unknown shell ${YELLOW}$pcmd${NORMAL}; defaulting to POSIX format"
+    echo >&2 "${BOLD}${YELLOW}warn:${NORMAL} Unknown shell ${YELLOW}$shell${NORMAL}; defaulting to POSIX format"
 }
 
 valid() {
@@ -209,10 +209,10 @@ setbackup() {
 }
 
 autodetect() {
-    pcmd="$(ps -o comm= -p "$1")"
-    pcmd="${pcmd##*/}"
+    cmd="$(ps -o comm= -p "$1")"
+    cmd="${cmd##*/}"
 
-    case "$pcmd" in
+    case "$cmd" in
         -ash|ash)       auto=--ash    ;;
         -bash|bash)     auto=--bash   ;;
         -csh|csh)       auto=--csh    ;;
@@ -231,7 +231,8 @@ autodetect() {
         -powershell|\
         powershell)     auto=--pwsh   ;;
         0|'')           auto=         ;;
-        *)              autodetect "$(ps -o ppid= -p "$1")" ;;
+        *)              shell="$cmd"
+                        autodetect "$(ps -o ppid= -p "$1")" ;;
     esac
 }
 
