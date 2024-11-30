@@ -232,7 +232,8 @@ autodetect() {
         powershell)     auto=--pwsh   ;;
         0|'')           auto=         ;;
         *)              shell="$cmd"
-                        autodetect "$(ps -o ppid= -p "$1")" ;;
+                        # shellcheck disable=SC2046
+                        autodetect $(ps -o ppid= -p "$1") ;;
     esac
 }
 
