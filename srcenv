@@ -192,8 +192,8 @@ init() {
     backup=
     undo=
 
-    diff='reduce (env|del(._, .SHLVL)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
-    ffid='reduce (env|del(._, .SHLVL)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
+    diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+    ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
     keys='keys[] as $k'
     sort='to_entries | sort_by(.key) | from_entries'
 }
