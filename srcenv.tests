@@ -386,18 +386,18 @@ launchctl setenv SRCENV_UNDO '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV
 EOF
 
 { murex_output=$(cat); } << 'EOF'
-out '6' | export SRCENV_TEST_A
-out '7' | export SRCENV_TEST_B
-out '42' | export SRCENV_TEST_C
-out '$NOT_EXPANDED\t\r\n'\''"' | export SRCENV_TEST_ESCAPE
+out '6' -> export SRCENV_TEST_A
+out '7' -> export SRCENV_TEST_B
+out '42' -> export SRCENV_TEST_C
+out '$NOT_EXPANDED\t\r\n'\''"' -> export SRCENV_TEST_ESCAPE
 out '
 6
 7
-42' | export SRCENV_TEST_MULTILINE
+42' -> export SRCENV_TEST_MULTILINE
 EOF
 
 { murex_backup_output=$(cat); } << 'EOF'
-out '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}' | export SRCENV_UNDO
+out '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}' -> export SRCENV_UNDO
 EOF
 
 { nu_output=$(cat); } << 'EOF'
