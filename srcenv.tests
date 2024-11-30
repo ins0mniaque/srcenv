@@ -209,7 +209,7 @@ jq --argjson snapshot "$snapshot:q" -n
 EOF
 
 { fish_script="$(cat) $diff"; } << 'EOF'
-set snapshot "$(jq -n env)"; ./srcenv %s | source
+set snapshot (jq -n env); ./srcenv %s | source
 jq --argjson snapshot "$snapshot" -n
 EOF
 
