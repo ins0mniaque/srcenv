@@ -615,6 +615,15 @@ run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env.sh'
 run_script "$ksh" 'ksh -c' "$posix_script" 'test.env'
 run_script "$ksh" 'ksh -c' "$posix_script" 'test.env.sh'
 
+mksh="$(detect mksh)" || msg warn "Mksh not found; skipping tests..."
+run "$mksh" 'mksh srcenv '"$env_input"                           "$posix_output"
+run "$mksh" 'mksh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
+run "$mksh" 'mksh srcenv --export - < '"$env_input"''            "$posix_output"
+run_script "$mksh" 'mksh -c' "$posix_script" '--mksh test.env'
+run_script "$mksh" 'mksh -c' "$posix_script" '--mksh test.env.sh'
+run_script "$mksh" 'mksh -c' "$posix_script" 'test.env'
+run_script "$mksh" 'mksh -c' "$posix_script" 'test.env.sh'
+
 zsh="$(detect zsh)" || msg warn "Zsh not found; skipping tests..."
 run "$zsh" 'zsh srcenv '"$env_input"                           "$posix_output"
 run "$zsh" 'zsh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"

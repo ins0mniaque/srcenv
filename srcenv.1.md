@@ -64,7 +64,7 @@ Options
 
 :   Format the output as JSON.
 
-\--ksh, \--pdksh
+\--ksh, \--pdksh, \--mksh
 
 :   Format the output as a Ksh script.
 

@@ -27,7 +27,7 @@ jobs:
       - name: Install shells
         run: |
           sudo apt-get update
-          sudo apt-get install csh fish ksh tcsh zsh
+          sudo apt-get install csh fish ksh mksh tcsh zsh
 
           echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"

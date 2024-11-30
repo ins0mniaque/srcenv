@@ -64,7 +64,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}--env                       ${NORMAL}Format the output as a .env file
   ${BOLD}--fish                      ${NORMAL}Format the output as a Fish script
   ${BOLD}--json                      ${NORMAL}Format the output as JSON
-  ${BOLD}--ksh, --pdksh              ${NORMAL}Format the output as a Ksh script
+  ${BOLD}--ksh, --pdksh, --mksh      ${NORMAL}Format the output as a Ksh script
   ${BOLD}--launchctl                 ${NORMAL}Format the output as a launchctl calls ${ITALIC}(macOS)${NORMAL}
   ${BOLD}--murex                     ${NORMAL}Format the output as a Murex script
   ${BOLD}--nu, --nushell             ${NORMAL}Format the output as a Nushell script
@@ -220,6 +220,7 @@ autodetect() {
         -dash|dash)     auto=--dash   ;;
         -ksh|ksh)       auto=--ksh    ;;
         -pdksh|pdksh)   auto=--pdksh  ;;
+        -mksh|mksh)     auto=--mksh   ;;
         -murex|murex)   auto=--murex  ;;
         -sh|sh)         auto=--sh     ;;
         -zsh|zsh)       auto=--zsh    ;;
@@ -245,7 +246,7 @@ run() {
             --ash|\
             --bash|\
             --dash|\
-            --ksh|--pdksh|\
+            --ksh|--pdksh|--mksh|\
             --murex|\
             --posix|--sh|\
             --zsh)               fmt 'export \($k)=\(.[$k]|@sh)'   'unset \($k)';        shift ;;
