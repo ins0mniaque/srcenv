@@ -79,14 +79,14 @@ run() {
 
     if [ -n "$stderr" ]; then
         if [ "$exitcode" = "0" ] || [ "$exitcode" = "$expected_exitcode" ]; then
-            msg test out "$id" "${BOLD}${DIM}|${NORMAL} " "$stderr"
+            msg test out "$id" "${BOLD}${DIM}❯${NORMAL} " "$stderr"
         else
-            msg test err "$id" "${BOLD}${RED}|${NORMAL} " "$stderr"
+            msg test err "$id" "${BOLD}${RED}❯${NORMAL} " "$stderr"
         fi
     fi
 
     if [ "$stdout" != "$expected" ]; then
-        msg test err "$id" "${BOLD}${RED}|${NORMAL} " "${BOLD}${RED}mismatch:${NORMAL} $stdout ${BOLD}${RED}!=${NORMAL} $expected"
+        msg test err "$id" "${BOLD}${RED}❯${NORMAL} " "${BOLD}${RED}mismatch:${NORMAL} $stdout ${BOLD}${RED}!=${NORMAL} $expected"
     fi
 }
 
