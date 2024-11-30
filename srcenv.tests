@@ -57,7 +57,7 @@ run() {
 
     case "$1" in
         0|'') tests_skipped=$((tests_skipped + 1))
-              msg test warn "$id" "${2%%"${LF}"*}" "" "${YELLOW}Skipped${NORMAL}"
+              msg test warn "$id" "${2%%"${LF}"*}: " "${YELLOW}Skipped${NORMAL}"
               return ;;
         1)    shift  ;;
     esac
