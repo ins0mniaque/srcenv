@@ -68,7 +68,7 @@ run() {
 
     if [ "$exitcode" != "$expected_exitcode" ]; then
         tests_failed=$((tests_failed + 1))
-        msg test err "$id" "$cmd" "Exit code ${YELLOW}$exitcode${NORMAL} ${BOLD}${RED}!=${NORMAL} Exit code ${YELLOW}$expected_exitcode${NORMAL}"
+        msg test err "$id" "${cmd}: Exit code ${YELLOW}$exitcode${NORMAL} ${BOLD}${RED}!=${NORMAL} Exit code ${YELLOW}$expected_exitcode${NORMAL}"
     elif [ "$stdout" != "$expected" ]; then
         tests_failed=$((tests_failed + 1))
         msg test err "$id" "$cmd"
@@ -79,14 +79,14 @@ run() {
 
     if [ -n "$stderr" ]; then
         if [ "$exitcode" = "0" ] || [ "$exitcode" = "$expected_exitcode" ]; then
-            msg test out "$id" "${BOLD}output" "${NORMAL}${stderr#"${BOLD}${RED}error:${NORMAL} "}"
+            msg test out "$id" "${BOLD}${DIM}|${NORMAL} $stderr"
         else
-            msg test err "$id" "${BOLD}${RED}error" "${NORMAL}${stderr#"${BOLD}${RED}error:${NORMAL} "}"
+            msg test err "$id" "${BOLD}${RED}|${NORMAL} $stderr"
         fi
     fi
 
     if [ "$stdout" != "$expected" ]; then
-        msg test err "$id" "${BOLD}${RED}mismatch" "${NORMAL}$stdout ${BOLD}${RED}!=${NORMAL} $expected"
+        msg test err "$id" "${BOLD}${RED}mismatch:${NORMAL} $stdout ${BOLD}${RED}!=${NORMAL} $expected"
     fi
 }
 
@@ -108,10 +108,10 @@ end() {
 msg() {
     case "$1" in
         test) case "$2" in
-                  err)  printf "${RED}✖${NORMAL} ${DIM}%3s.${NORMAL} %s: %s\n"    "$3" "$4" "$5" ;;
-                  warn) printf "${YELLOW}▲${NORMAL} ${DIM}%3s.${NORMAL} %s: %s\n" "$3" "$4" "$5" ;;
-                  out)  printf "  ${DIM}%3s.${NORMAL} %s: %s\n"                   "$3" "$4" "$5" ;;
-                  *)    printf "${GREEN}✔${NORMAL} ${DIM}%3s.${NORMAL} %s\n"      "$2" "$3"      ;;
+                  err)  printf "${RED}✖${NORMAL} ${DIM}%3s.${NORMAL} %s\n"    "$3" "$4" ;;
+                  warn) printf "${YELLOW}▲${NORMAL} ${DIM}%3s.${NORMAL} %s\n" "$3" "$4" ;;
+                  out)  printf "  ${DIM}%3s.${NORMAL} %s\n"                   "$3" "$4" ;;
+                  *)    printf "${GREEN}✔${NORMAL} ${DIM}%3s.${NORMAL} %s\n"  "$2" "$3" ;;
               esac ;;
         err)  echo "${RED}✖${NORMAL} ${BOLD}srcenv tests:${NORMAL} $2"    ;;
         warn) echo "${YELLOW}▲${NORMAL} ${BOLD}srcenv tests:${NORMAL} $2" ;;

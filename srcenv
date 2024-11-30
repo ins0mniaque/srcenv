@@ -151,24 +151,22 @@ err() {
 
     escape=$(printf '\e')
     case $1 in
-        "$escape"*)        printf >&2 '%s\n' "$1"; return ;;
-        $jq:\ *--argjson*) echo   >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}";
-                           return ;;
+        '')                echo   >&2 '' ;;
+        "$escape"*)        printf >&2 '%s\n' "$1" ;;
+        $jq:\ *--argjson*) echo   >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}" ;;
         $jq:\ *)           LF='
 '
                            error=${1#"$jq": }
                            error=${error#error: }
                            error=${error%%, line 1:"${LF}"*}
-                           echo   >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error";
-                           return ;;
+                           echo   >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error" ;;
+        *)                 printf '%s\n' "$1" | while read -r line; do
+                               line=${line#"$0": }
+                               line=${line#line [0-9]*: }
+
+                               echo >&2 "${BOLD}${RED}error:${NORMAL} $line"
+                           done ;;
     esac
-
-    printf '%s\n' "$1" | while read -r line; do
-        line=${line#"$0": }
-        line=${line#line [0-9]*: }
-
-        echo >&2 "${BOLD}${RED}error:${NORMAL} $line"
-    done
 }
 
 # endregion Help / Usage
@@ -336,7 +334,9 @@ capture run ${auto:+"$auto"} "$@"
 
 if [ "$exitcode" != "0" ]; then
     err "$stderr"
-    exit "$exitcode"
+else
+    printf >&2 '%s\n' "$stderr"
 fi
 
 printf '%s\n' "$stdout"
+exit "$exitcode"
