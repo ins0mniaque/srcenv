@@ -129,16 +129,18 @@ invalid() {
 '
     error="${2#getopt: }"
     case "$error" in
-        *\ --\ *) error="${error%%"${LF}"*}"
+        *' -- '*) error="${error%%"${LF}"*}"
                   option="${error#* -- }"
                   [ "$option" = '-' ] && option="${1#-}"
                   option="${option#-}"
                   error="${error% -- *}"
                   error="$error -- ${YELLOW}$option${NORMAL}" ;;
-        '`'*\')   option="${error#*\`}";
+        '`'*\')   error="${error%%"${LF}"*}"
+                  option="${error#*\`}";
                   option="${option%\'*}";
                   error="${error%\`*}'${YELLOW}$option${NORMAL}'${error#*\'}" ;;
-        \'*\')    option="${error#*\'}";
+        \'*\')    error="${error%%"${LF}"*}"
+                  option="${error#*\'}";
                   option="${option%\'*}";
                   error="${error%\'*}'${YELLOW}$option${NORMAL}'${error#*\'}" ;;
     esac
