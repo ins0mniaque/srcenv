@@ -24,5 +24,14 @@ jobs:
           ./shellcheck --color=always srcenv srcenv.tests srcenv.version && \
           printf "\033[32m✔\033[0m ShellCheck\n"
 
+      - name: Install shells
+        run: |
+          sudo apt-get update
+          sudo apt-get install csh fish ksh tcsh zsh
+
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew update
+          brew install nushell
+
       - name: Run srcenv tests
         run: ./srcenv.tests
