@@ -29,6 +29,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install csh fish ksh tcsh zsh
 
+          echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           brew update
           brew install nushell
