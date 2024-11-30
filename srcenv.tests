@@ -78,7 +78,6 @@ run() {
         msg test "$id" "$cmd"
     fi
 
-    # Clean up?
     if [ -n "$stderr" ]; then
         if [ "$exitcode" = "0" ] || [ "$exitcode" = "$expected_exitcode" ]; then
             msg test out "$id" "${BOLD}output" "${NORMAL}${stderr#"${BOLD}${RED}error:${NORMAL} "}"
@@ -90,8 +89,6 @@ run() {
     if [ "$stdout" != "$expected" ]; then
         msg test err "$id" "${BOLD}${RED}mismatch" "${NORMAL}$stdout ${BOLD}${RED}!=${NORMAL} $expected"
     fi
-
-    # printf '%s\n' "$stdout"
 }
 
 end() {
@@ -191,7 +188,7 @@ trap cleanup EXIT INT HUP TERM
 
 # region Scripts
 
-diff=\''reduce (env|%s|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'\'
+diff=\''reduce (env|del(._, .SHLVL)|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'\'
 
 { posix_script="$(cat) $diff"; } << 'EOF'
 snapshot="$(jq -n env)"; eval "$(./srcenv %s)"
@@ -572,7 +569,7 @@ escape() { printf "'%s'\\n" "$(printf '%s' "$1" | sed -e "s/'/'\\\\''/g")"; }
 
 # shellcheck disable=SC2059
 run_script() {
-    script="$(printf "$3" "$4" "${5:-.}")"
+    script="$(printf "$3" "$4")"
 
     run "$1" "$2 $(escape "$script")" "$json_output"
 }
@@ -608,19 +605,19 @@ ksh="$(detect ksh)" || msg warn "Ksh not found; skipping tests..."
 run "$ksh" 'ksh srcenv '"$env_input"                           "$posix_output"
 run "$ksh" 'ksh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
 run "$ksh" 'ksh srcenv --export - < '"$env_input"''            "$posix_output"
-run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env'    'del(._)'
-run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env.sh' 'del(._)'
-run_script "$ksh" 'ksh -c' "$posix_script" 'test.env'          'del(._)'
-run_script "$ksh" 'ksh -c' "$posix_script" 'test.env.sh'       'del(._)'
+run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env'
+run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env.sh'
+run_script "$ksh" 'ksh -c' "$posix_script" 'test.env'
+run_script "$ksh" 'ksh -c' "$posix_script" 'test.env.sh'
 
 zsh="$(detect zsh)" || msg warn "Zsh not found; skipping tests..."
 run "$zsh" 'zsh srcenv '"$env_input"                           "$posix_output"
 run "$zsh" 'zsh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
 run "$zsh" 'zsh srcenv --export - < '"$env_input"''            "$posix_output"
-run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env'    'del(.SHLVL)'
-run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env.sh' 'del(.SHLVL)'
-run_script "$zsh" 'zsh -c' "$posix_script" 'test.env'          'del(.SHLVL)'
-run_script "$zsh" 'zsh -c' "$posix_script" 'test.env.sh'       'del(.SHLVL)'
+run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env'
+run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env.sh'
+run_script "$zsh" 'zsh -c' "$posix_script" 'test.env'
+run_script "$zsh" 'zsh -c' "$posix_script" 'test.env.sh'
 
 csh="$(detect csh)" || msg warn "Csh not found; skipping tests..."
 run_script "$csh" 'csh -c' "$csh_script" '--csh test.env'
