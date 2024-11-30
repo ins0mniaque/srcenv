@@ -218,6 +218,11 @@ set snapshot (jq -n env); ./srcenv %s | source
 jq --argjson snapshot "$snapshot" -n
 EOF
 
+{ murex_script="$(cat) $diff"; } << 'EOF'
+jq -n env -> set snapshot; ./srcenv %s -> source
+jq --argjson snapshot "$snapshot" -n
+EOF
+
 { nu_setup_script="$(cat) $env_input"; } << 'EOF'
 ./srcenv %s | save -f test.nu.env
 let filter = "%s"
@@ -380,6 +385,21 @@ EOF
 launchctl setenv SRCENV_UNDO '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}'
 EOF
 
+{ murex_output=$(cat); } << 'EOF'
+out '6' | export SRCENV_TEST_A
+out '7' | export SRCENV_TEST_B
+out '42' | export SRCENV_TEST_C
+out '$NOT_EXPANDED\t\r\n'\''"' | export SRCENV_TEST_ESCAPE
+out '
+6
+7
+42' | export SRCENV_TEST_MULTILINE
+EOF
+
+{ murex_backup_output=$(cat); } << 'EOF'
+out '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}' | export SRCENV_UNDO
+EOF
+
 { nu_output=$(cat); } << 'EOF'
 $env.SRCENV_TEST_A = r#'6'#
 $env.SRCENV_TEST_B = r#'7'#
@@ -437,7 +457,6 @@ run './srcenv --bash '"$env_input"       "$posix_output"
 run './srcenv --dash '"$env_input"       "$posix_output"
 run './srcenv --ksh '"$env_input"        "$posix_output"
 run './srcenv --pdksh '"$env_input"      "$posix_output"
-run './srcenv --murex '"$env_input"      "$posix_output"
 run './srcenv --posix '"$env_input"      "$posix_output"
 run './srcenv --sh '"$env_input"         "$posix_output"
 run './srcenv --zsh '"$env_input"        "$posix_output"
@@ -448,6 +467,7 @@ run './srcenv --tcsh '"$env_input"       "$csh_output"
 run './srcenv --elvish '"$env_input"     "$elvish_output"
 run './srcenv --fish '"$env_input"       "$fish_output"
 run './srcenv --launchctl '"$env_input"  "$launchctl_output"
+run './srcenv --murex '"$env_input"      "$murex_output"
 run './srcenv --nu '"$env_input"         "$nu_output"
 run './srcenv --nushell '"$env_input"    "$nu_output"
 run './srcenv --pwsh '"$env_input"       "$pwsh_output"
@@ -460,7 +480,6 @@ run './srcenv --bash --backup '"$env_input"       "$posix_output${LF}$posix_back
 run './srcenv --dash --backup '"$env_input"       "$posix_output${LF}$posix_backup_output"
 run './srcenv --ksh --backup '"$env_input"        "$posix_output${LF}$posix_backup_output"
 run './srcenv --pdksh --backup '"$env_input"      "$posix_output${LF}$posix_backup_output"
-run './srcenv --murex --backup '"$env_input"      "$posix_output${LF}$posix_backup_output"
 run './srcenv --posix --backup '"$env_input"      "$posix_output${LF}$posix_backup_output"
 run './srcenv --sh --backup '"$env_input"         "$posix_output${LF}$posix_backup_output"
 run './srcenv --zsh --backup '"$env_input"        "$posix_output${LF}$posix_backup_output"
@@ -471,6 +490,7 @@ run './srcenv --tcsh --backup '"$env_input"       "$csh_output${LF}$csh_backup_o
 run './srcenv --elvish --backup '"$env_input"     "$elvish_output${LF}$elvish_backup_output"
 run './srcenv --fish --backup '"$env_input"       "$fish_output${LF}$fish_backup_output"
 run './srcenv --launchctl --backup '"$env_input"  "$launchctl_output${LF}$launchctl_backup_output"
+run './srcenv --murex --backup '"$env_input"      "$murex_output${LF}$murex_backup_output"
 run './srcenv --nu --backup '"$env_input"         "$nu_output${LF}$nu_backup_output"
 run './srcenv --nushell --backup '"$env_input"    "$nu_output${LF}$nu_backup_output"
 run './srcenv --pwsh --backup '"$env_input"       "$pwsh_output${LF}$pwsh_backup_output"
@@ -483,7 +503,6 @@ run './srcenv --bash --local '"$env_input"       ''
 run './srcenv --dash --local '"$env_input"       ''
 run './srcenv --ksh --local '"$env_input"        ''
 run './srcenv --pdksh --local '"$env_input"      ''
-run './srcenv --murex --local '"$env_input"      ''
 run './srcenv --posix --local '"$env_input"      ''
 run './srcenv --sh --local '"$env_input"         ''
 run './srcenv --zsh --local '"$env_input"        ''
@@ -494,6 +513,7 @@ run './srcenv --tcsh --local '"$env_input"       ''
 run './srcenv --elvish --local '"$env_input"     ''
 run './srcenv --fish --local '"$env_input"       ''
 run './srcenv --launchctl --local '"$env_input"  ''
+run './srcenv --murex --local '"$env_input"      ''
 run './srcenv --nu --local '"$env_input"         ''
 run './srcenv --nushell --local '"$env_input"    ''
 run './srcenv --pwsh --local '"$env_input"       ''
@@ -506,7 +526,6 @@ run './srcenv --bash --local --backup '"$env_input"       ''
 run './srcenv --dash --local --backup '"$env_input"       ''
 run './srcenv --ksh --local --backup '"$env_input"        ''
 run './srcenv --pdksh --local --backup '"$env_input"      ''
-run './srcenv --murex --local --backup '"$env_input"      ''
 run './srcenv --posix --local --backup '"$env_input"      ''
 run './srcenv --sh --local --backup '"$env_input"         ''
 run './srcenv --zsh --local --backup '"$env_input"        ''
@@ -517,6 +536,7 @@ run './srcenv --tcsh --local --backup '"$env_input"       ''
 run './srcenv --elvish --local --backup '"$env_input"     ''
 run './srcenv --fish --local --backup '"$env_input"       ''
 run './srcenv --launchctl --local --backup '"$env_input"  ''
+run './srcenv --murex --local --backup '"$env_input"      ''
 run './srcenv --nu --local --backup '"$env_input"         ''
 run './srcenv --nushell --local --backup '"$env_input"    ''
 run './srcenv --pwsh --local --backup '"$env_input"       ''
@@ -533,7 +553,6 @@ run './srcenv --bash '"$posix_input"       "$posix_output"
 run './srcenv --dash '"$posix_input"       "$posix_output"
 run './srcenv --ksh '"$posix_input"        "$posix_output"
 run './srcenv --pdksh '"$posix_input"      "$posix_output"
-run './srcenv --murex '"$posix_input"      "$posix_output"
 run './srcenv --posix '"$posix_input"      "$posix_output"
 run './srcenv --sh '"$posix_input"         "$posix_output"
 run './srcenv --zsh '"$posix_input"        "$posix_output"
@@ -544,6 +563,7 @@ run './srcenv --tcsh '"$posix_input"       "$csh_output"
 run './srcenv --elvish '"$posix_input"     "$elvish_output"
 run './srcenv --fish '"$posix_input"       "$fish_output"
 run './srcenv --launchctl '"$posix_input"  "$launchctl_output"
+run './srcenv --murex '"$posix_input"      "$murex_output"
 run './srcenv --nu '"$posix_input"         "$nu_output"
 run './srcenv --nushell '"$posix_input"    "$nu_output"
 run './srcenv --pwsh '"$posix_input"       "$pwsh_output"
@@ -556,7 +576,6 @@ run './srcenv --bash --backup '"$posix_input"       "$posix_output${LF}$posix_ba
 run './srcenv --dash --backup '"$posix_input"       "$posix_output${LF}$posix_backup_output"
 run './srcenv --ksh --backup '"$posix_input"        "$posix_output${LF}$posix_backup_output"
 run './srcenv --pdksh --backup '"$posix_input"      "$posix_output${LF}$posix_backup_output"
-run './srcenv --murex --backup '"$posix_input"      "$posix_output${LF}$posix_backup_output"
 run './srcenv --posix --backup '"$posix_input"      "$posix_output${LF}$posix_backup_output"
 run './srcenv --sh --backup '"$posix_input"         "$posix_output${LF}$posix_backup_output"
 run './srcenv --zsh --backup '"$posix_input"        "$posix_output${LF}$posix_backup_output"
@@ -567,6 +586,7 @@ run './srcenv --tcsh --backup '"$posix_input"       "$csh_output${LF}$csh_backup
 run './srcenv --elvish --backup '"$posix_input"     "$elvish_output${LF}$elvish_backup_output"
 run './srcenv --fish --backup '"$posix_input"       "$fish_output${LF}$fish_backup_output"
 run './srcenv --launchctl --backup '"$posix_input"  "$launchctl_output${LF}$launchctl_backup_output"
+run './srcenv --murex --backup '"$posix_input"      "$murex_output${LF}$murex_backup_output"
 run './srcenv --nu --backup '"$posix_input"         "$nu_output${LF}$nu_backup_output"
 run './srcenv --nushell --backup '"$posix_input"    "$nu_output${LF}$nu_backup_output"
 run './srcenv --pwsh --backup '"$posix_input"       "$pwsh_output${LF}$pwsh_backup_output"
@@ -661,6 +681,12 @@ run_script "$fish" 'fish -c' "$fish_script" '--fish test.env'
 run_script "$fish" 'fish -c' "$fish_script" '--fish test.env.sh'
 run_script "$fish" 'fish -c' "$fish_script" 'test.env'
 run_script "$fish" 'fish -c' "$fish_script" 'test.env.sh'
+
+murex="$(detect murex)" || msg warn "Murex not found; skipping tests..."
+run_script "$murex" 'murex -c' "$murex_script" '--murex test.env'
+run_script "$murex" 'murex -c' "$murex_script" '--murex test.env.sh'
+run_script "$murex" 'murex -c' "$murex_script" 'test.env'
+run_script "$murex" 'murex -c' "$murex_script" 'test.env.sh'
 
 nu="$(detect nu)" || msg warn "Nushell not found; skipping tests..."
 run_script "$nu" 'nu -c' "$nu_json_script"  '--json test.env'

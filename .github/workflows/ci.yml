@@ -32,7 +32,7 @@ jobs:
           echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           brew update
-          brew install nushell
+          brew install murex nushell
 
       - name: Run srcenv tests
         run: ./srcenv.tests
