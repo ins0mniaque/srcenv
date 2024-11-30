@@ -208,6 +208,11 @@ rm -f test.csh.env
 jq --argjson snapshot "$snapshot:q" -n
 EOF
 
+{ elvish_script="$(cat) $diff"; } << 'EOF'
+var snapshot = (jq -n env | slurp); eval (./srcenv %s | slurp)
+jq --argjson snapshot $snapshot -n
+EOF
+
 { fish_script="$(cat) $diff"; } << 'EOF'
 set snapshot (jq -n env); ./srcenv %s | source
 jq --argjson snapshot "$snapshot" -n
@@ -331,18 +336,18 @@ setenv SRCENV_UNDO '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":n
 EOF
 
 { elvish_output=$(cat); } << 'EOF'
-set-env $SRCENV_TEST_A '6'
-set-env $SRCENV_TEST_B '7'
-set-env $SRCENV_TEST_C '42'
-set-env $SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"'
-set-env $SRCENV_TEST_MULTILINE '
+set-env SRCENV_TEST_A '6'
+set-env SRCENV_TEST_B '7'
+set-env SRCENV_TEST_C '42'
+set-env SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n''"'
+set-env SRCENV_TEST_MULTILINE '
 6
 7
 42'
 EOF
 
 { elvish_backup_output=$(cat); } << 'EOF'
-set-env $SRCENV_UNDO '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}'
+set-env SRCENV_UNDO '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}'
 EOF
 
 { fish_output=$(cat); } << 'EOF'
@@ -644,6 +649,12 @@ run_script "$tcsh" 'tcsh -c' "$csh_script" '--tcsh test.env'
 run_script "$tcsh" 'tcsh -c' "$csh_script" '--tcsh test.env.sh'
 run_script "$tcsh" 'tcsh -c' "$csh_script" 'test.env'
 run_script "$tcsh" 'tcsh -c' "$csh_script" 'test.env.sh'
+
+elvish="$(detect elvish)" || msg warn "Elvish not found; skipping tests..."
+run_script "$elvish" 'elvish -c' "$elvish_script" '--elvish test.env'
+run_script "$elvish" 'elvish -c' "$elvish_script" '--elvish test.env.sh'
+run_script "$elvish" 'elvish -c' "$elvish_script" 'test.env'
+run_script "$elvish" 'elvish -c' "$elvish_script" 'test.env.sh'
 
 fish="$(detect fish)" || msg warn "Fish not found; skipping tests..."
 run_script "$fish" 'fish -c' "$fish_script" '--fish test.env'
