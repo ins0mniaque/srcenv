@@ -273,7 +273,7 @@ run() {
             -*)            # shellcheck disable=SC2086
                            opts=$(getopt "a:bef:hlsuUv" "$1" 2>&1) &&   shift && \
                            set -- ${opts% --} "$@"                 &&   continue
-                           invalid "$1" "$opts";                        exit 1 ;;
+                           invalid "$1" "$opts";                        exit 2 ;;
             *.env|*.envrc) src file "$1" "${export:---export}";         shift ;;
             *)             src file "$1" "$export";                     shift ;;
         esac
@@ -292,12 +292,12 @@ src() {
     [ "$3" = --export ] && set -a
 
     if [ "$1" = var ]; then
-        eval "$2" > /dev/null || exit 1
+        eval "$2" 1>&2 || exit 1
     elif [ -f "$2" ]; then
         # shellcheck disable=SC1090
         case "$2" in
-            .*|/*) .   "$2" > /dev/null || exit 1 ;;
-            *)     . "./$2" > /dev/null || exit 1 ;;
+            .*|/*) .   "$2" 1>&2 || exit 1 ;;
+            *)     . "./$2" 1>&2 || exit 1 ;;
         esac
     else
         echo >&2 "$2: No such file or directory"
@@ -313,14 +313,29 @@ if [ $# = 0 ]; then
     header; help; exit 0
 fi
 
+DLM="$(printf '\032')"
+LF='
+'
+
+capture() {
+    stdout="$( (printf "${DLM}%s${DLM}%d${DLM}" "$("$@")" "${?}" 1>&2) 2>&1 )"
+    exitcode="${stdout%"${DLM}"}"
+    exitcode="${exitcode##*"${DLM}"}"
+    stderr="${stdout%%"${DLM}"*}"
+    stderr="${stderr%"${LF}"}"
+    stdout="${stdout#*"${DLM}"}"
+    stdout="${stdout%"${DLM}"*"${DLM}"}"
+
+    return "$exitcode"
+}
+
 init
 autodetect
-output=$(run ${auto:+"$auto"} "$@" 2>&1)
-exitcode=$?
+capture run ${auto:+"$auto"} "$@"
 
-if [ $exitcode != 0 ]; then
-    err "$output"
-    exit $exitcode
+if [ "$exitcode" != "0" ]; then
+    err "$stderr"
+    exit "$exitcode"
 fi
 
-printf '%s\n' "$output"
+printf '%s\n' "$stdout"
