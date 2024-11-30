@@ -209,7 +209,7 @@ setbackup() {
 }
 
 autodetect() {
-    pcmd="$(ps -o comm= -p "$PPID")"
+    pcmd="$(ps -o comm= -p "$1")"
     pcmd="${pcmd##*/}"
 
     case "$pcmd" in
@@ -230,7 +230,8 @@ autodetect() {
         -pwsh|pwsh|\
         -powershell|\
         powershell)     auto=--pwsh   ;;
-        *)              auto=         ;;
+        0|'')           auto=         ;;
+        *)              autodetect "$(ps -o ppid= -p "$1")" ;;
     esac
 }
 
@@ -344,7 +345,7 @@ capture() {
 }
 
 init
-autodetect
+autodetect "$PPID"
 capture run ${auto:+"$auto"} "$@"
 
 [ -n "$stderr" ] && err "$stderr" "$exitcode"
