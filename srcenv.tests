@@ -405,7 +405,7 @@ EOF
 
 start
 
-run './srcenv --version' 'srcenv 1.3.5'
+run './srcenv --version' 'srcenv 1.3.6'
 
 run './srcenv --invalid'              '' 2
 run './srcenv not_a_file'             '' 1
