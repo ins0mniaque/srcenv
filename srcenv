@@ -127,16 +127,24 @@ invalid() {
 
     LF='
 '
-    error="$2"
-    error="${error#getopt: }"
-    error="${error%%"${LF}"*}"
-    option="${error#* -- }"
-    [ "$option" = '-' ] && option="${1#-}"
-    option="${option#-}"
-    error="${error% -- *}"
+    error="${2#getopt: }"
+    case "$error" in
+        *\ --\ *) error="${error%%"${LF}"*}"
+                  option="${error#* -- }"
+                  [ "$option" = '-' ] && option="${1#-}"
+                  option="${option#-}"
+                  error="${error% -- *}"
+                  error="$error -- ${YELLOW}$option${NORMAL}" ;;
+        '`'*\')   option="${error#*\`}";
+                  option="${option%\'*}";
+                  error="${error%\`*}'${YELLOW}$option${NORMAL}'${error#*\'}" ;;
+        \'*\')    option="${error#*\'}";
+                  option="${option%\'*}";
+                  error="${error%\'*}'${YELLOW}$option${NORMAL}'${error#*\'}" ;;
+    esac
 
     echo >&2 "\
-${BOLD}${RED}error:${NORMAL} $error -- ${YELLOW}$option${NORMAL}
+${BOLD}${RED}error:${NORMAL} $error
 
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]
               [-h|--help|-v|--version]
