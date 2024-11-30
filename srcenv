@@ -128,19 +128,17 @@ invalid() {
     LF='
 '
     error="${2#getopt: }"
+    error="${error%%"${LF}"*}"
     case "$error" in
-        *' -- '*) error="${error%%"${LF}"*}"
-                  option="${error#* -- }"
+        *' -- '*) option="${error#* -- }"
                   [ "$option" = '-' ] && option="${1#-}"
                   option="${option#-}"
                   error="${error% -- *}"
                   error="$error -- ${YELLOW}$option${NORMAL}" ;;
-        '`'*\')   error="${error%%"${LF}"*}"
-                  option="${error#*\`}";
+        *'`'*\'*) option="${error#*\`}";
                   option="${option%\'*}";
                   error="${error%\`*}'${YELLOW}$option${NORMAL}'${error#*\'}" ;;
-        \'*\')    error="${error%%"${LF}"*}"
-                  option="${error#*\'}";
+        *\'*\'*)  option="${error#*\'}";
                   option="${option%\'*}";
                   error="${error%\'*}'${YELLOW}$option${NORMAL}'${error#*\'}" ;;
     esac
