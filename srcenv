@@ -9,24 +9,13 @@ version() { echo "srcenv 1.4.0"; }
 
 # region Help / Usage
 
-header() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
-    DIM=$(tput dim 2> /dev/null || printf '\033[2m')
-    ITALIC=$(tput sitm 2> /dev/null || printf '\033[3m')
-    UNDERLINE=$(tput smul 2> /dev/null || printf '\033[4m')
-    YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
+header() { echo >&2 "srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts."; }
 
-    warn=; command -v "$jq" > /dev/null || \
-    warn=$(printf "%$((40 + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
-                  "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
+desc() {
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
+    DIM=$(tput dim 2> /dev/null || printf '\033[2m')
 
     echo >&2 "\
-srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.
-
-${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
-              [-h|--help|-v|--version]
-
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
 and prints a script exporting the environment variables that have changed since
 the snapshot, for one of the following shells:
@@ -38,16 +27,37 @@ the snapshot, for one of the following shells:
 help() {
     NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
     BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
+
+    echo >&2 "For listing the command options, use '${0##*/} ${BOLD}--help${NORMAL}'."
+}
+
+man() {
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
     ITALIC=$(tput sitm 2> /dev/null || printf '\033[3m')
 
-    echo >&2 "\
-For listing the command options, use '${0##*/} ${BOLD}--help${NORMAL}'.
-
+    echo >&2 "
 For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
 https://github.com/ins0mniaque/srcenv/."
 }
 
 usage() {
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
+    BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
+    ITALIC=$(tput sitm 2> /dev/null || printf '\033[3m')
+    UNDERLINE=$(tput smul 2> /dev/null || printf '\033[4m')
+    YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
+
+    warn=; command -v "$jq" > /dev/null || \
+    warn=$(printf "%$((40 + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
+                  "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
+
+    echo >&2 "
+${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
+              [-h|--help|-v|--version]
+"
+}
+
+options() {
     NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
     BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
     ITALIC=$(tput sitm 2> /dev/null || printf '\033[3m')
@@ -85,9 +95,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-U, --unsorted              ${NORMAL}Keep the environment variables unsorted
   ${BOLD}-h, --help                  ${NORMAL}Display help and exit
   ${BOLD}-v, --version               ${NORMAL}Display the version number and exit
-
-For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
-https://github.com/ins0mniaque/srcenv/."
+"
 }
 
 nojq() {
@@ -108,13 +116,6 @@ noformat() {
     YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
 
     echo >&2 "${BOLD}${YELLOW}warn:${NORMAL} Unknown shell ${YELLOW}$shell${NORMAL}; defaulting to POSIX format"
-}
-
-valid() {
-    case $2 in
-        -*|'') invalid "$1" "option requires an argument -- -"; exit 1 ;;
-        *)     printf  "%s" "$2" ;;
-    esac
 }
 
 invalid() {
@@ -143,13 +144,7 @@ invalid() {
                   error="${error%%\'*}'${YELLOW}$option${NORMAL}'${error##*\'}" ;;
     esac
 
-    echo >&2 "\
-${BOLD}${RED}error:${NORMAL} $error
-
-${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]
-              [-h|--help|-v|--version]
-
-For more information, try '${0##*/} ${BOLD}--help${NORMAL}'."
+    echo >&2 "${BOLD}${RED}error:${NORMAL} $error"
 }
 
 err() {
@@ -237,6 +232,13 @@ autodetect() {
     esac
 }
 
+parse() {
+    case $2 in
+        -*|'') invalid "$1" "option requires an argument -- -"; usage; help; return 2 ;;
+        *)     printf  "%s" "$2" ;;
+    esac
+}
+
 run() {
     if ! command -v "$jq" > /dev/null; then
         nojq; exit 1
@@ -270,8 +272,8 @@ run() {
                                  suffix='] | join("\n")) + "\nset LFM=\nset LF="'; shift ;;
             --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                                      'launchctl unsetenv \($k)'; shift ;;
-            -f|--format)         format="$(valid "$@")";           fmt "${format%\?\?*}" "${format#*\?\?}"; shift; [ $# -gt 0 ] && shift ;;
-            -f=*|--format=*)     format="$(valid "$1" "${1#*=}")"; fmt "${format%\?\?*}" "${format#*\?\?}"; shift ;;
+            -f|--format)         format="$(parse "$1" "$2")"            || exit $?; fmt "${format%\?\?*}" "${format#*\?\?}"; shift; [ $# -gt 0 ] && shift ;;
+            -f=*|--format=*)     format="$(parse "${1%%=*}" "${1#*=}")" || exit $?; fmt "${format%\?\?*}" "${format#*\?\?}"; shift ;;
 
             -b|--backup)   backup=1;             shift ;;
             -u|--undo)     undo='$undo | . += '; shift ;;
@@ -280,16 +282,16 @@ run() {
             -s|--sort)     keys='keys[] as $k';
                            sort='to_entries | sort_by(.key) | from_entries'; shift ;;
             -U|--unsorted) keys='keys_unsorted[] as $k'; sort='.';           shift ;;
-            -\?|-h|--help) header; usage; exit 0 ;;
-            -v|--version)  version;       exit 0 ;;
+            -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
+            -v|--version)  version;                                 exit 0 ;;
 
-            -a|--arg)      set -- "$@" -- --arg "$(valid "$@")";           shift; [ $# -gt 0 ] && shift ;;
-            -a=*|--arg=*)  set -- "$@" -- --arg "$(valid "$1" "${1#*=}")"; shift ;;
+            -a|--arg)      set -- "$@" -- --arg "$(parse "$1" "$2")"            || exit $?; shift; [ $# -gt 0 ] && shift ;;
+            -a=*|--arg=*)  set -- "$@" -- --arg "$(parse "${1%%=*}" "${1#*=}")" || exit $?; shift ;;
             -)             set -- "$@" -- -;    shift ;;
             -*)            # shellcheck disable=SC2086
                            opt=$(getopt "a:bef:hlsuUv" "$1" 2>&1) && shift &&
                            set -- ${opt% --} "$@"                 && continue
-                           invalid "$1" "$opt";                      exit 2 ;;
+                           invalid "$1" "$opt"; usage; help;         exit 2 ;;
             *)             set -- "$@" -- "$1"; shift ;;
         esac
     done
@@ -335,7 +337,7 @@ src() {
 jq="${SRCENV_JQ:-jq}"
 
 if [ $# = 0 ]; then
-    header; help; exit 0
+    set -- --help
 fi
 
 DLM="$(printf '\032')"
