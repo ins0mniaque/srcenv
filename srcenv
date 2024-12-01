@@ -244,7 +244,7 @@ run() {
 
     snapshot=$("$jq" -n env) || exit 1
 
-    while [ $# -gt 0 ]; do
+    while [ $# -gt 0 ] && [ "$1" != -- ]; do
         case $1 in
             --ash|\
             --bash|\
@@ -283,15 +283,24 @@ run() {
             -\?|-h|--help) header; usage; exit 0 ;;
             -v|--version)  version;       exit 0 ;;
 
-            -a|--arg)      src var "$(valid "$@")"           "$export"; shift; [ $# -gt 0 ] && shift ;;
-            -a=*|--arg=*)  src var "$(valid "$1" "${1#*=}")" "$export"; shift ;;
-            -)             src var "$(cat)"                  "$export"; shift ;;
+            -a|--arg)      set -- "$@" -- --arg "$(valid "$@")";           shift; [ $# -gt 0 ] && shift ;;
+            -a=*|--arg=*)  set -- "$@" -- --arg "$(valid "$1" "${1#*=}")"; shift ;;
+            -)             set -- "$@" -- -;    shift ;;
             -*)            # shellcheck disable=SC2086
-                           opts=$(getopt "a:bef:hlsuUv" "$1" 2>&1) &&   shift && \
-                           set -- ${opts% --} "$@"                 &&   continue
-                           invalid "$1" "$opts";                        exit 2 ;;
-            *.env|*.envrc) src file "$1" "${export:---export}";         shift ;;
-            *)             src file "$1" "$export";                     shift ;;
+                           opt=$(getopt "a:bef:hlsuUv" "$1" 2>&1) && shift &&
+                           set -- ${opt% --} "$@"                 && continue
+                           invalid "$1" "$opt";                      exit 2 ;;
+            *)             set -- "$@" -- "$1"; shift ;;
+        esac
+    done
+
+    while [ $# -gt 0 ]; do
+        case $1 in
+            --)                                                    shift ;;
+            --arg)         src var "$2"     "$export";             shift; shift ;;
+            -)             src var "$(cat)" "$export";             shift ;;
+            *.env|*.envrc) src file "$1"    "${export:---export}"; shift ;;
+            *)             src file "$1"    "$export";             shift ;;
         esac
     done
 
