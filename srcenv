@@ -12,8 +12,7 @@ version() { echo "srcenv 1.4.1"; }
 header() { echo >&2 "srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts."; }
 
 desc() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    DIM=$(tput dim 2> /dev/null || printf '\033[2m')
+    colors NORMAL DIM
 
     echo >&2 "\
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
@@ -25,15 +24,13 @@ the snapshot, for one of the following shells:
 }
 
 help() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
+    colors NORMAL BOLD
 
     echo >&2 "For listing the command options, use '${0##*/} ${BOLD}--help${NORMAL}'."
 }
 
 man() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    ITALIC=$(tput sitm 2> /dev/null || printf '\033[3m')
+    colors NORMAL ITALIC
 
     echo >&2 "
 For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
@@ -41,11 +38,7 @@ https://github.com/ins0mniaque/srcenv/."
 }
 
 usage() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
-    ITALIC=$(tput sitm 2> /dev/null || printf '\033[3m')
-    UNDERLINE=$(tput smul 2> /dev/null || printf '\033[4m')
-    YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
+    colors NORMAL BOLD ITALIC UNDERLINE YELLOW
 
     warn=; command -v "$jq" > /dev/null || \
     warn=$(printf "%$((40 + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
@@ -58,10 +51,7 @@ ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NOR
 }
 
 options() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
-    ITALIC=$(tput sitm 2> /dev/null || printf '\033[3m')
-    UNDERLINE=$(tput smul 2> /dev/null || printf '\033[4m')
+    colors NORMAL BOLD ITALIC UNDERLINE
 
     echo >&2 "\
 ${BOLD}${UNDERLINE}Options${NORMAL}:
@@ -99,11 +89,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
 }
 
 nojq() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
-    RED=$(tput setaf 1 2> /dev/null || printf '\033[31m')
-    GREEN=$(tput setaf 2 2> /dev/null || printf '\033[32m')
-    YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
+    colors NORMAL BOLD RED GREEN YELLOW
 
     [ "$jq" != jq ] && \
     echo >&2 "${BOLD}${YELLOW}warn: ${NORMAL} ${YELLOW}jq${NORMAL} is set to ${GREEN}$jq${NORMAL}; unset ${YELLOW}SRCENV_JQ${NORMAL} to revert to ${GREEN}jq${NORMAL}"
@@ -111,20 +97,13 @@ nojq() {
 }
 
 noformat() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
-    YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
+    colors NORMAL BOLD YELLOW
 
     echo >&2 "${BOLD}${YELLOW}warn:${NORMAL} Unknown shell ${YELLOW}$shell${NORMAL}; defaulting to POSIX format"
 }
 
 invalid() {
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
-    ITALIC=$(tput sitm 2> /dev/null || printf '\033[3m')
-    UNDERLINE=$(tput smul 2> /dev/null || printf '\033[4m')
-    RED=$(tput setaf 1 2> /dev/null || printf '\033[31m')
-    YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
+    colors NORMAL BOLD ITALIC UNDERLINE RED YELLOW
 
     LF='
 '
@@ -152,10 +131,7 @@ err() {
         printf >&2 '%s\n' "$1"; return
     fi
 
-    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
-    BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
-    RED=$(tput setaf 1 2> /dev/null || printf '\033[31m')
-    YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
+    colors NORMAL BOLD RED YELLOW
 
     escape=$(printf '\033')
     case $1 in
@@ -175,6 +151,26 @@ err() {
                                echo >&2 "${BOLD}${RED}error:${NORMAL} $line"
                            done ;;
     esac
+}
+
+colors() {
+    for color in "$@"; do
+        case $color in
+            NORMAL)    NORMAL=${NORMAL:-"$(      tput sgr0    2> /dev/null || printf '\033[0m')"}  ;;
+            BOLD)      BOLD=${BOLD:-"$(          tput bold    2> /dev/null || printf '\033[1m')"}  ;;
+            DIM)       DIM=${DIM:-"$(            tput dim     2> /dev/null || printf '\033[2m')"}  ;;
+            ITALIC)    ITALIC=${ITALIC:-"$(      tput sitm    2> /dev/null || printf '\033[3m')"}  ;;
+            UNDERLINE) UNDERLINE=${UNDERLINE:-"$(tput smul    2> /dev/null || printf '\033[4m')"}  ;;
+            BLACK)     BLACK=${BLACK:-"$(        tput setaf 0 2> /dev/null || printf '\033[30m')"} ;;
+            RED)       RED=${RED:-"$(            tput setaf 1 2> /dev/null || printf '\033[31m')"} ;;
+            GREEN)     GREEN=${GREEN:-"$(        tput setaf 2 2> /dev/null || printf '\033[32m')"} ;;
+            YELLOW)    YELLOW=${YELLOW:-"$(      tput setaf 3 2> /dev/null || printf '\033[33m')"} ;;
+            BLUE)      BLUE=${BLUE:-"$(          tput setaf 4 2> /dev/null || printf '\033[34m')"} ;;
+            MAGENTA)   MAGENTA=${MAGENTA:-"$(    tput setaf 5 2> /dev/null || printf '\033[35m')"} ;;
+            CYAN)      CYAN=${CYAN:-"$(          tput setaf 6 2> /dev/null || printf '\033[36m')"} ;;
+            WHITE)     WHITE=${WHITE:-"$(        tput setaf 7 2> /dev/null || printf '\033[37m')"} ;;
+        esac
+    done
 }
 
 # endregion Help / Usage
