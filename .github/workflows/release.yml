@@ -22,8 +22,8 @@ jobs:
         run: |
           mkdir -p debbuild/DEBIAN
 
-          TAG="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG#v}"
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
 
           cp srcenv debbuild
           cp srcenv.1 debbuild
@@ -45,13 +45,13 @@ jobs:
             echo 'Upstream-Name: srcenv'
             echo 'Upstream-Contact: https://github.com/ins0mniaque/srcenv/issues'
             echo 'Source: https://github.com/ins0mniaque/srcenv'
-            echo ''
-            echo "Files: *"
-            echo "Copyright: 2024 Jean-Philippe Leconte"
-            echo "License: MIT"
-            echo ""
-            echo "License: MIT"
-            sed 's/^/ /' "LICENSE"
+            echo
+            echo 'Files: *'
+            echo 'Copyright: 2024 Jean-Philippe Leconte'
+            echo 'License: MIT'
+            echo
+            echo 'License: MIT'
+            sed 's/^/ /' LICENSE
           ) | tee debbuild/DEBIAN/copyright
 
           dpkg-deb --build debbuild "release/srcenv_${VERSION}-1_all.deb"
@@ -65,9 +65,9 @@ jobs:
           mkdir -p rpmbuild/SPECS
           mkdir -p rpmbuild/SRPMS
 
-          TAG="${GITHUB_REF#refs/tags/}"
+          TAG=${GITHUB_REF#refs/tags/}
           URL="https://github.com/ins0mniaque/srcenv/archive/refs/tags/$TAG.tar.gz"
-          VERSION="${TAG#v}"
+          VERSION=${TAG#v}
 
           curl -Ls "$URL" -o "rpmbuild/SOURCES/srcenv-$VERSION.tar.gz"
 
@@ -78,26 +78,26 @@ jobs:
             echo 'Summary:        A cross-shell tool for sourcing POSIX compliant .env scripts'
             echo 'BuildArch:      noarch'
             echo 'Requires:       jq'
-            echo ''
+            echo
             echo 'License:        MIT'
             echo 'Source0:        %{name}-%{version}.tar.gz'
-            echo ''
+            echo
             echo '%description'
             echo 'A cross-shell tool for sourcing POSIX compliant .env scripts'
-            echo ''
+            echo
             echo '%prep'
             echo '%setup -q'
-            echo ''
+            echo
             echo '%install'
             echo 'rm -rf $RPM_BUILD_ROOT'
             echo 'mkdir -p $RPM_BUILD_ROOT%{_bindir}'
             echo 'mkdir -p $RPM_BUILD_ROOT%{_mandir}/man1'
             echo 'cp %{name} $RPM_BUILD_ROOT%{_bindir}'
             echo 'cp %{name}.1 $RPM_BUILD_ROOT%{_mandir}/man1'
-            echo ''
+            echo
             echo '%clean'
             echo 'rm -rf $RPM_BUILD_ROOT'
-            echo ''
+            echo
             echo '%files'
             echo '%{_bindir}/%{name}'
             echo '%{_mandir}/man1/%{name}.1.gz'
@@ -121,10 +121,10 @@ jobs:
 
       - name: Update Homebrew Formula
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
+          TAG=${GITHUB_REF#refs/tags/}
           URL="https://github.com/ins0mniaque/srcenv/archive/refs/tags/$TAG.tar.gz"
-          SHA256="$(curl -Ls "$URL" | shasum -a 256 | cut -c1-64)"
-          VERSION="${TAG#v}"
+          SHA256=$(curl -Ls "$URL" | shasum -a 256 | cut -c1-64)
+          VERSION=${TAG#v}
 
           cd homebrew-srcenv
 
@@ -136,14 +136,14 @@ jobs:
             echo '  version "'$VERSION'"'
             echo '  sha256 "'$SHA256'"'
             echo '  license "MIT"'
-            echo ''
+            echo
             echo '  depends_on "jq"'
-            echo ''
+            echo
             echo '  def install'
             echo '    bin.install "srcenv"'
             echo '    man1.install "srcenv.1"'
             echo '  end'
-            echo ''
+            echo
             echo '  test do'
             echo '    expected_version = "srcenv #{version}"'
             echo '    actual_version = shell_output("#{bin}/srcenv --version").strip'

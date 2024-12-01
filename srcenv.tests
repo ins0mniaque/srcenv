@@ -27,21 +27,21 @@ DIM=$(tput dim 2> /dev/null || printf '\033[2m')
 RED=$(tput setaf 1 2> /dev/null || printf '\033[31m')
 GREEN=$(tput setaf 2 2> /dev/null || printf '\033[32m')
 YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
-DLM="$(printf '\032')"
+DLM=$(printf '\032')
 LF='
 '
 
-start() { msg "Running..."; }
+start() { msg 'Running...'; }
 
 capture() {
-    stdout="$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )"
-    exitcode="${stdout%"${DLM}"}"
-    exitcode="${exitcode##*"${DLM}"}"
-    stderr="${stdout%%"${DLM}"*}"
-    stderr="${stderr%"${LF}"}"
-    stdout="${stdout#*"${DLM}"}"
-    stdout="${stdout%"${DLM}"*"${DLM}"}"
-    stdout="${stdout%"${LF}"}"
+    stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )
+    exitcode=${stdout%"${DLM}"}
+    exitcode=${exitcode##*"${DLM}"}
+    stderr=${stdout%%"${DLM}"*}
+    stderr=${stderr%"${LF}"}
+    stdout=${stdout#*"${DLM}"}
+    stdout=${stdout%"${DLM}"*"${DLM}"}
+    stdout=${stdout%"${LF}"}
 
     return "$exitcode"
 }
@@ -49,22 +49,22 @@ capture() {
 run() {
     id=$((tests_sequence + 1)); tests_sequence=$id
 
-    case "$tests_filter" in
+    case $tests_filter in
         *\ $id\ *) ;;
         '')        ;;
         *) return  ;;
     esac
 
-    case "$1" in
+    case $1 in
         0|'') tests_skipped=$((tests_skipped + 1))
               msg test warn "$id" "${2%%"${LF}"*}: " "${YELLOW}Skipped${NORMAL}"
               return ;;
         1)    shift  ;;
     esac
 
-    cmd="$1"; capture eval "$cmd"
-    cmd="${cmd%%"${LF}"*}"
-    expected="$2"; expected_exitcode="${3:-0}" 
+    cmd=$1; capture eval "$cmd"
+    cmd=${cmd%%"${LF}"*}
+    expected=$2; expected_exitcode=${3:-0} 
 
     if [ "$exitcode" != "$expected_exitcode" ]; then
         tests_failed=$((tests_failed + 1))
@@ -78,7 +78,7 @@ run() {
     fi
 
     if [ -n "$stderr" ]; then
-        if [ "$exitcode" = "0" ] || [ "$exitcode" = "$expected_exitcode" ]; then
+        if [ "$exitcode" = 0 ] || [ "$exitcode" = "$expected_exitcode" ]; then
             msg test out "$id" "${BOLD}${DIM}❯${NORMAL} " "$stderr"
         else
             msg test err "$id" "${BOLD}${RED}❯${NORMAL} " "$stderr"
@@ -106,8 +106,8 @@ end() {
 }
 
 msg() {
-    case "$1" in
-        test) case "$2" in
+    case $1 in
+        test) case $2 in
                   err)  indent "$(printf "${RED}✖${NORMAL} ${DIM}%3s.${NORMAL} %s"    "$3" "$4")" "$5" ;;
                   warn) indent "$(printf "${YELLOW}▲${NORMAL} ${DIM}%3s.${NORMAL} %s" "$3" "$4")" "$5" ;;
                   out)  indent "$(printf "  ${DIM}%3s.${NORMAL} %s"                   "$3" "$4")" "$5" ;;
@@ -121,7 +121,7 @@ msg() {
 
 indent() {
     printf '%s\n' "$2" | while IFS= read -r line; do
-        printf "%s%s\n" "$1" "$line"
+        printf '%s%s\n' "$1" "$line"
     done
 }
 
@@ -144,9 +144,9 @@ posix_input=test.env.sh
 
 tee "$env_input" > /dev/null << 'EOF'
 # Interpolation tests
-SRCENV_TEST_A="${SRCENV_TEST_EXISTING:+6}"
-SRCENV_TEST_B="${SRCENV_TEST_NOT_EXISTING:-7}"
-SRCENV_TEST_C="$((SRCENV_TEST_A * SRCENV_TEST_B))"
+SRCENV_TEST_A=${SRCENV_TEST_EXISTING:+6}
+SRCENV_TEST_B=${SRCENV_TEST_NOT_EXISTING:-7}
+SRCENV_TEST_C=$((SRCENV_TEST_A * SRCENV_TEST_B))
 
 # Escape sequence tests
 SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\""
@@ -163,9 +163,9 @@ tee "$posix_input" > /dev/null << 'EOF'
 SRCENV_TEST_NOT_EXPORTED=1
 
 # Interpolation tests
-export SRCENV_TEST_A="${SRCENV_TEST_EXISTING:+6}"
-export SRCENV_TEST_B="${SRCENV_TEST_NOT_EXISTING:-7}"
-export SRCENV_TEST_C="$((SRCENV_TEST_A * SRCENV_TEST_B * SRCENV_TEST_NOT_EXPORTED))"
+export SRCENV_TEST_A=${SRCENV_TEST_EXISTING:+6}
+export SRCENV_TEST_B=${SRCENV_TEST_NOT_EXISTING:-7}
+export SRCENV_TEST_C=$((SRCENV_TEST_A * SRCENV_TEST_B * SRCENV_TEST_NOT_EXPORTED))
 
 # Escape sequence tests
 export SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\""
@@ -196,13 +196,13 @@ trap cleanup EXIT INT HUP TERM
 diff=\''reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'\'
 
 { posix_script="$(cat) $diff"; } << 'EOF'
-snapshot="$(jq -n env)"; eval "$(./srcenv %s)"
+snapshot=$(jq -n env); eval "$(./srcenv %s)"
 jq --argjson snapshot "$snapshot" -n
 EOF
 
 { csh_script="$(cat) $diff"; } << 'EOF'
 set snapshot = "`jq -n env`"; set sourced = "`./srcenv %s`"
-printf "%%s\\n" $sourced:q > test.csh.env
+printf '%%s\\n' $sourced:q > test.csh.env
 source test.csh.env
 rm -f test.csh.env
 jq --argjson snapshot "$snapshot:q" -n
@@ -225,14 +225,13 @@ EOF
 
 { nu_setup_script="$(cat) $env_input"; } << 'EOF'
 ./srcenv %s | save -f test.nu.env
-let filter = "%s"
 ./srcenv --json
 EOF
 
 { nu_script="$(cat) $diff"; } << 'EOF'
 let snapshot = (jq -n env); source test.nu.env
 rm -f test.nu.env
-let temp = "%s"
+let temp = '%s'
 jq --argjson snapshot $snapshot -n
 EOF
 
@@ -242,7 +241,7 @@ jq --argjson snapshot $snapshot -n
 EOF
 
 { pwsh_script="$(cat) $diff"; } << 'EOF'
-$snapshot="$(jq -n env)"; Invoke-Expression ((&./srcenv %s) -join "`n")
+$snapshot=$(jq -n env); Invoke-Expression ((&./srcenv %s) -join "`n")
 jq --argjson snapshot "$snapshot" -n
 EOF
 
@@ -599,12 +598,12 @@ escape() { printf "'%s'\\n" "$(printf '%s' "$1" | sed -e "s/'/'\\\\''/g")"; }
 
 # shellcheck disable=SC2059
 run_script() {
-    script="$(printf "$3" "$4")"
+    script=$(printf "$3" "$4")
 
     run "$1" "$2 $(escape "$script")" "$json_output"
 }
 
-sh="$(detect sh)" || msg warn "sh not found; skipping tests..."
+sh=$(detect sh) || msg warn 'sh not found; skipping tests...'
 run "$sh" 'sh srcenv '"$env_input"                           "$posix_output"
 run "$sh" 'sh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
 run "$sh" 'sh srcenv --export - < '"$env_input"''            "$posix_output"
@@ -613,7 +612,7 @@ run_script "$sh" 'sh -c' "$posix_script" '--sh test.env.sh'
 run_script "$sh" 'sh -c' "$posix_script" 'test.env'
 run_script "$sh" 'sh -c' "$posix_script" 'test.env.sh'
 
-bash="$(detect bash)" || msg warn "Bash not found; skipping tests..."
+bash=$(detect bash) || msg warn 'Bash not found; skipping tests...'
 run "$bash" 'bash srcenv '"$env_input"                           "$posix_output"
 run "$bash" 'bash srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
 run "$bash" 'bash srcenv --export - < '"$env_input"''            "$posix_output"
@@ -622,7 +621,7 @@ run_script "$bash" 'bash -c' "$posix_script" '--bash test.env.sh'
 run_script "$bash" 'bash -c' "$posix_script" 'test.env'
 run_script "$bash" 'bash -c' "$posix_script" 'test.env.sh'
 
-dash="$(detect dash)" || msg warn "Dash not found; skipping tests..."
+dash=$(detect dash) || msg warn 'Dash not found; skipping tests...'
 run "$dash" 'dash srcenv '"$env_input"                           "$posix_output"
 run "$dash" 'dash srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
 run "$dash" 'dash srcenv --export - < '"$env_input"''            "$posix_output"
@@ -631,7 +630,7 @@ run_script "$dash" 'dash -c' "$posix_script" '--dash test.env.sh'
 run_script "$dash" 'dash -c' "$posix_script" 'test.env'
 run_script "$dash" 'dash -c' "$posix_script" 'test.env.sh'
 
-ksh="$(detect ksh)" || msg warn "Ksh not found; skipping tests..."
+ksh=$(detect ksh) || msg warn 'Ksh not found; skipping tests...'
 run "$ksh" 'ksh srcenv '"$env_input"                           "$posix_output"
 run "$ksh" 'ksh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
 run "$ksh" 'ksh srcenv --export - < '"$env_input"''            "$posix_output"
@@ -640,7 +639,7 @@ run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env.sh'
 run_script "$ksh" 'ksh -c' "$posix_script" 'test.env'
 run_script "$ksh" 'ksh -c' "$posix_script" 'test.env.sh'
 
-mksh="$(detect mksh)" || msg warn "Mksh not found; skipping tests..."
+mksh=$(detect mksh) || msg warn 'Mksh not found; skipping tests...'
 run "$mksh" 'mksh srcenv '"$env_input"                           "$posix_output"
 run "$mksh" 'mksh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
 run "$mksh" 'mksh srcenv --export - < '"$env_input"''            "$posix_output"
@@ -649,7 +648,7 @@ run_script "$mksh" 'mksh -c' "$posix_script" '--mksh test.env.sh'
 run_script "$mksh" 'mksh -c' "$posix_script" 'test.env'
 run_script "$mksh" 'mksh -c' "$posix_script" 'test.env.sh'
 
-zsh="$(detect zsh)" || msg warn "Zsh not found; skipping tests..."
+zsh=$(detect zsh) || msg warn 'Zsh not found; skipping tests...'
 run "$zsh" 'zsh srcenv '"$env_input"                           "$posix_output"
 run "$zsh" 'zsh srcenv --export --arg "$(cat '"$env_input"')"' "$posix_output"
 run "$zsh" 'zsh srcenv --export - < '"$env_input"''            "$posix_output"
@@ -658,37 +657,37 @@ run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env.sh'
 run_script "$zsh" 'zsh -c' "$posix_script" 'test.env'
 run_script "$zsh" 'zsh -c' "$posix_script" 'test.env.sh'
 
-csh="$(detect csh)" || msg warn "Csh not found; skipping tests..."
+csh=$(detect csh) || msg warn 'Csh not found; skipping tests...'
 run_script "$csh" 'csh -c' "$csh_script" '--csh test.env'
 run_script "$csh" 'csh -c' "$csh_script" '--csh test.env.sh'
 run_script "$csh" 'csh -c' "$csh_script" 'test.env'
 run_script "$csh" 'csh -c' "$csh_script" 'test.env.sh'
 
-tcsh="$(detect tcsh)" || msg warn "Tcsh not found; skipping tests..."
+tcsh=$(detect tcsh) || msg warn 'Tcsh not found; skipping tests...'
 run_script "$tcsh" 'tcsh -c' "$csh_script" '--tcsh test.env'
 run_script "$tcsh" 'tcsh -c' "$csh_script" '--tcsh test.env.sh'
 run_script "$tcsh" 'tcsh -c' "$csh_script" 'test.env'
 run_script "$tcsh" 'tcsh -c' "$csh_script" 'test.env.sh'
 
-elvish="$(detect elvish)" || msg warn "Elvish not found; skipping tests..."
+elvish=$(detect elvish) || msg warn 'Elvish not found; skipping tests...'
 run_script "$elvish" 'elvish -c' "$elvish_script" '--elvish test.env'
 run_script "$elvish" 'elvish -c' "$elvish_script" '--elvish test.env.sh'
 run_script "$elvish" 'elvish -c' "$elvish_script" 'test.env'
 run_script "$elvish" 'elvish -c' "$elvish_script" 'test.env.sh'
 
-fish="$(detect fish)" || msg warn "Fish not found; skipping tests..."
+fish=$(detect fish) || msg warn 'Fish not found; skipping tests...'
 run_script "$fish" 'fish -c' "$fish_script" '--fish test.env'
 run_script "$fish" 'fish -c' "$fish_script" '--fish test.env.sh'
 run_script "$fish" 'fish -c' "$fish_script" 'test.env'
 run_script "$fish" 'fish -c' "$fish_script" 'test.env.sh'
 
-murex="$(detect murex)" || msg warn "Murex not found; skipping tests..."
+murex=$(detect murex) || msg warn 'Murex not found; skipping tests...'
 run_script "$murex" 'murex -c' "$murex_script" '--murex test.env'
 run_script "$murex" 'murex -c' "$murex_script" '--murex test.env.sh'
 run_script "$murex" 'murex -c' "$murex_script" 'test.env'
 run_script "$murex" 'murex -c' "$murex_script" 'test.env.sh'
 
-nu="$(detect nu)" || msg warn "Nushell not found; skipping tests..."
+nu=$(detect nu) || msg warn 'Nushell not found; skipping tests...'
 run_script "$nu" 'nu -c' "$nu_json_script"  '--json test.env'
 run_script "$nu" 'nu -c' "$nu_json_script"  '--json test.env.sh'
 run_script "$nu" 'nu -c' "$nu_setup_script" '--nu test.env'
@@ -700,7 +699,7 @@ run_script "$nu" 'nu -c' "$nu_script"
 run_script "$nu" 'nu -c' "$nu_setup_script" '--nu test.env'
 run_script "$nu" 'nu -c' "$nu_script"
 
-pwsh="$(detect pwsh)" || msg warn "PowerShell not found; skipping tests..."
+pwsh=$(detect pwsh) || msg warn 'PowerShell not found; skipping tests...'
 run_script "$pwsh" 'pwsh -c' "$pwsh_script" '--pwsh test.env'
 run_script "$pwsh" 'pwsh -c' "$pwsh_script" '--pwsh test.env.sh'
 run_script "$pwsh" 'pwsh -c' "$pwsh_script" 'test.env'

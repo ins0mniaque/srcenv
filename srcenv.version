@@ -2,17 +2,17 @@
 #
 # srcenv.version - Version tool for srcenv
 
-TAG="$(git describe --tags --abbrev=0)"
-CURRENT="${TAG#v}"
-VERSION="$1"
+TAG=$(git describe --tags --abbrev=0)
+CURRENT=${TAG#v}
+VERSION=$1
 shift
 
-if [ "$VERSION" = "bump" ]; then
+if [ "$VERSION" = bump ]; then
     IFS=. read -r major minor patch << EOF
 $CURRENT
 EOF
 
-    case "$1" in
+    case $1 in
         major)    VERSION="$((major+1)).0.0";           shift ;;
         minor)    VERSION="$major.$((minor+1)).0";      shift ;;
         patch|'') VERSION="$major.$minor.$((patch+1))"; shift ;;
@@ -20,8 +20,8 @@ EOF
     esac
 fi
 
-CURRENT="${1:-$CURRENT}"
-ERRORS=""
+CURRENT=${1:-$CURRENT}
+ERRORS=
 
 NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
 BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
@@ -38,7 +38,7 @@ check() {
 }
 
 usage() {
-    echo ""
+    echo
     echo "make ${BOLD}bump [v=major|minor|patch] ${DIM}[from=X.Y.Z]${NORMAL} or "
     echo "make ${BOLD}version v=X.Y.Z ${DIM}[from=X.Y.Z]${NORMAL} to change version"
 }
@@ -53,7 +53,7 @@ if [ -n "$VERSION" ]; then
         exit
     fi
 
-    ERRORS=""
+    ERRORS=
 fi
 
 check srcenv       "$CURRENT"
@@ -74,7 +74,7 @@ fi
 
 REPLACE="srcenv $(echo "$CURRENT" | sed s/\\./\\\\./g)"
 WITH="srcenv $(echo "$VERSION" | sed s/\\./\\\\./g)"
-sed -i "" "s/$REPLACE/$WITH/g" srcenv srcenv.tests srcenv.1.md
+sed -i '' "s/$REPLACE/$WITH/g" srcenv srcenv.tests srcenv.1.md
 
 check srcenv       "$VERSION"
 check srcenv.tests "$VERSION"

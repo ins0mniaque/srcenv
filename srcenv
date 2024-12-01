@@ -5,11 +5,11 @@
 # shellcheck disable=SC2016
 # shellcheck disable=SC2317
 
-version() { echo "srcenv 1.4.3"; }
+version() { echo 'srcenv 1.4.3'; }
 
 # region Help / Usage
 
-header() { echo >&2 "srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts."; }
+header() { echo >&2 'srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.'; }
 
 desc() {
     colors NORMAL DIM
@@ -107,19 +107,19 @@ invalid() {
 
     LF='
 '
-    error="${2#getopt: }"
-    error="${error%%"${LF}"*}"
-    case "$error" in
-        *' -- '*) option="${error#* -- }"
-                  [ "$option" = '-' ] && option="${1#-}"
-                  option="${option#-}"
-                  error="${error% -- *}"
+    error=${2#getopt: }
+    error=${error%%"${LF}"*}
+    case $error in
+        *' -- '*) option=${error#* -- }
+                  [ "$option" = - ] && option=${1#-}
+                  option=${option#-}
+                  error=${error% -- *}
                   error="$error -- ${YELLOW}$option${NORMAL}" ;;
-        *'`'*\'*) option="${error#*\`}";
-                  option="${option%\'*}";
+        *'`'*\'*) option=${error#*\`};
+                  option=${option%\'*};
                   error="${error%%\`*}'${YELLOW}$option${NORMAL}'${error##*\'}" ;;
-        *\'*\'*)  option="${error#*\'}";
-                  option="${option%\'*}";
+        *\'*\'*)  option=${error#*\'};
+                  option=${option%\'*};
                   error="${error%%\'*}'${YELLOW}$option${NORMAL}'${error##*\'}" ;;
     esac
 
@@ -127,7 +127,7 @@ invalid() {
 }
 
 err() {
-    if [ "$2" = "0" ]; then
+    if [ "$2" = 0 ]; then
         printf >&2 '%s\n' "$1"; return
     fi
 
@@ -136,7 +136,7 @@ err() {
     escape=$(printf '\033')
     case $1 in
         '')                echo   >&2 '' ;;
-        "$escape"*)        printf >&2 '%s\n' "$1" ;;
+        $escape*)          printf >&2 '%s\n' "$1" ;;
         $jq:\ *--argjson*) echo   >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}" ;;
         $jq:\ *)           LF='
 '
@@ -200,10 +200,10 @@ setbackup() {
 }
 
 autodetect() {
-    cmd="$(ps -o comm= -p "$1")"
-    cmd="${cmd##*/}"
+    cmd=$(ps -o comm= -p "$1")
+    cmd=${cmd##*/}
 
-    case "$cmd" in
+    case $cmd in
         -ash|ash)       auto=--ash    ;;
         -bash|bash)     auto=--bash   ;;
         -csh|csh)       auto=--csh    ;;
@@ -222,7 +222,7 @@ autodetect() {
         -powershell|\
         powershell)     auto=--pwsh   ;;
         0|'')           auto=         ;;
-        *)              shell="$cmd"
+        *)              shell=$cmd
                         # shellcheck disable=SC2046
                         autodetect $(ps -o ppid= -p "$1") ;;
     esac
@@ -230,8 +230,8 @@ autodetect() {
 
 parse() {
     case $2 in
-        -*|'') invalid "$1" "option requires an argument -- -"; usage; help; return 2 ;;
-        *)     printf  "%s" "$2" ;;
+        -*|'') invalid "$1" 'option requires an argument -- -'; usage; help; return 2 ;;
+        *)     printf  '%s' "$2" ;;
     esac
 }
 
@@ -268,9 +268,9 @@ run() {
                                  suffix='] | join("\n")) + "\nset LFM=\nset LF="'; shift ;;
             --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                                      'launchctl unsetenv \($k)'; shift ;;
-            -f|--format)         value="$(parse "$1" "$2")" || exit $?; [ $# -gt 1 ] && shift
+            -f|--format)         value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                                  fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
-            -f=*|--format=*)     value="$(parse "${1%%=*}" "${1#*=}")" || exit $?
+            -f=*|--format=*)     value=$(parse "${1%%=*}" "${1#*=}") || exit $?
                                  fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
 
             -b|--backup)   backup=1;             shift ;;
@@ -279,17 +279,17 @@ run() {
             -l|--local)    export=0;             shift ;;
             -s|--sort)     keys='keys[] as $k';
                            sort='to_entries | sort_by(.key) | from_entries'; shift ;;
-            -U|--unsorted) keys='keys_unsorted[] as $k'; sort='.';           shift ;;
+            -U|--unsorted) keys='keys_unsorted[] as $k'; sort=.;             shift ;;
             -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
             -v|--version)  version;                                 exit 0 ;;
 
-            -a|--arg)      value="$(parse "$1" "$2")" || exit $?; [ $# -gt 1 ] && shift
+            -a|--arg)      value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                            set -- "$@" -- --arg "$value"; shift ;;
-            -a=*|--arg=*)  value="$(parse "${1%%=*}" "${1#*=}")" || exit $?
+            -a=*|--arg=*)  value=$(parse "${1%%=*}" "${1#*=}") || exit $?
                            set -- "$@" -- --arg "$value"; shift ;;
             -)             set -- "$@" -- -;              shift ;;
             -*)            # shellcheck disable=SC2086
-                           opt=$(getopt "a:bef:hlsuUv" "$1" 2>&1) && shift &&
+                           opt=$(getopt 'a:bef:hlsuUv' "$1" 2>&1) && shift &&
                            set -- ${opt% --} "$@"                 && continue
                            invalid "$1" "$opt"; usage; help;         exit 2 ;;
             *)             set -- "$@" -- "$1"; shift ;;
@@ -308,7 +308,7 @@ run() {
 
     [ -n "$backup"  ] && setbackup
     [ -z "$format"  ] && noformat && fmt 'export \($k)=\(.[$k]|@sh)' 'unset \($k)'
-    [ "$format" = . ] && keys="$sort"
+    [ "$format" = . ] && keys=$sort
 
     "$jq" --argjson snapshot "$snapshot" \
        ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
@@ -322,7 +322,7 @@ src() {
         eval "$2" 1>&2 || exit 1
     elif [ -f "$2" ]; then
         # shellcheck disable=SC1090
-        case "$2" in
+        case $2 in
             .*|/*) .   "$2" 1>&2 || exit 1 ;;
             *)     . "./$2" 1>&2 || exit 1 ;;
         esac
@@ -334,25 +334,25 @@ src() {
     [ "$3" = --export ] && set +a
 }
 
-jq="${SRCENV_JQ:-jq}"
+jq=${SRCENV_JQ:-jq}
 
 if [ $# = 0 ]; then
     set -- --help
 fi
 
-DLM="$(printf '\032')"
+DLM=$(printf '\032')
 LF='
 '
 
 capture() {
-    stdout="$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )"
-    exitcode="${stdout%"${DLM}"}"
-    exitcode="${exitcode##*"${DLM}"}"
-    stderr="${stdout%%"${DLM}"*}"
-    stderr="${stderr%"${LF}"}"
-    stdout="${stdout#*"${DLM}"}"
-    stdout="${stdout%"${DLM}"*"${DLM}"}"
-    stdout="${stdout%"${LF}"}"
+    stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )
+    exitcode=${stdout%"${DLM}"}
+    exitcode=${exitcode##*"${DLM}"}
+    stderr=${stdout%%"${DLM}"*}
+    stderr=${stderr%"${LF}"}
+    stdout=${stdout#*"${DLM}"}
+    stdout=${stdout%"${DLM}"*"${DLM}"}
+    stdout=${stdout%"${LF}"}
 
     return "$exitcode"
 }

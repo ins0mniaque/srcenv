@@ -7,8 +7,8 @@ GREEN=$$(tput setaf 2 2> /dev/null || printf '\033[32m')
 .PHONY: list build test bump version
 
 list:
-	@echo "srcenv Makefile"
-	@echo ""
+	@echo 'srcenv Makefile'
+	@echo
 	@echo "make ${BOLD}build     ${NORMAL}Run ShellCheck and generate man page"
 	@echo "make ${BOLD}test      ${NORMAL}Run ShellCheck and test suite"
 	@echo "make ${BOLD}bump      ${NORMAL}Bump srcenv version"
