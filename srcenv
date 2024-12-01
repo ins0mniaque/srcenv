@@ -268,8 +268,10 @@ run() {
                                  suffix='] | join("\n")) + "\nset LFM=\nset LF="'; shift ;;
             --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                                      'launchctl unsetenv \($k)'; shift ;;
-            -f|--format)         format="$(parse "$1" "$2")"            || exit $?; fmt "${format%\?\?*}" "${format#*\?\?}"; shift; [ $# -gt 0 ] && shift ;;
-            -f=*|--format=*)     format="$(parse "${1%%=*}" "${1#*=}")" || exit $?; fmt "${format%\?\?*}" "${format#*\?\?}"; shift ;;
+            -f|--format)         value="$(parse "$1" "$2")" || exit $?; [ $# -gt 1 ] && shift
+                                 fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
+            -f=*|--format=*)     value="$(parse "${1%%=*}" "${1#*=}")" || exit $?
+                                 fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
 
             -b|--backup)   backup=1;             shift ;;
             -u|--undo)     undo='$undo | . += '; shift ;;
@@ -281,9 +283,11 @@ run() {
             -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
             -v|--version)  version;                                 exit 0 ;;
 
-            -a|--arg)      set -- "$@" -- --arg "$(parse "$1" "$2")"            || exit $?; shift; [ $# -gt 0 ] && shift ;;
-            -a=*|--arg=*)  set -- "$@" -- --arg "$(parse "${1%%=*}" "${1#*=}")" || exit $?; shift ;;
-            -)             set -- "$@" -- -;    shift ;;
+            -a|--arg)      value="$(parse "$1" "$2")" || exit $?; [ $# -gt 1 ] && shift
+                           set -- "$@" -- --arg "$value"; shift ;;
+            -a=*|--arg=*)  value="$(parse "${1%%=*}" "${1#*=}")" || exit $?
+                           set -- "$@" -- --arg "$value"; shift ;;
+            -)             set -- "$@" -- -;              shift ;;
             -*)            # shellcheck disable=SC2086
                            opt=$(getopt "a:bef:hlsuUv" "$1" 2>&1) && shift &&
                            set -- ${opt% --} "$@"                 && continue
