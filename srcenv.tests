@@ -15,11 +15,8 @@ tests_sequence=0
 tests_skipped=0
 tests_passed=0
 tests_failed=0
-tests_filter=
 
-for filter in "$@"; do
-    tests_filter="$tests_filter $filter "
-done
+[ $# -gt 0 ] && tests_filter=" $* "
 
 NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
 BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
