@@ -73,6 +73,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}--zsh                       ${NORMAL}Format the output as a Zsh script
   ${BOLD}-f FORMAT, --format FORMAT,
   ${BOLD}-f=FORMAT, --format=FORMAT  ${NORMAL}Format the output as anything ${ITALIC}(jq interpolated string)${NORMAL}
+                              ${ITALIC}${DIM}e.g. '\(\$k)=\(.[\$k]|@sh)??\(\$k)='${NORMAL}
 
   ${BOLD}-                           ${NORMAL}Source from STDIN
   ${BOLD}-i INPUT, --input INPUT,
