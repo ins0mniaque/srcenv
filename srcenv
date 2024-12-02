@@ -88,6 +88,12 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
 "
 }
 
+noinput() {
+    colors NORMAL BOLD RED
+
+    echo >&2 "${BOLD}${RED}error:${NORMAL} no input files or arguments"
+}
+
 nojq() {
     colors NORMAL BOLD RED GREEN YELLOW
 
@@ -236,12 +242,6 @@ parse() {
 }
 
 run() {
-    if ! command -v "$jq" > /dev/null; then
-        nojq; exit 1
-    fi
-
-    snapshot=$("$jq" -n env) || exit 1
-
     while [ $# -gt 0 ] && [ "$1" != -- ]; do
         case $1 in
             --ash|\
@@ -296,6 +296,20 @@ run() {
         esac
     done
 
+    if [ $# = 0 ] && [ -z "$undo" ]; then
+        noinput; exit 2
+    fi
+
+    [ -n "$backup"  ] && setbackup
+    [ -z "$format"  ] && noformat && fmt 'export \($k)=\(.[$k]|@sh)' 'unset \($k)'
+    [ "$format" = . ] && keys=$sort
+
+    if ! command -v "$jq" > /dev/null; then
+        nojq; exit 1
+    fi
+
+    snapshot=$("$jq" -n env) || exit 1
+
     while [ $# -gt 0 ]; do
         case $1 in
             --)                                                    shift ;;
@@ -305,10 +319,6 @@ run() {
             *)             src file "$1"    "$export";             shift ;;
         esac
     done
-
-    [ -n "$backup"  ] && setbackup
-    [ -z "$format"  ] && noformat && fmt 'export \($k)=\(.[$k]|@sh)' 'unset \($k)'
-    [ "$format" = . ] && keys=$sort
 
     "$jq" --argjson snapshot "$snapshot" \
        ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \

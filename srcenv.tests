@@ -437,6 +437,8 @@ run './srcenv --version' 'srcenv 1.4.3'
 run './srcenv --invalid'              '' 2
 run './srcenv not_a_file'             '' 1
 run './srcenv --arg not_a_command'    '' 1
+run './srcenv --export'               '' 2
+run './srcenv --undo'                 ''
 
 run './srcenv --arg "echo something"'                ''
 run './srcenv --arg "echo something; not_a_command"' '' 1
