@@ -75,8 +75,8 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-f=FORMAT, --format=FORMAT  ${NORMAL}Format the output as anything ${ITALIC}(jq interpolated string)${NORMAL}
 
   ${BOLD}-                           ${NORMAL}Source from STDIN
-  ${BOLD}-a ARG, --arg ARG,
-  ${BOLD}-a=ARG, --arg=ARG           ${NORMAL}Source from string value of ARG
+  ${BOLD}-i INPUT, --input INPUT,
+  ${BOLD}-i=INPUT, --input=INPUT     ${NORMAL}Source from string value of INPUT
   ${BOLD}-b, --backup                ${NORMAL}Backup changes in SRCENV_UNDO for undo
   ${BOLD}-u, --undo                  ${NORMAL}Undo backed up changes from SRCENV_UNDO
   ${BOLD}-e, --export                ${NORMAL}Export all variables ${ITALIC}(Default for .env/.envrc files)${NORMAL}
@@ -283,16 +283,17 @@ run() {
             -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
             -v|--version)  version;                                 exit 0 ;;
 
-            -a|--arg)      value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
-                           set -- "$@" -- --arg "$value"; shift ;;
-            -a=*|--arg=*)  value=$(parse "${1%%=*}" "${1#*=}") || exit $?
-                           set -- "$@" -- --arg "$value"; shift ;;
-            -)             set -- "$@" -- -;              shift ;;
-            -*)            # shellcheck disable=SC2086
-                           opt=$(getopt 'a:bef:hlsuUv' "$1" 2>&1) && shift &&
-                           set -- ${opt% --} "$@"                 && continue
-                           invalid "$1" "$opt"; usage; help;         exit 2 ;;
-            *)             set -- "$@" -- "$1"; shift ;;
+            -i|--input)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
+                            set -- "$@" -- --input "$value"; shift ;;
+            -i=*|--input=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
+                            set -- "$@" -- --input "$value"; shift ;;
+
+            -)  set -- "$@" -- -;    shift ;;
+            -*) # shellcheck disable=SC2086
+                opt=$(getopt 'a:bef:hlsuUv' "$1" 2>&1) && shift &&
+                set -- ${opt% --} "$@"                 && continue
+                invalid "$1" "$opt"; usage; help;         exit 2 ;;
+            *)  set -- "$@" -- "$1"; shift ;;
         esac
     done
 
@@ -313,7 +314,7 @@ run() {
     while [ $# -gt 0 ]; do
         case $1 in
             --)                                                    shift ;;
-            --arg)         src var "$2"     "$export";             shift; shift ;;
+            --input)       src var "$2"     "$export";             shift; shift ;;
             -)             src var "$(cat)" "$export";             shift ;;
             *.env|*.envrc) src file "$1"    "${export:---export}"; shift ;;
             *)             src file "$1"    "$export";             shift ;;

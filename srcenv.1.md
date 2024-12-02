@@ -100,9 +100,9 @@ Options
 
 :   Source from STDIN.
 
--a ARG, -a=ARG, \--arg ARG, \--arg=ARG
+-i INPUT, -i=INPUT, \--input INPUT, \--input=INPUT
 
-:   Source from string value of ARG.
+:   Source from string value of INPUT.
 
 -b, \--backup
 

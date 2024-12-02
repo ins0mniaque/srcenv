@@ -434,21 +434,21 @@ start
 
 run './srcenv --version' 'srcenv 1.4.5'
 
-run './srcenv --invalid'              '' 2
-run './srcenv not_a_file'             '' 1
-run './srcenv --arg not_a_command'    '' 1
-run './srcenv --export'               '' 2
-run './srcenv --undo'                 ''
+run './srcenv --invalid'             '' 2
+run './srcenv not_a_file'            '' 1
+run './srcenv --input not_a_command' '' 1
+run './srcenv --export'              '' 2
+run './srcenv --undo'                ''
 
-run './srcenv --arg "echo something"'                ''
-run './srcenv --arg "echo something; not_a_command"' '' 1
+run './srcenv --input "echo something"'                ''
+run './srcenv --input "echo something; not_a_command"' '' 1
 
-run "./srcenv $env_input"                            "$posix_output"
-run "./srcenv --export --arg \"\$(cat $env_input)\"" "$posix_output"
-run "./srcenv --export - < $env_input"               "$posix_output"
-run "./srcenv --local $env_input"                    ''
-run "./srcenv --local --arg \"\$(cat $env_input)\""  ''
-run "./srcenv - < $env_input"                        ''
+run "./srcenv $env_input"                              "$posix_output"
+run "./srcenv --export --input \"\$(cat $env_input)\"" "$posix_output"
+run "./srcenv --export - < $env_input"                 "$posix_output"
+run "./srcenv --local $env_input"                      ''
+run "./srcenv --local --input \"\$(cat $env_input)\""  ''
+run "./srcenv - < $env_input"                          ''
 
 run "./srcenv --ash $env_input"        "$posix_output"
 run "./srcenv --bash $env_input"       "$posix_output"
@@ -542,9 +542,9 @@ run "./srcenv --powershell --local --backup $env_input" ''
 run "./srcenv --env --local --backup $env_input"        ''
 run "./srcenv --json --local --backup $env_input"       '{}'
 
-run "./srcenv $posix_input"                   "$posix_output"
-run "./srcenv --arg \"\$(cat $posix_input)\"" "$posix_output"
-run "./srcenv - < $posix_input"               "$posix_output"
+run "./srcenv $posix_input"                     "$posix_output"
+run "./srcenv --input \"\$(cat $posix_input)\"" "$posix_output"
+run "./srcenv - < $posix_input"                 "$posix_output"
 
 run "./srcenv --ash $posix_input"        "$posix_output"
 run "./srcenv --bash $posix_input"       "$posix_output"
@@ -603,63 +603,63 @@ run_script() {
 }
 
 sh=$(detect sh) || msg warn 'sh not found; skipping tests...'
-run "$sh" "sh srcenv $env_input"                            "$posix_output"
-run "$sh" "sh srcenv --export --arg \"\$(cat $env_input)\"" "$posix_output"
-run "$sh" "sh srcenv --export - < $env_input"               "$posix_output"
+run "$sh" "sh srcenv $env_input"                              "$posix_output"
+run "$sh" "sh srcenv --export --input \"\$(cat $env_input)\"" "$posix_output"
+run "$sh" "sh srcenv --export - < $env_input"                 "$posix_output"
 run_script "$sh" 'sh -c' "$posix_script" '--sh test.env'
 run_script "$sh" 'sh -c' "$posix_script" '--sh test.env.sh'
 run_script "$sh" 'sh -c' "$posix_script" 'test.env'
 run_script "$sh" 'sh -c' "$posix_script" 'test.env.sh'
 
 ash=$(detect ash) || msg warn 'Ash not found; skipping tests...'
-run "$ash" "ash srcenv $env_input"                            "$posix_output"
-run "$ash" "ash srcenv --export --arg \"\$(cat $env_input)\"" "$posix_output"
-run "$ash" "ash srcenv --export - < $env_input"               "$posix_output"
+run "$ash" "ash srcenv $env_input"                              "$posix_output"
+run "$ash" "ash srcenv --export --input \"\$(cat $env_input)\"" "$posix_output"
+run "$ash" "ash srcenv --export - < $env_input"                 "$posix_output"
 run_script "$ash" 'ash -c' "$posix_script" '--sh test.env'
 run_script "$ash" 'ash -c' "$posix_script" '--sh test.env.sh'
 run_script "$ash" 'ash -c' "$posix_script" 'test.env'
 run_script "$ash" 'ash -c' "$posix_script" 'test.env.sh'
 
 bash=$(detect bash) || msg warn 'Bash not found; skipping tests...'
-run "$bash" "bash srcenv $env_input"                            "$posix_output"
-run "$bash" "bash srcenv --export --arg \"\$(cat $env_input)\"" "$posix_output"
-run "$bash" "bash srcenv --export - < $env_input"               "$posix_output"
+run "$bash" "bash srcenv $env_input"                              "$posix_output"
+run "$bash" "bash srcenv --export --input \"\$(cat $env_input)\"" "$posix_output"
+run "$bash" "bash srcenv --export - < $env_input"                 "$posix_output"
 run_script "$bash" 'bash -c' "$posix_script" '--bash test.env'
 run_script "$bash" 'bash -c' "$posix_script" '--bash test.env.sh'
 run_script "$bash" 'bash -c' "$posix_script" 'test.env'
 run_script "$bash" 'bash -c' "$posix_script" 'test.env.sh'
 
 dash=$(detect dash) || msg warn 'Dash not found; skipping tests...'
-run "$dash" "dash srcenv $env_input"                            "$posix_output"
-run "$dash" "dash srcenv --export --arg \"\$(cat $env_input)\"" "$posix_output"
-run "$dash" "dash srcenv --export - < $env_input"               "$posix_output"
+run "$dash" "dash srcenv $env_input"                              "$posix_output"
+run "$dash" "dash srcenv --export --input \"\$(cat $env_input)\"" "$posix_output"
+run "$dash" "dash srcenv --export - < $env_input"                 "$posix_output"
 run_script "$dash" 'dash -c' "$posix_script" '--dash test.env'
 run_script "$dash" 'dash -c' "$posix_script" '--dash test.env.sh'
 run_script "$dash" 'dash -c' "$posix_script" 'test.env'
 run_script "$dash" 'dash -c' "$posix_script" 'test.env.sh'
 
 ksh=$(detect ksh) || msg warn 'Ksh not found; skipping tests...'
-run "$ksh" "ksh srcenv $env_input"                            "$posix_output"
-run "$ksh" "ksh srcenv --export --arg \"\$(cat $env_input)\"" "$posix_output"
-run "$ksh" "ksh srcenv --export - < $env_input"               "$posix_output"
+run "$ksh" "ksh srcenv $env_input"                              "$posix_output"
+run "$ksh" "ksh srcenv --export --input \"\$(cat $env_input)\"" "$posix_output"
+run "$ksh" "ksh srcenv --export - < $env_input"                 "$posix_output"
 run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env'
 run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env.sh'
 run_script "$ksh" 'ksh -c' "$posix_script" 'test.env'
 run_script "$ksh" 'ksh -c' "$posix_script" 'test.env.sh'
 
 mksh=$(detect mksh) || msg warn 'Mksh not found; skipping tests...'
-run "$mksh" "mksh srcenv $env_input"                            "$posix_output"
-run "$mksh" "mksh srcenv --export --arg \"\$(cat $env_input)\"" "$posix_output"
-run "$mksh" "mksh srcenv --export - < $env_input"               "$posix_output"
+run "$mksh" "mksh srcenv $env_input"                              "$posix_output"
+run "$mksh" "mksh srcenv --export --input \"\$(cat $env_input)\"" "$posix_output"
+run "$mksh" "mksh srcenv --export - < $env_input"                 "$posix_output"
 run_script "$mksh" 'mksh -c' "$posix_script" '--mksh test.env'
 run_script "$mksh" 'mksh -c' "$posix_script" '--mksh test.env.sh'
 run_script "$mksh" 'mksh -c' "$posix_script" 'test.env'
 run_script "$mksh" 'mksh -c' "$posix_script" 'test.env.sh'
 
 zsh=$(detect zsh) || msg warn 'Zsh not found; skipping tests...'
-run "$zsh" "zsh srcenv $env_input"                            "$posix_output"
-run "$zsh" "zsh srcenv --export --arg \"\$(cat $env_input)\"" "$posix_output"
-run "$zsh" "zsh srcenv --export - < $env_input"               "$posix_output"
+run "$zsh" "zsh srcenv $env_input"                              "$posix_output"
+run "$zsh" "zsh srcenv --export --input \"\$(cat $env_input)\"" "$posix_output"
+run "$zsh" "zsh srcenv --export - < $env_input"                 "$posix_output"
 run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env'
 run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env.sh'
 run_script "$zsh" 'zsh -c' "$posix_script" 'test.env'
