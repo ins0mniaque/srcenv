@@ -22,7 +22,7 @@ the snapshot, for one of the following shells:
 
     bash, csh/tcsh, dash, elvish, fish, murex, nushell, powershell, zsh
 
-srcenv depends on jq(1) being available; see <https://jqlang.github.io/jq/> for
+srcenv depends on jq(1) being available; see <https://jqlang.github.io/jq> for
 installation options.
 
 Options

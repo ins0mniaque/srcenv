@@ -28,7 +28,7 @@ brew install ins0mniaque/srcenv/srcenv
 > [!IMPORTANT]
 > A POSIX shell is required to evaluate the `.env` scripts.
 >
-> [jq](https://jqlang.github.io/jq/) is required and needs to be in your `PATH`; see [installation options](https://jqlang.github.io/jq/download/).
+> [jq](https://jqlang.github.io/jq) is required and needs to be in your `PATH`; see [installation options](https://jqlang.github.io/jq/download).
 
 Download the [latest script](https://raw.githubusercontent.com/ins0mniaque/srcenv/main/srcenv) and/or [man page](https://raw.githubusercontent.com/ins0mniaque/srcenv/main/srcenv.1) and make it executable:
 

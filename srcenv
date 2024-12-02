@@ -34,7 +34,7 @@ man() {
 
     echo >&2 "
 For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
-https://github.com/ins0mniaque/srcenv/."
+https://github.com/ins0mniaque/srcenv."
 }
 
 usage() {
@@ -99,7 +99,7 @@ nojq() {
 
     [ "$jq" != jq ] && \
     echo >&2 "${BOLD}${YELLOW}warn: ${NORMAL} ${YELLOW}jq${NORMAL} is set to ${GREEN}$jq${NORMAL}; unset ${YELLOW}SRCENV_JQ${NORMAL} to revert to ${GREEN}jq${NORMAL}"
-    echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}jq${NORMAL} not found; see https://jqlang.github.io/jq/download/ for installation options"
+    echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}jq${NORMAL} not found; see https://jqlang.github.io/jq/download for installation options"
 }
 
 noformat() {
