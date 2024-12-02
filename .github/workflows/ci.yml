@@ -21,7 +21,7 @@ jobs:
 
       - name: Run ShellCheck
         run: |
-          ./shellcheck --color=always srcenv srcenv.tests srcenv.version && \
+          ./shellcheck --color=always srcenv srcenv.benchmarks srcenv.tests srcenv.version && \
           printf '\033[32m✔\033[0m ShellCheck\n'
 
       - name: Install shells

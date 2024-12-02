@@ -1,0 +1,104 @@
+#!/bin/sh
+#
+# srcenv.benchmarks - Benchmark suite for srcenv
+
+# region Setup
+
+unset SRCENV_TEST_A
+unset SRCENV_TEST_B
+unset SRCENV_TEST_C
+unset SRCENV_TEST_ESCAPE
+unset SRCENV_TEST_MULTILINE
+unset SRCENV_UNDO
+
+export SRCENV_TEST_EXISTING=1
+unset SRCENV_TEST_NOT_EXISTING
+
+env_input=test.env
+posix_input=test.env.sh
+
+tee "$env_input" > /dev/null << 'EOF'
+# Interpolation tests
+SRCENV_TEST_A=${SRCENV_TEST_EXISTING:+6}
+SRCENV_TEST_B=${SRCENV_TEST_NOT_EXISTING:-7}
+SRCENV_TEST_C=$((SRCENV_TEST_A * SRCENV_TEST_B))
+
+# Escape sequence tests
+SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\""
+
+# Multi-line tests
+SRCENV_TEST_MULTILINE="
+$SRCENV_TEST_A
+$SRCENV_TEST_B
+$SRCENV_TEST_C"
+EOF
+
+tee "$posix_input" > /dev/null << 'EOF'
+# Unexported variable tests
+SRCENV_TEST_NOT_EXPORTED=1
+
+# Interpolation tests
+export SRCENV_TEST_A=${SRCENV_TEST_EXISTING:+6}
+export SRCENV_TEST_B=${SRCENV_TEST_NOT_EXISTING:-7}
+export SRCENV_TEST_C=$((SRCENV_TEST_A * SRCENV_TEST_B * SRCENV_TEST_NOT_EXPORTED))
+
+# Escape sequence tests
+export SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\""
+
+# Multi-line tests
+export SRCENV_TEST_MULTILINE="
+$SRCENV_TEST_A
+$SRCENV_TEST_B
+$SRCENV_TEST_C"
+EOF
+
+# shellcheck disable=SC2317
+cleanup() {
+    unset SRCENV_TEST_EXISTING
+
+    rm -f "$env_input" "$posix_input"
+
+    trap - EXIT
+    exit
+}
+
+trap cleanup EXIT INT HUP TERM
+
+# endregion Setup
+
+# region Benchmarks
+
+if ! command -v hyperfine > /dev/null; then
+    NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
+    RED=$(tput setaf 1 2> /dev/null || printf '\033[31m')
+    YELLOW=$(tput setaf 3 2> /dev/null || printf '\033[33m')
+
+    echo >&2 "${RED}✖${NORMAL} ${YELLOW}hyperfine${NORMAL} not found; see https://github.com/sharkdp/hyperfine for installation options"
+    exit 1
+fi
+
+case $1 in
+    -*) against=$(command -v srcenv) ;;
+    '') against=$(command -v srcenv); shift ;;
+    *)  against=$1;                   shift ;;
+esac
+
+if [ "$against" = shells ]; then
+    sh=$(command -v sh)
+    ash=$(command -v ash)
+    bash=$(command -v bash)
+    dash=$(command -v dash)
+    ksh=$(command -v ksh)
+    mksh=$(command -v mksh)
+    zsh=$(command -v zsh)
+
+    hyperfine --shell=none "$@" -- ${sh:+"sh $env_input"}   ${ash:+"ash $env_input"}   ${bash:+"bash $env_input"}   ${dash:+"dash $env_input"}   ${ksh:+"ksh $env_input"}   ${mksh:+"mksh $env_input"}   ${zsh:+"zsh $env_input"}
+    hyperfine --shell=none "$@" -- ${sh:+"sh $posix_input"} ${ash:+"ash $posix_input"} ${bash:+"bash $posix_input"} ${dash:+"dash $posix_input"} ${ksh:+"ksh $posix_input"} ${mksh:+"mksh $posix_input"} ${zsh:+"zsh $posix_input"}
+
+    exit 0
+fi
+
+hyperfine --shell=none "$@" -- "./srcenv $env_input"   ${against:+"$against $env_input"}
+hyperfine --shell=none "$@" -- "./srcenv $posix_input" ${against:+"$against $posix_input"}
+
+# endregion Benchmarks
