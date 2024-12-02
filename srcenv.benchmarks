@@ -93,12 +93,14 @@ if [ "$against" = shells ]; then
     zsh=$(command -v zsh)
 
     hyperfine --shell=none "$@" -- ${sh:+"sh srcenv $env_input"}   ${ash:+"ash srcenv $env_input"}   ${bash:+"bash srcenv $env_input"}   ${dash:+"dash srcenv $env_input"}   ${ksh:+"ksh srcenv $env_input"}   ${mksh:+"mksh srcenv $env_input"}   ${zsh:+"zsh srcenv $env_input"}
+    echo
     hyperfine --shell=none "$@" -- ${sh:+"sh srcenv $posix_input"} ${ash:+"ash srcenv $posix_input"} ${bash:+"bash srcenv $posix_input"} ${dash:+"dash srcenv $posix_input"} ${ksh:+"ksh srcenv $posix_input"} ${mksh:+"mksh srcenv $posix_input"} ${zsh:+"zsh srcenv $posix_input"}
 
     exit 0
 fi
 
 hyperfine --shell=none "$@" -- "./srcenv $env_input"   ${against:+"$against $env_input"}
+echo
 hyperfine --shell=none "$@" -- "./srcenv $posix_input" ${against:+"$against $posix_input"}
 
 # endregion Benchmarks
