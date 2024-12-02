@@ -438,7 +438,7 @@ run './srcenv --invalid'             '' 2
 run './srcenv not_a_file'            '' 1
 run './srcenv --input not_a_command' '' 1
 run './srcenv --export'              '' 2
-run './srcenv --undo'                ''
+run './srcenv --undo'                '' 5
 
 run './srcenv --input "echo something"'                ''
 run './srcenv --input "echo something; not_a_command"' '' 1

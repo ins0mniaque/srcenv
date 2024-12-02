@@ -142,21 +142,28 @@ err() {
 
     escape=$(printf '\033')
     case $1 in
-        '')                echo   >&2 '' ;;
-        $escape*)          printf >&2 '%s\n' "$1" ;;
-        $jq:\ *--argjson*) echo   >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}" ;;
-        $jq:\ *)           LF='
-'
-                           error=${1#"$jq": }
-                           error=${error#error: }
-                           error=${error%%, line 1:"${LF}"*}
-                           echo   >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error" ;;
-        *)                 printf '%s\n' "$1" | while IFS= read -r line; do
-                               line=${line#"$0": }
-                               line=${line#line [0-9]*: }
+        '')       echo   >&2 '' ;;
+        $escape*) printf >&2 '%s\n' "$1" ;;
 
-                               echo >&2 "${BOLD}${RED}error:${NORMAL} $line"
-                           done ;;
+        $jq:\ *null*parsed*)  echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable is not set" ;;
+        $jq:\ *JSON*parsing*) if [ -n "$SRCENV_UNDO" ]; then
+                                  echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains invalid JSON: ${RED}$SRCENV_UNDO${NORMAL}"
+                              else
+                                  echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable is empty"
+                              fi ;;
+        $jq:\ *) LF='
+'
+                 error=${1#"$jq": }
+                 error=${error#error: }
+                 error=${error%%, line 1:"${LF}"*}
+                 echo   >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error" ;;
+
+        *) printf '%s\n' "$1" | while IFS= read -r line; do
+               line=${line#"$0": }
+               line=${line#line [0-9]*: }
+
+               echo >&2 "${BOLD}${RED}error:${NORMAL} $line"
+           done ;;
     esac
 }
 
@@ -274,10 +281,10 @@ run() {
             -f=*|--format=*)     value=$(parse "${1%%=*}" "${1#*=}") || exit $?
                                  fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
 
-            -b|--backup)   backup=1;             shift ;;
-            -u|--undo)     undo='$undo | . += '; shift ;;
-            -e|--export)   export=--export;      shift ;;
-            -l|--local)    export=0;             shift ;;
+            -b|--backup)   backup=1;                                  shift ;;
+            -u|--undo)     undo='env.SRCENV_UNDO | fromjson | . += '; shift ;;
+            -e|--export)   export=--export;                           shift ;;
+            -l|--local)    export=0;                                  shift ;;
             -s|--sort)     keys='keys[] as $k';
                            sort='to_entries | sort_by(.key) | from_entries'; shift ;;
             -U|--unsorted) keys='keys_unsorted[] as $k'; sort=.;             shift ;;
@@ -323,7 +330,6 @@ run() {
     done
 
     "$jq" --argjson snapshot "$snapshot" \
-       ${undo:+--argjson} ${undo:+undo} ${undo:+"${SRCENV_UNDO:-{}}"} \
        -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
 }
 
