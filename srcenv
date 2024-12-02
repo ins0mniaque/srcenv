@@ -291,7 +291,7 @@ run() {
 
             -)  set -- "$@" -- -;    shift ;;
             -*) # shellcheck disable=SC2086
-                opt=$(getopt 'a:bef:hlsuUv' "$1" 2>&1) && shift &&
+                opt=$(getopt 'bef:hi:lsuUv' "$1" 2>&1) && shift &&
                 set -- ${opt% --} "$@"                 && continue
                 invalid "$1" "$opt"; usage; help;         exit 2 ;;
             *)  set -- "$@" -- "$1"; shift ;;
