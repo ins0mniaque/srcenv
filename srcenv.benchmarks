@@ -92,8 +92,8 @@ if [ "$against" = shells ]; then
     mksh=$(command -v mksh)
     zsh=$(command -v zsh)
 
-    hyperfine --shell=none "$@" -- ${sh:+"sh $env_input"}   ${ash:+"ash $env_input"}   ${bash:+"bash $env_input"}   ${dash:+"dash $env_input"}   ${ksh:+"ksh $env_input"}   ${mksh:+"mksh $env_input"}   ${zsh:+"zsh $env_input"}
-    hyperfine --shell=none "$@" -- ${sh:+"sh $posix_input"} ${ash:+"ash $posix_input"} ${bash:+"bash $posix_input"} ${dash:+"dash $posix_input"} ${ksh:+"ksh $posix_input"} ${mksh:+"mksh $posix_input"} ${zsh:+"zsh $posix_input"}
+    hyperfine --shell=none "$@" -- ${sh:+"sh srcenv $env_input"}   ${ash:+"ash srcenv $env_input"}   ${bash:+"bash srcenv $env_input"}   ${dash:+"dash srcenv $env_input"}   ${ksh:+"ksh srcenv $env_input"}   ${mksh:+"mksh srcenv $env_input"}   ${zsh:+"zsh srcenv $env_input"}
+    hyperfine --shell=none "$@" -- ${sh:+"sh srcenv $posix_input"} ${ash:+"ash srcenv $posix_input"} ${bash:+"bash srcenv $posix_input"} ${dash:+"dash srcenv $posix_input"} ${ksh:+"ksh srcenv $posix_input"} ${mksh:+"mksh srcenv $posix_input"} ${zsh:+"zsh srcenv $posix_input"}
 
     exit 0
 fi
