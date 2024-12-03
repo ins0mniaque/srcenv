@@ -352,11 +352,15 @@ src() {
     [ "$3" = --export ] && set +a
 }
 
-jq=${SRCENV_JQ:-jq}
+if [ ! -t 0 ]; then
+    set -- "$@" -
+fi
 
 if [ $# = 0 ]; then
     set -- --help
 fi
+
+jq=${SRCENV_JQ:-jq}
 
 DLM=$(printf '\032')
 LF='
