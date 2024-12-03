@@ -442,6 +442,8 @@ EOF
 
 # region Tests
 
+[ -t 0 ] && no_stdin=1
+
 start
 
 run './srcenv --version' 'srcenv 1.4.7'
@@ -449,7 +451,7 @@ run './srcenv --version' 'srcenv 1.4.7'
 run './srcenv --invalid'             '' 2
 run './srcenv not_a_file'            '' 1
 run './srcenv --input not_a_command' '' 1
-run './srcenv --export'              '' 2
+run "$no_stdin" './srcenv --export'  '' 2
 run './srcenv --undo'                '' 5
 
 run './srcenv --input "echo something"'                ''
