@@ -367,14 +367,23 @@ LF='
 '
 
 capture() {
-    stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )
-    exitcode=${stdout%"${DLM}"}
-    exitcode=${exitcode##*"${DLM}"}
-    stderr=${stdout%%"${DLM}"*}
-    stderr=${stderr%"${LF}"}
-    stdout=${stdout#*"${DLM}"}
-    stdout=${stdout%"${DLM}"*"${DLM}"}
-    stdout=${stdout%"${LF}"}
+    if [ "$KSH_VERSION" = "Version AJM 93u+ 2012-08-01" ]; then
+        stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@" 3>&1 1>&2 2>&3)" ) 2>&1 )
+        exitcode=${stdout%"${DLM}"*"${DLM}"}
+        exitcode=${exitcode#*"${DLM}"}
+        stderr=${stdout%"${DLM}"}
+        stderr=${stderr##*"${DLM}"}
+        stdout=${stdout%%"${DLM}"*}
+    else
+        stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )
+        exitcode=${stdout%"${DLM}"}
+        exitcode=${exitcode##*"${DLM}"}
+        stderr=${stdout%%"${DLM}"*}
+        stderr=${stderr%"${LF}"}
+        stdout=${stdout#*"${DLM}"}
+        stdout=${stdout%"${DLM}"*"${DLM}"}
+        stdout=${stdout%"${LF}"}
+    fi
 
     return "$exitcode"
 }
