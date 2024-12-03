@@ -161,6 +161,7 @@ err() {
         *) printf '%s\n' "$1" | while IFS= read -r line; do
                line=${line#"$0": }
                line=${line#line [0-9]*: }
+               line=${line#"$0"\[[0-9]*\]: }
 
                echo >&2 "${BOLD}${RED}error:${NORMAL} $line"
            done ;;
