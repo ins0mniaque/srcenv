@@ -5,7 +5,7 @@
 # shellcheck disable=SC2016
 # shellcheck disable=SC2317
 
-version() { echo 'srcenv 1.4.6'; }
+version() { echo 'srcenv 1.4.7'; }
 
 # region Help / Usage
 

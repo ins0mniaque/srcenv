@@ -432,7 +432,7 @@ EOF
 
 start
 
-run './srcenv --version' 'srcenv 1.4.6'
+run './srcenv --version' 'srcenv 1.4.7'
 
 run './srcenv --invalid'             '' 2
 run './srcenv not_a_file'            '' 1
