@@ -373,7 +373,9 @@ capture() {
         exitcode=${exitcode#*"${DLM}"}
         stderr=${stdout%"${DLM}"}
         stderr=${stderr##*"${DLM}"}
+        stderr=${stderr%"${LF}"}
         stdout=${stdout%%"${DLM}"*}
+        stdout=${stdout%"${LF}"}
     else
         stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )
         exitcode=${stdout%"${DLM}"}
