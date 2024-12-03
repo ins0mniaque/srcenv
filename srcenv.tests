@@ -15,8 +15,15 @@ tests_sequence=0
 tests_skipped=0
 tests_passed=0
 tests_failed=0
+tests_to_run=
+tests_to_skip=
 
-[ $# -gt 0 ] && tests_filter=" $* "
+for filter in "$@"; do
+    case $filter in
+        -*) tests_to_skip="$tests_to_skip ${filter#-} " ;;
+        *)  tests_to_run="$tests_to_run $filter "       ;;
+    esac
+done
 
 NORMAL=$(tput sgr0 2> /dev/null || printf '\033[0m')
 BOLD=$(tput bold 2> /dev/null || printf '\033[1m')
@@ -46,10 +53,15 @@ capture() {
 run() {
     id=$((tests_sequence + 1)); tests_sequence=$id
 
-    case $tests_filter in
+    case $tests_to_run in
         *\ $id\ *) ;;
         '')        ;;
         *) return  ;;
+    esac
+
+    case $tests_to_skip in
+        *\ $id\ *) return ;;
+        *)                ;;
     esac
 
     case $1 in
