@@ -358,13 +358,8 @@ src() {
     [ "$3" = --export ] && set +a
 }
 
-if [ ! -t 0 ]; then
-    set -- "$@" -
-fi
-
-if [ $# = 0 ]; then
-    set -- --help
-fi
+[ ! -t 0 ] && set -- "$@" -
+[ $# = 0 ] && set -- --help
 
 jq=${SRCENV_JQ:-jq}
 
