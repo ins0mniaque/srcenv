@@ -8,7 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  linux:
+    name: Linux
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,6 +34,31 @@ jobs:
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           brew update
           brew install murex nushell
+
+      - name: Run srcenv tests
+        run: ./srcenv.tests
+
+  macos:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: |
+          curl -Ls https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.darwin.aarch64.tar.xz | \
+          tar xJ --strip-components=1 shellcheck-v0.10.0/shellcheck
+
+      - name: Run ShellCheck
+        run: |
+          ./shellcheck --color=always srcenv srcenv.benchmarks srcenv.tests srcenv.version && \
+          printf '\033[32m✔\033[0m ShellCheck\n'
+
+      - name: Install shells
+        run: |
+          brew update
+          brew install elvish fish mksh murex nushell
 
       - name: Run srcenv tests
         run: ./srcenv.tests
