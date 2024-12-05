@@ -481,14 +481,15 @@ run_posix_tests() {
     run "$1" "$2 --input 'echo something; not_a_command'" '' 127
     run "$1" "$2 -eiSRCENV_TEST_A=1"                      "export SRCENV_TEST_A='1'"
 
-    run "$1" "$2 $exit_0_input"                                        ''
-    run "$1" "$2 $exit_0_input $env_input"                             "$posix_output"
-    run "$1" "$2 $exit_42_input"                                       '' 42
-    run "$1" "$2 $exit_42_input $env_input"                            '' 42
-    run "$1" "$2 --input 'exit 0; export SRCENV_TEST_A=1'"             ''
-    run "$1" "$2 --input 'exit 0; export SRCENV_TEST_A=1' $env_input"  "$posix_output"
-    run "$1" "$2 --input 'exit 42; export SRCENV_TEST_A=1'"            '' 42
-    run "$1" "$2 --input 'exit 42; export SRCENV_TEST_A=1' $env_input" '' 42
+    run "$1" "$2 $exit_0_input"             ''
+    run "$1" "$2 $exit_0_input $env_input"  "$posix_output"
+    run "$1" "$2 $exit_42_input"            '' 42
+    run "$1" "$2 $exit_42_input $env_input" '' 42
+
+    run "$1" "$2 --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1'"            ''
+    run "$1" "$2 --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1' $env_input" "$posix_output"
+    run "$1" "$2 --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1'"            '' 42
+    run "$1" "$2 --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1' $env_input" '' 42
 
     run "$1" "$2 $env_input"                              "$posix_output"
     run "$1" "$2 --export --input \"\$(cat $env_input)\"" "$posix_output"
