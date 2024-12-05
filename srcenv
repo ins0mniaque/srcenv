@@ -215,7 +215,7 @@ setbackup() {
 }
 
 autodetect() {
-    cmd=$(ps -o comm= -p "$1")
+    cmd=$(ps -o comm= -p "$1" 2> /dev/null)
     cmd=${cmd##*/}
 
     case $cmd in
