@@ -340,7 +340,8 @@ run() {
         esac
     done
 
-    "$jq" --argjson snapshot "$snapshot" \
+    # shellcheck disable=SC2086
+    "$jq" $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" \
        -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
 }
 
