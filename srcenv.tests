@@ -222,7 +222,7 @@ diff=\''reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys[]) as $k ({}; if env[$k
 
 { posix_script="$(cat) $diff"; } << 'EOF'
 snapshot=$(jq -n env); eval "$(./srcenv %s)"
-jq $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" -n
+jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { csh_script="$(cat) $diff"; } << 'EOF'
@@ -230,44 +230,45 @@ set snapshot = "`jq -n env`"; set sourced = "`./srcenv %s`"
 printf '%%s\\n' $sourced:q > test.csh.env
 source test.csh.env
 rm -f test.csh.env
-jq $SRCENV_JQ_OPTS --argjson snapshot "$snapshot:q" -n
+jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 
 { elvish_script="$(cat) $diff"; } << 'EOF'
 var snapshot = (jq -n env | slurp); eval (./srcenv %s | slurp)
-jq $E:SRCENV_JQ_OPTS --argjson snapshot $snapshot -n
+jq %s --argjson snapshot $snapshot -n
 EOF
 
 { fish_script="$(cat) $diff"; } << 'EOF'
 set snapshot (jq -n env); ./srcenv %s | source
-jq $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" -n
+jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { murex_script="$(cat) $diff"; } << 'EOF'
 jq -n env -> set snapshot; ./srcenv %s -> source
-jq $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" -n
+jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { nu_setup_script="$(cat) $env_input"; } << 'EOF'
 ./srcenv %s | save -f test.nu.env
+let unused = '%s'
 ./srcenv --json
 EOF
 
 { nu_script="$(cat) $diff"; } << 'EOF'
 let snapshot = (jq -n env); source test.nu.env
 rm -f test.nu.env
-let temp = '%s'
-jq $env.SRCENV_JQ_OPTS --argjson snapshot $snapshot -n
+let unused = '%s'
+jq %s --argjson snapshot $snapshot -n
 EOF
 
 { nu_json_script="$(cat) $diff"; } << 'EOF'
 let snapshot = (jq -n env); ./srcenv %s | from json | load-env
-jq $env.SRCENV_JQ_OPTS --argjson snapshot $snapshot -n
+jq %s --argjson snapshot $snapshot -n
 EOF
 
 { pwsh_script="$(cat) $diff"; } << 'EOF'
 $snapshot=$(jq -n env); Invoke-Expression ((&sh srcenv %s) -join "`n")
-jq $Env:SRCENV_JQ_OPTS --argjson snapshot "$snapshot" -n
+jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 # endregion Scripts
@@ -661,7 +662,7 @@ escape() { printf "'%s'\\n" "$(printf '%s' "$1" | sed -e "s/'/'\\\\''/g")"; }
 
 # shellcheck disable=SC2059
 run_script() {
-    script=$(printf "$3" "$4")
+    script=$(printf "$3" "$4" "$SRCENV_JQ_OPTS")
 
     run "$1" "$2 $(escape "$script")" "$json_output"
 }
