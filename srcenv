@@ -301,7 +301,9 @@ run() {
             -*) if opts=$(getopt 'bef:hi:lsuUv' "$1" 2>&1) && shift; then
                     # shellcheck disable=SC2086
                     if [ -n "$ZSH_VERSION" ]; then
-                        set -- ${=opts% --} "$@"
+                        setopt shwordsplit > /dev/null 2>&1
+                        set -- ${opts% --} "$@"
+                        unsetopt shwordsplit > /dev/null 2>&1
                     else
                         set -- ${opts% --} "$@"
                     fi
