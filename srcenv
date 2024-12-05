@@ -104,9 +104,9 @@ nojq() {
 }
 
 noformat() {
-    colors NORMAL BOLD YELLOW
+    colors NORMAL BOLD RED
 
-    echo >&2 "${BOLD}${YELLOW}warn:${NORMAL} Unknown shell ${YELLOW}$shell${NORMAL}; defaulting to POSIX format"
+    echo >&2 "${BOLD}${RED}error:${NORMAL} no shell or format specified"
 }
 
 invalid() {
@@ -214,35 +214,6 @@ setbackup() {
     fi
 }
 
-autodetect() {
-    cmd=$(ps -o comm= -p "$1" 2> /dev/null)
-    cmd=${cmd##*/}
-
-    case $cmd in
-        -ash|ash)       auto=--ash    ;;
-        -bash|bash)     auto=--bash   ;;
-        -csh|csh)       auto=--csh    ;;
-        -tcsh|tcsh)     auto=--tcsh   ;;
-        -dash|dash)     auto=--dash   ;;
-        -ksh|ksh)       auto=--ksh    ;;
-        -pdksh|pdksh)   auto=--pdksh  ;;
-        -mksh|mksh)     auto=--mksh   ;;
-        -murex|murex)   auto=--murex  ;;
-        -sh|sh)         auto=--sh     ;;
-        -zsh|zsh)       auto=--zsh    ;;
-        -elvish|elvish) auto=--elvish ;;
-        -fish|fish)     auto=--fish   ;;
-        -nu|nu)         auto=--nu     ;;
-        -pwsh|pwsh|\
-        -powershell|\
-        powershell)     auto=--pwsh   ;;
-        0|'')           auto=         ;;
-        *)              shell=$cmd
-                        # shellcheck disable=SC2046
-                        autodetect $(ps -o ppid= -p "$1") ;;
-    esac
-}
-
 parse() {
     case $2 in
         -*|'') invalid "$1" 'option requires an argument -- -'; usage; help; return 2 ;;
@@ -316,13 +287,16 @@ run() {
         esac
     done
 
+    [ -n "$backup"  ] && setbackup
+    [ "$format" = . ] && keys=$sort
+
     if [ $# = 0 ] && [ -z "$undo" ]; then
-        noinput; exit 2
+        noinput; usage; help; exit 2
     fi
 
-    [ -n "$backup"  ] && setbackup
-    [ -z "$format"  ] && noformat && fmt 'export \($k)=\(.[$k]|@sh)' 'unset \($k)'
-    [ "$format" = . ] && keys=$sort
+    if [ -z "$format"  ]; then
+        noformat; usage; help; exit 2
+    fi
 
     if ! command -v "$jq" > /dev/null; then
         nojq; exit 1
@@ -415,7 +389,6 @@ capture() {
 }
 
 init
-autodetect "$PPID"
 capture run ${auto:+"$auto"} "$@"
 
 [ -n "$stderr" ] && err "$stderr" "$exitcode"

@@ -476,39 +476,41 @@ run_posix_tests() {
     run "$1" "$2 -v"        'srcenv 1.4.8'
     run "$1" "$2 --version" 'srcenv 1.4.8'
 
-    run "$1" "$2 --invalid"             '' 2
-    run "$1" "$2 not_a_file"            '' 1
-    run "$1" "$2 --input not_a_command" '' 127
-    run "$and_no_stdin" "$2 --export"   '' 2
-    run "$1" "$2 --undo"                '' 5
+    run "$1" "$2 --invalid"                  '' 2
+    run "$1" "$2 --sh not_a_file"            '' 1
+    run "$1" "$2 --sh --input not_a_command" '' 127
+    run "$and_no_stdin" "$2 --export"        '' 2
+    run "$1" "$2 --sh --undo"                '' 5
+    run "$1" "$2 --undo"                     '' 2
 
-    run "$1" "$2 --input 'echo something'"                ''
-    run "$1" "$2 --input 'echo something; not_a_command'" '' 127
-    run "$1" "$2 -eiSRCENV_TEST_A=1"                      "export SRCENV_TEST_A='1'"
+    run "$1" "$2 --sh --input 'echo something'"                ''
+    run "$1" "$2 --sh --input 'echo something; not_a_command'" '' 127
+    run "$1" "$2 --sh -eiSRCENV_TEST_A=1"                      "export SRCENV_TEST_A='1'"
+    run "$1" "$2 -eiSRCENV_TEST_A=1"                           '' 2
 
-    run "$1" "$2 $exit_0_input"             ''
-    run "$1" "$2 $exit_0_input $env_input"  "$posix_output"
-    run "$1" "$2 $exit_42_input"            '' 42
-    run "$1" "$2 $exit_42_input $env_input" '' 42
+    run "$1" "$2 --sh $exit_0_input"             ''
+    run "$1" "$2 --sh $exit_0_input $env_input"  "$posix_output"
+    run "$1" "$2 --sh $exit_42_input"            '' 42
+    run "$1" "$2 --sh $exit_42_input $env_input" '' 42
 
-    run "$1" "$2 --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1'"            ''
-    run "$1" "$2 --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1' $env_input" "$posix_output"
-    run "$1" "$2 --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1'"            '' 42
-    run "$1" "$2 --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1' $env_input" '' 42
+    run "$1" "$2 --sh --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1'"            ''
+    run "$1" "$2 --sh --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1' $env_input" "$posix_output"
+    run "$1" "$2 --sh --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1'"            '' 42
+    run "$1" "$2 --sh --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1' $env_input" '' 42
 
-    run "$1" "$2 $env_input"                              "$posix_output"
-    run "$1" "$2 --export --input \"\$(cat $env_input)\"" "$posix_output"
-    run "$1" "$2 --export - < $env_input"                 "$posix_output"
-    run "$1" "$2 --export < $env_input"                   "$posix_output"
-    run "$1" "$2 --local $env_input"                      ''
-    run "$1" "$2 --local --input \"\$(cat $env_input)\""  ''
-    run "$1" "$2 - < $env_input"                          ''
-    run "$1" "$2 < $env_input"                            ''
+    run "$1" "$2 --sh $env_input"                              "$posix_output"
+    run "$1" "$2 --sh --export --input \"\$(cat $env_input)\"" "$posix_output"
+    run "$1" "$2 --sh --export - < $env_input"                 "$posix_output"
+    run "$1" "$2 --sh --export < $env_input"                   "$posix_output"
+    run "$1" "$2 --sh --local $env_input"                      ''
+    run "$1" "$2 --sh --local --input \"\$(cat $env_input)\""  ''
+    run "$1" "$2 --sh - < $env_input"                          ''
+    run "$1" "$2 --sh < $env_input"                            ''
 
-    run "$1" "$2 $posix_input"                     "$posix_output"
-    run "$1" "$2 --input \"\$(cat $posix_input)\"" "$posix_output"
-    run "$1" "$2 - < $posix_input"                 "$posix_output"
-    run "$1" "$2 < $posix_input"                   "$posix_output"
+    run "$1" "$2 --sh $posix_input"                     "$posix_output"
+    run "$1" "$2 --sh --input \"\$(cat $posix_input)\"" "$posix_output"
+    run "$1" "$2 --sh - < $posix_input"                 "$posix_output"
+    run "$1" "$2 --sh < $posix_input"                   "$posix_output"
 }
 
 run_output_tests() {
@@ -675,80 +677,56 @@ sh=$(detect sh) || msg warn 'sh not found; skipping tests...'
 run_posix_tests "$sh" "sh srcenv"
 run_script "$sh" 'sh -c' "$posix_script" '--sh test.env'
 run_script "$sh" 'sh -c' "$posix_script" '--sh test.env.sh'
-run_script "$sh" 'sh -c' "$posix_script" 'test.env'
-run_script "$sh" 'sh -c' "$posix_script" 'test.env.sh'
 
 ash=$(detect ash) || msg warn 'Ash not found; skipping tests...'
 run_posix_tests "$ash" "ash srcenv"
-run_script "$ash" 'ash -c' "$posix_script" '--sh test.env'
-run_script "$ash" 'ash -c' "$posix_script" '--sh test.env.sh'
-run_script "$ash" 'ash -c' "$posix_script" 'test.env'
-run_script "$ash" 'ash -c' "$posix_script" 'test.env.sh'
+run_script "$ash" 'ash -c' "$posix_script" '--ash test.env'
+run_script "$ash" 'ash -c' "$posix_script" '--ash test.env.sh'
 
 bash=$(detect bash) || msg warn 'Bash not found; skipping tests...'
 run_posix_tests "$bash" "bash srcenv"
 run_script "$bash" 'bash -c' "$posix_script" '--bash test.env'
 run_script "$bash" 'bash -c' "$posix_script" '--bash test.env.sh'
-run_script "$bash" 'bash -c' "$posix_script" 'test.env'
-run_script "$bash" 'bash -c' "$posix_script" 'test.env.sh'
 
 dash=$(detect dash) || msg warn 'Dash not found; skipping tests...'
 run_posix_tests "$dash" "dash srcenv"
 run_script "$dash" 'dash -c' "$posix_script" '--dash test.env'
 run_script "$dash" 'dash -c' "$posix_script" '--dash test.env.sh'
-run_script "$dash" 'dash -c' "$posix_script" 'test.env'
-run_script "$dash" 'dash -c' "$posix_script" 'test.env.sh'
 
 ksh=$(detect ksh) || msg warn 'Ksh not found; skipping tests...'
 run_posix_tests "$ksh" "ksh srcenv"
 run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env'
 run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env.sh'
-run_script "$ksh" 'ksh -c' "$posix_script" 'test.env'
-run_script "$ksh" 'ksh -c' "$posix_script" 'test.env.sh'
 
 mksh=$(detect mksh) || msg warn 'Mksh not found; skipping tests...'
 run_posix_tests "$mksh" "mksh srcenv"
 run_script "$mksh" 'mksh -c' "$posix_script" '--mksh test.env'
 run_script "$mksh" 'mksh -c' "$posix_script" '--mksh test.env.sh'
-run_script "$mksh" 'mksh -c' "$posix_script" 'test.env'
-run_script "$mksh" 'mksh -c' "$posix_script" 'test.env.sh'
 
 zsh=$(detect zsh) || msg warn 'Zsh not found; skipping tests...'
 run_posix_tests "$zsh" "zsh srcenv"
 run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env'
 run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env.sh'
-run_script "$zsh" 'zsh -c' "$posix_script" 'test.env'
-run_script "$zsh" 'zsh -c' "$posix_script" 'test.env.sh'
 
 csh=$(detect csh) || msg warn 'Csh not found; skipping tests...'
 run_script "$csh" 'csh -c' "$csh_script" '--csh test.env'
 run_script "$csh" 'csh -c' "$csh_script" '--csh test.env.sh'
-run_script "$csh" 'csh -c' "$csh_script" 'test.env'
-run_script "$csh" 'csh -c' "$csh_script" 'test.env.sh'
 
 tcsh=$(detect tcsh) || msg warn 'Tcsh not found; skipping tests...'
 run_script "$tcsh" 'tcsh -c' "$csh_script" '--tcsh test.env'
 run_script "$tcsh" 'tcsh -c' "$csh_script" '--tcsh test.env.sh'
-run_script "$tcsh" 'tcsh -c' "$csh_script" 'test.env'
-run_script "$tcsh" 'tcsh -c' "$csh_script" 'test.env.sh'
 
 elvish=$(detect elvish) || msg warn 'Elvish not found; skipping tests...'
 run_script "$elvish" 'elvish -c' "$elvish_script" '--elvish test.env'
 run_script "$elvish" 'elvish -c' "$elvish_script" '--elvish test.env.sh'
-run_script "$elvish" 'elvish -c' "$elvish_script" 'test.env'
-run_script "$elvish" 'elvish -c' "$elvish_script" 'test.env.sh'
 
 fish=$(detect fish) || msg warn 'Fish not found; skipping tests...'
 run_script "$fish" 'fish -c' "$fish_script" '--fish test.env'
 run_script "$fish" 'fish -c' "$fish_script" '--fish test.env.sh'
-run_script "$fish" 'fish -c' "$fish_script" 'test.env'
-run_script "$fish" 'fish -c' "$fish_script" 'test.env.sh'
 
 murex=$(detect murex) || msg warn 'Murex not found; skipping tests...'
 run_script "$murex" 'murex -c' "$murex_script" '--murex test.env'
 run_script "$murex" 'murex -c' "$murex_script" '--murex test.env.sh'
-run_script "$murex" 'murex -c' "$murex_script" 'test.env'
-run_script "$murex" 'murex -c' "$murex_script" 'test.env.sh'
 
 nu=$(detect nu) || msg warn 'Nushell not found; skipping tests...'
 run_script "$nu" 'nu -c' "$nu_json_script"  '--json test.env'
@@ -765,8 +743,6 @@ run_script "$nu" 'nu -c' "$nu_script"
 pwsh=$(detect pwsh) || msg warn 'PowerShell not found; skipping tests...'
 run_script "$pwsh" 'pwsh -c' "$pwsh_script" '--pwsh test.env'
 run_script "$pwsh" 'pwsh -c' "$pwsh_script" '--pwsh test.env.sh'
-run_script "$pwsh" 'pwsh -c' "$pwsh_script" 'test.env'
-run_script "$pwsh" 'pwsh -c' "$pwsh_script" 'test.env.sh'
 
 end
 
