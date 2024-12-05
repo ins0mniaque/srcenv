@@ -266,7 +266,7 @@ jq --argjson snapshot $snapshot -n
 EOF
 
 { pwsh_script="$(cat) $diff"; } << 'EOF'
-$snapshot=$(jq -n env); Invoke-Expression ((&./srcenv %s) -join "`n")
+$snapshot=$(jq -n env); Invoke-Expression ((&sh srcenv %s) -join "`n")
 jq --argjson snapshot "$snapshot" -n
 EOF
 
