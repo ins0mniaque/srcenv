@@ -459,6 +459,10 @@ EOF
 
 # region Tests
 
+case $(uname) in
+    CYGWIN*|MINGW*|MSYS_NT*) export SRCENV_JQ_OPTS=-b ;;
+esac
+
 [ -t 0 ] && no_stdin=1 || no_stdin=
 
 run_posix_tests() {
