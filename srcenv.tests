@@ -150,6 +150,8 @@ unset SRCENV_TEST_NOT_EXISTING
 
 env_input=test.env
 posix_input=test.env.sh
+exit_0_input=test.exit.0.env
+exit_42_input=test.exit.42.env
 
 tee "$env_input" > /dev/null << 'EOF'
 # Interpolation tests
@@ -186,11 +188,25 @@ $SRCENV_TEST_B
 $SRCENV_TEST_C"
 EOF
 
+tee "$exit_0_input" > /dev/null << 'EOF'
+exit 0
+
+# Unexported variable tests
+export SRCENV_TEST_NOT_EXPORTED=1
+EOF
+
+tee "$exit_42_input" > /dev/null << 'EOF'
+exit 42
+
+# Unexported variable tests
+export SRCENV_TEST_NOT_EXPORTED=1
+EOF
+
 # shellcheck disable=SC2317
 cleanup() {
     unset SRCENV_TEST_EXISTING
 
-    rm -f "$env_input" "$posix_input"
+    rm -f "$env_input" "$posix_input" "$exit_0_input" "$exit_42_input"
 
     trap - EXIT
     exit
@@ -457,13 +473,22 @@ run_posix_tests() {
 
     run "$1" "$2 --invalid"             '' 2
     run "$1" "$2 not_a_file"            '' 1
-    run "$1" "$2 --input not_a_command" '' 1
+    run "$1" "$2 --input not_a_command" '' 127
     run "$and_no_stdin" "$2 --export"   '' 2
     run "$1" "$2 --undo"                '' 5
 
     run "$1" "$2 --input 'echo something'"                ''
-    run "$1" "$2 --input 'echo something; not_a_command'" '' 1
+    run "$1" "$2 --input 'echo something; not_a_command'" '' 127
     run "$1" "$2 -eiSRCENV_TEST_A=1"                      "export SRCENV_TEST_A='1'"
+
+    run "$1" "$2 $exit_0_input"                                        ''
+    run "$1" "$2 $exit_0_input $env_input"                             "$posix_output"
+    run "$1" "$2 $exit_42_input"                                       '' 42
+    run "$1" "$2 $exit_42_input $env_input"                            '' 42
+    run "$1" "$2 --input 'exit 0; export SRCENV_TEST_A=1'"             ''
+    run "$1" "$2 --input 'exit 0; export SRCENV_TEST_A=1' $env_input"  "$posix_output"
+    run "$1" "$2 --input 'exit 42; export SRCENV_TEST_A=1'"            '' 42
+    run "$1" "$2 --input 'exit 42; export SRCENV_TEST_A=1' $env_input" '' 42
 
     run "$1" "$2 $env_input"                              "$posix_output"
     run "$1" "$2 --export --input \"\$(cat $env_input)\"" "$posix_output"

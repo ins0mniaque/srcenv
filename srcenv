@@ -324,15 +324,15 @@ run() {
         nojq; exit 1
     fi
 
-    snapshot=$("$jq" -n env) || exit 1
+    snapshot=$("$jq" -n env) || exit $?
 
     while [ $# -gt 0 ]; do
         case $1 in
-            --)                                                    shift ;;
-            --input)       src var "$2"     "$export";             shift; shift ;;
-            -)             src var "$(cat)" "$export";             shift ;;
-            *.env|*.envrc) src file "$1"    "${export:---export}"; shift ;;
-            *)             src file "$1"    "$export";             shift ;;
+            --)            shift ;;
+            --input)       src var "$2"     "$export"             || exit $?; shift; shift ;;
+            -)             src var "$(cat)" "$export"             || exit $?; shift ;;
+            *.env|*.envrc) src file "$1"    "${export:---export}" || exit $?; shift ;;
+            *)             src file "$1"    "$export"             || exit $?; shift ;;
         esac
     done
 
@@ -341,22 +341,38 @@ run() {
 }
 
 src() {
+    exitcode=0
+
     [ "$3" = --export ] && set -a
 
+    # shellcheck disable=SC3044
+    [ -n "$BASH_VERSION" ] && shopt -s expand_aliases 2> /dev/null
+    alias exit=return
+
     if [ "$1" = var ]; then
-        eval "$2" 1>&2 || exit 1
+        if [ -n "$ZSH_VERSION" ]; then
+            eval "srcenv_zsh_input() { $2; }; srcenv_zsh_input" 1>&2 || exitcode=$?
+        else
+            eval "$2" 1>&2 || exitcode=$?
+        fi
     elif [ -f "$2" ]; then
         # shellcheck disable=SC1090
         case $2 in
-            .*|/*) .   "$2" 1>&2 || exit 1 ;;
-            *)     . "./$2" 1>&2 || exit 1 ;;
+            .*|/*) .   "$2" 1>&2 || exitcode=$? ;;
+            *)     . "./$2" 1>&2 || exitcode=$? ;;
         esac
     else
         echo >&2 "$2: No such file or directory"
-        exit 1
+        exitcode=1
     fi
 
+    # shellcheck disable=SC3044
+    [ -n "$BASH_VERSION" ] && shopt -u expand_aliases 2> /dev/null
+    unalias exit
+
     [ "$3" = --export ] && set +a
+
+    return "$exitcode"
 }
 
 [ ! -t 0 ] && set -- "$@" -
