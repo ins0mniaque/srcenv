@@ -62,3 +62,26 @@ jobs:
 
       - name: Run srcenv tests
         run: ./srcenv.tests
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        shell: bash
+        run: |
+          curl -Lso https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.zip
+          7z x shellcheck-v0.10.0.zip shellcheck.exe
+
+      - name: Run ShellCheck
+        shell: bash
+        run: |
+          ./shellcheck.exe --color=always srcenv srcenv.benchmarks srcenv.tests srcenv.version && \
+          printf '\033[32m✔\033[0m ShellCheck\n'
+
+      - name: Run srcenv tests
+        shell: bash
+        run: ./srcenv.tests
