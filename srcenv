@@ -402,6 +402,8 @@ src() {
 
 # endregion run()
 
+jq=${SRCENV_JQ:-jq}
+
 [ ! -t 0 ] && set -- "$@" -
 [ $# = 0 ] && set -- --help
 
@@ -436,8 +438,6 @@ if [ "$cmd" = init ]; then
 
     init; exit $?
 fi
-
-jq=${SRCENV_JQ:-jq}
 
 DLM=$(printf '\032')
 LF='
