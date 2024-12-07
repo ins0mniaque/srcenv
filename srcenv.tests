@@ -218,14 +218,14 @@ trap cleanup EXIT INT HUP TERM
 
 # region Scripts
 
-diff=\''reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'\'
+diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
 
-{ posix_script="$(cat) $diff"; } << 'EOF'
+{ posix_script="$(cat) '$diff'"; } << 'EOF'
 snapshot=$(jq -n env); eval "$(./srcenv %s)"
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
-{ csh_script="$(cat) $diff"; } << 'EOF'
+{ csh_script="$(cat) '$diff'"; } << 'EOF'
 set snapshot = "`jq -n env`"; set sourced = "`./srcenv %s`"
 printf '%%s\\n' $sourced:q > test.csh.env
 source test.csh.env
@@ -233,17 +233,17 @@ rm -f test.csh.env
 jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 
-{ elvish_script="$(cat) $diff"; } << 'EOF'
+{ elvish_script="$(cat) '$diff'"; } << 'EOF'
 var snapshot = (jq -n env | slurp); eval (./srcenv %s | slurp)
 jq %s --argjson snapshot $snapshot -n
 EOF
 
-{ fish_script="$(cat) $diff"; } << 'EOF'
+{ fish_script="$(cat) '$diff'"; } << 'EOF'
 set snapshot (jq -n env); ./srcenv %s | source
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
-{ murex_script="$(cat) $diff"; } << 'EOF'
+{ murex_script="$(cat) '$diff'"; } << 'EOF'
 jq -n env -> set snapshot; ./srcenv %s -> source
 jq %s --argjson snapshot "$snapshot" -n
 EOF
@@ -254,21 +254,26 @@ let unused = '%s'
 ./srcenv --json
 EOF
 
-{ nu_script="$(cat) $diff"; } << 'EOF'
+{ nu_script="$(cat) '$diff'"; } << 'EOF'
 let snapshot = (jq -n env); source test.nu.env
 rm -f test.nu.env
 let unused = '%s'
 jq %s --argjson snapshot $snapshot -n
 EOF
 
-{ nu_json_script="$(cat) $diff"; } << 'EOF'
+{ nu_json_script="$(cat) '$diff'"; } << 'EOF'
 let snapshot = (jq -n env); ./srcenv %s | from json | load-env
 jq %s --argjson snapshot $snapshot -n
 EOF
 
-{ pwsh_script="$(cat) $diff"; } << 'EOF'
-$snapshot=$(jq -n env); Invoke-Expression ((&sh srcenv %s) -join "`n")
+{ pwsh_script="$(cat) '$diff'"; } << 'EOF'
+$snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s) -join "`n")
 jq %s --argjson snapshot "$snapshot" -n
+EOF
+
+{ powershell_script="$(cat) '. as \$snapshot | $diff'"; } << 'EOF'
+$snapshot="$(jq -n env)"; Invoke-Expression ((sh srcenv %s) -join "`n")
+echo "$snapshot" | jq %s
 EOF
 
 # endregion Scripts
@@ -743,6 +748,10 @@ run_script "$nu" 'nu -c' "$nu_script"
 pwsh=$(detect pwsh) || msg warn 'PowerShell not found; skipping tests...'
 run_script "$pwsh" 'pwsh -c' "$pwsh_script" '--pwsh test.env'
 run_script "$pwsh" 'pwsh -c' "$pwsh_script" '--pwsh test.env.sh'
+
+powershell=$(detect powershell) || msg warn 'Windows PowerShell not found; skipping tests...'
+run_script "$powershell" 'powershell -c' "$powershell_script" '--powershell test.env'
+run_script "$powershell" 'powershell -c' "$powershell_script" '--powershell test.env.sh'
 
 end
 
