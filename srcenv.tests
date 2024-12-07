@@ -226,7 +226,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { posix_undo_script="$(cat) '$diff'"; } << 'EOF'
-snapshot=$(jq -n env); eval "$(./srcenv --backup %s)"; eval "$(./srcenv --undo %s)"
+snapshot=$(jq -n env); eval "$(./srcenv %s --backup)"; eval "$(./srcenv %s --undo)"
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
@@ -239,11 +239,11 @@ jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 
 { csh_undo_script="$(cat) '$diff'"; } << 'EOF'
-set snapshot = "`jq -n env`"; set backed = "`./srcenv --backup %s`"
+set snapshot = "`jq -n env`"; set backed = "`./srcenv %s --backup`"
 printf '%%s\\n' $backed:q > test.csh.env
 source test.csh.env
 rm -f test.csh.env
-set sourced =  "`./srcenv --undo %s`"
+set sourced =  "`./srcenv %s --undo`"
 printf '%%s\\n' $sourced:q > test.csh.env
 source test.csh.env
 rm -f test.csh.env
@@ -256,7 +256,7 @@ jq %s --argjson snapshot $snapshot -n
 EOF
 
 { elvish_undo_script="$(cat) '$diff'"; } << 'EOF'
-var snapshot = (jq -n env | slurp); eval (./srcenv --backup %s | slurp); eval (./srcenv --undo %s | slurp)
+var snapshot = (jq -n env | slurp); eval (./srcenv %s --backup | slurp); eval (./srcenv %s --undo | slurp)
 jq %s --argjson snapshot $snapshot -n
 EOF
 
@@ -266,7 +266,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { fish_undo_script="$(cat) '$diff'"; } << 'EOF'
-set snapshot (jq -n env); ./srcenv --backup %s | source; ./srcenv --undo %s | source
+set snapshot (jq -n env); ./srcenv %s --backup | source; ./srcenv %s --undo | source
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
@@ -276,7 +276,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { murex_undo_script="$(cat) '$diff'"; } << 'EOF'
-jq -n env -> set snapshot; ./srcenv --backup %s -> source; ./srcenv --undo %s -> source
+jq -n env -> set snapshot; ./srcenv %s --backup -> source; ./srcenv %s --undo -> source
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
@@ -297,7 +297,7 @@ jq %s --argjson snapshot $snapshot -n
 EOF
 
 { nu_undo_script="$(cat) '$diff'"; } << 'EOF'
-let snapshot = (jq -n env); ./srcenv --backup %s | from json | load-env; ./srcenv --undo %s | from json | load-env
+let snapshot = (jq -n env); ./srcenv %s --backup | from json | load-env; ./srcenv %s --undo | from json | load-env
 jq %s --argjson snapshot $snapshot -n
 EOF
 
@@ -307,7 +307,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { pwsh_undo_script="$(cat) '$diff'"; } << 'EOF'
-$snapshot=$(jq -n env); Invoke-Expression ((sh srcenv --backup %s) -join "`n"); Invoke-Expression ((sh srcenv --undo %s) -join "`n")
+$snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s --backup) -join "`n"); Invoke-Expression ((sh srcenv %s --undo) -join "`n")
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
@@ -317,7 +317,7 @@ echo "$snapshot" | jq %s
 EOF
 
 { powershell_undo_script="$(cat) '. as \$snapshot | $diff'"; } << 'EOF'
-$snapshot="$(jq -n env)"; Invoke-Expression ((sh srcenv --backup %s) -join "`n"); Invoke-Expression ((sh srcenv --undo %s) -join "`n")
+$snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s --backup) -join "`n"); Invoke-Expression ((sh srcenv %s --undo) -join "`n")
 echo "$snapshot" | jq %s
 EOF
 
@@ -544,40 +544,40 @@ run_posix_tests() {
     run "$1" "$2 --version" 'srcenv 1.4.9'
 
     run "$1" "$2 --invalid"                  '' 2
-    run "$1" "$2 --sh not_a_file"            '' 1
-    run "$1" "$2 --sh --input not_a_command" '' 127
+    run "$1" "$2 sh not_a_file"              '' 1
+    run "$1" "$2 sh --input not_a_command"   '' 127
     run "$and_no_stdin" "$2 --export"        '' 2
-    run "$1" "$2 --sh --undo"                '' 5
+    run "$1" "$2 sh --undo"                  '' 5
     run "$1" "$2 --undo"                     '' 2
 
-    run "$1" "$2 --sh --input 'echo something'"                ''
-    run "$1" "$2 --sh --input 'echo something; not_a_command'" '' 127
-    run "$1" "$2 --sh -eiSRCENV_TEST_A=1"                      "export SRCENV_TEST_A='1'"
-    run "$1" "$2 -eiSRCENV_TEST_A=1"                           '' 2
+    run "$1" "$2 sh --input 'echo something'"                ''
+    run "$1" "$2 sh --input 'echo something; not_a_command'" '' 127
+    run "$1" "$2 sh -eiSRCENV_TEST_A=1"                      "export SRCENV_TEST_A='1'"
+    run "$1" "$2 -eiSRCENV_TEST_A=1"                         '' 2
 
-    run "$1" "$2 --sh $exit_0_input"             ''
-    run "$1" "$2 --sh $exit_0_input $env_input"  "$posix_output"
-    run "$1" "$2 --sh $exit_42_input"            '' 42
-    run "$1" "$2 --sh $exit_42_input $env_input" '' 42
+    run "$1" "$2 sh $exit_0_input"             ''
+    run "$1" "$2 sh $exit_0_input $env_input"  "$posix_output"
+    run "$1" "$2 sh $exit_42_input"            '' 42
+    run "$1" "$2 sh $exit_42_input $env_input" '' 42
 
-    run "$1" "$2 --sh --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1'"            ''
-    run "$1" "$2 --sh --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1' $env_input" "$posix_output"
-    run "$1" "$2 --sh --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1'"            '' 42
-    run "$1" "$2 --sh --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1' $env_input" '' 42
+    run "$1" "$2 sh --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1'"            ''
+    run "$1" "$2 sh --input 'exit 0;  export SRCENV_TEST_NOT_EXPORTED=1' $env_input" "$posix_output"
+    run "$1" "$2 sh --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1'"            '' 42
+    run "$1" "$2 sh --input 'exit 42; export SRCENV_TEST_NOT_EXPORTED=1' $env_input" '' 42
 
-    run "$1" "$2 --sh $env_input"                              "$posix_output"
-    run "$1" "$2 --sh --export --input \"\$(cat $env_input)\"" "$posix_output"
-    run "$1" "$2 --sh --export - < $env_input"                 "$posix_output"
-    run "$1" "$2 --sh --export < $env_input"                   "$posix_output"
-    run "$1" "$2 --sh --local $env_input"                      ''
-    run "$1" "$2 --sh --local --input \"\$(cat $env_input)\""  ''
-    run "$1" "$2 --sh - < $env_input"                          ''
-    run "$1" "$2 --sh < $env_input"                            ''
+    run "$1" "$2 sh $env_input"                              "$posix_output"
+    run "$1" "$2 sh --export --input \"\$(cat $env_input)\"" "$posix_output"
+    run "$1" "$2 sh --export - < $env_input"                 "$posix_output"
+    run "$1" "$2 sh --export < $env_input"                   "$posix_output"
+    run "$1" "$2 sh --local $env_input"                      ''
+    run "$1" "$2 sh --local --input \"\$(cat $env_input)\""  ''
+    run "$1" "$2 sh - < $env_input"                          ''
+    run "$1" "$2 sh < $env_input"                            ''
 
-    run "$1" "$2 --sh $posix_input"                     "$posix_output"
-    run "$1" "$2 --sh --input \"\$(cat $posix_input)\"" "$posix_output"
-    run "$1" "$2 --sh - < $posix_input"                 "$posix_output"
-    run "$1" "$2 --sh < $posix_input"                   "$posix_output"
+    run "$1" "$2 sh $posix_input"                     "$posix_output"
+    run "$1" "$2 sh --input \"\$(cat $posix_input)\"" "$posix_output"
+    run "$1" "$2 sh - < $posix_input"                 "$posix_output"
+    run "$1" "$2 sh < $posix_input"                   "$posix_output"
 }
 
 run_output_tests() {
@@ -586,149 +586,149 @@ run_output_tests() {
         *)      set -- 1 "$@" ;;
     esac
 
-    run "$1" "$2 --ash $env_input"        "$posix_output"
-    run "$1" "$2 --bash $env_input"       "$posix_output"
-    run "$1" "$2 --dash $env_input"       "$posix_output"
-    run "$1" "$2 --ksh $env_input"        "$posix_output"
-    run "$1" "$2 --pdksh $env_input"      "$posix_output"
-    run "$1" "$2 --posix $env_input"      "$posix_output"
-    run "$1" "$2 --sh $env_input"         "$posix_output"
-    run "$1" "$2 --zsh $env_input"        "$posix_output"
-    run "$1" "$2 --bat $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
-    run "$1" "$2 --cmd $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
-    run "$1" "$2 --csh $env_input"        "$csh_output"
-    run "$1" "$2 --tcsh $env_input"       "$csh_output"
-    run "$1" "$2 --elvish $env_input"     "$elvish_output"
-    run "$1" "$2 --fish $env_input"       "$fish_output"
-    run "$1" "$2 --launchctl $env_input"  "$launchctl_output"
-    run "$1" "$2 --murex $env_input"      "$murex_output"
-    run "$1" "$2 --nu $env_input"         "$nu_output"
-    run "$1" "$2 --nushell $env_input"    "$nu_output"
-    run "$1" "$2 --pwsh $env_input"       "$pwsh_output"
-    run "$1" "$2 --powershell $env_input" "$pwsh_output"
-    run "$1" "$2 --env $env_input"        "$env_output"
-    run "$1" "$2 --json $env_input"       "$json_output"
-    run "$1" "$2 $format $env_input"      "$format_output"
+    run "$1" "$2 ash $env_input"        "$posix_output"
+    run "$1" "$2 bash $env_input"       "$posix_output"
+    run "$1" "$2 dash $env_input"       "$posix_output"
+    run "$1" "$2 ksh $env_input"        "$posix_output"
+    run "$1" "$2 pdksh $env_input"      "$posix_output"
+    run "$1" "$2 posix $env_input"      "$posix_output"
+    run "$1" "$2 sh $env_input"         "$posix_output"
+    run "$1" "$2 zsh $env_input"        "$posix_output"
+    run "$1" "$2 bat $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+    run "$1" "$2 cmd $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+    run "$1" "$2 csh $env_input"        "$csh_output"
+    run "$1" "$2 tcsh $env_input"       "$csh_output"
+    run "$1" "$2 elvish $env_input"     "$elvish_output"
+    run "$1" "$2 fish $env_input"       "$fish_output"
+    run "$1" "$2 launchctl $env_input"  "$launchctl_output"
+    run "$1" "$2 murex $env_input"      "$murex_output"
+    run "$1" "$2 nu $env_input"         "$nu_output"
+    run "$1" "$2 nushell $env_input"    "$nu_output"
+    run "$1" "$2 pwsh $env_input"       "$pwsh_output"
+    run "$1" "$2 powershell $env_input" "$pwsh_output"
+    run "$1" "$2 env $env_input"        "$env_output"
+    run "$1" "$2 json $env_input"       "$json_output"
+    run "$1" "$2 $format $env_input"    "$format_output"
 
-    run "$1" "$2 --ash --backup $env_input"        "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --bash --backup $env_input"       "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --dash --backup $env_input"       "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --ksh --backup $env_input"        "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --pdksh --backup $env_input"      "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --posix --backup $env_input"      "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --sh --backup $env_input"         "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --zsh --backup $env_input"        "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --bat --backup $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
-    run "$1" "$2 --cmd --backup $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
-    run "$1" "$2 --csh --backup $env_input"        "$csh_output${LF}$csh_backup_output"
-    run "$1" "$2 --tcsh --backup $env_input"       "$csh_output${LF}$csh_backup_output"
-    run "$1" "$2 --elvish --backup $env_input"     "$elvish_output${LF}$elvish_backup_output"
-    run "$1" "$2 --fish --backup $env_input"       "$fish_output${LF}$fish_backup_output"
-    run "$1" "$2 --launchctl --backup $env_input"  "$launchctl_output${LF}$launchctl_backup_output"
-    run "$1" "$2 --murex --backup $env_input"      "$murex_output${LF}$murex_backup_output"
-    run "$1" "$2 --nu --backup $env_input"         "$nu_output${LF}$nu_backup_output"
-    run "$1" "$2 --nushell --backup $env_input"    "$nu_output${LF}$nu_backup_output"
-    run "$1" "$2 --pwsh --backup $env_input"       "$pwsh_output${LF}$pwsh_backup_output"
-    run "$1" "$2 --powershell --backup $env_input" "$pwsh_output${LF}$pwsh_backup_output"
-    run "$1" "$2 --env --backup $env_input"        "$env_output${LF}$env_backup_output"
-    run "$1" "$2 --json --backup $env_input"       "$json_backup_output"
-    run "$1" "$2 $format --backup $env_input"      "$format_output${LF}$format_backup_output"
+    run "$1" "$2 ash --backup $env_input"        "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 bash --backup $env_input"       "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 dash --backup $env_input"       "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 ksh --backup $env_input"        "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 pdksh --backup $env_input"      "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 posix --backup $env_input"      "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 sh --backup $env_input"         "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 zsh --backup $env_input"        "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 bat --backup $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
+    run "$1" "$2 cmd --backup $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
+    run "$1" "$2 csh --backup $env_input"        "$csh_output${LF}$csh_backup_output"
+    run "$1" "$2 tcsh --backup $env_input"       "$csh_output${LF}$csh_backup_output"
+    run "$1" "$2 elvish --backup $env_input"     "$elvish_output${LF}$elvish_backup_output"
+    run "$1" "$2 fish --backup $env_input"       "$fish_output${LF}$fish_backup_output"
+    run "$1" "$2 launchctl --backup $env_input"  "$launchctl_output${LF}$launchctl_backup_output"
+    run "$1" "$2 murex --backup $env_input"      "$murex_output${LF}$murex_backup_output"
+    run "$1" "$2 nu --backup $env_input"         "$nu_output${LF}$nu_backup_output"
+    run "$1" "$2 nushell --backup $env_input"    "$nu_output${LF}$nu_backup_output"
+    run "$1" "$2 pwsh --backup $env_input"       "$pwsh_output${LF}$pwsh_backup_output"
+    run "$1" "$2 powershell --backup $env_input" "$pwsh_output${LF}$pwsh_backup_output"
+    run "$1" "$2 env --backup $env_input"        "$env_output${LF}$env_backup_output"
+    run "$1" "$2 json --backup $env_input"       "$json_backup_output"
+    run "$1" "$2 $format --backup $env_input"    "$format_output${LF}$format_backup_output"
 
-    run "$1" "$2 --ash --local $env_input"        ''
-    run "$1" "$2 --bash --local $env_input"       ''
-    run "$1" "$2 --dash --local $env_input"       ''
-    run "$1" "$2 --ksh --local $env_input"        ''
-    run "$1" "$2 --pdksh --local $env_input"      ''
-    run "$1" "$2 --posix --local $env_input"      ''
-    run "$1" "$2 --sh --local $env_input"         ''
-    run "$1" "$2 --zsh --local $env_input"        ''
-    run "$1" "$2 --bat --local $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
-    run "$1" "$2 --cmd --local $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
-    run "$1" "$2 --csh --local $env_input"        ''
-    run "$1" "$2 --tcsh --local $env_input"       ''
-    run "$1" "$2 --elvish --local $env_input"     ''
-    run "$1" "$2 --fish --local $env_input"       ''
-    run "$1" "$2 --launchctl --local $env_input"  ''
-    run "$1" "$2 --murex --local $env_input"      ''
-    run "$1" "$2 --nu --local $env_input"         ''
-    run "$1" "$2 --nushell --local $env_input"    ''
-    run "$1" "$2 --pwsh --local $env_input"       ''
-    run "$1" "$2 --powershell --local $env_input" ''
-    run "$1" "$2 --env --local $env_input"        ''
-    run "$1" "$2 --json --local $env_input"       '{}'
-    run "$1" "$2 $format --local $env_input"      ''
+    run "$1" "$2 ash --local $env_input"        ''
+    run "$1" "$2 bash --local $env_input"       ''
+    run "$1" "$2 dash --local $env_input"       ''
+    run "$1" "$2 ksh --local $env_input"        ''
+    run "$1" "$2 pdksh --local $env_input"      ''
+    run "$1" "$2 posix --local $env_input"      ''
+    run "$1" "$2 sh --local $env_input"         ''
+    run "$1" "$2 zsh --local $env_input"        ''
+    run "$1" "$2 bat --local $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+    run "$1" "$2 cmd --local $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+    run "$1" "$2 csh --local $env_input"        ''
+    run "$1" "$2 tcsh --local $env_input"       ''
+    run "$1" "$2 elvish --local $env_input"     ''
+    run "$1" "$2 fish --local $env_input"       ''
+    run "$1" "$2 launchctl --local $env_input"  ''
+    run "$1" "$2 murex --local $env_input"      ''
+    run "$1" "$2 nu --local $env_input"         ''
+    run "$1" "$2 nushell --local $env_input"    ''
+    run "$1" "$2 pwsh --local $env_input"       ''
+    run "$1" "$2 powershell --local $env_input" ''
+    run "$1" "$2 env --local $env_input"        ''
+    run "$1" "$2 json --local $env_input"       '{}'
+    run "$1" "$2 $format --local $env_input"    ''
 
-    run "$1" "$2 --ash --local --backup $env_input"        ''
-    run "$1" "$2 --bash --local --backup $env_input"       ''
-    run "$1" "$2 --dash --local --backup $env_input"       ''
-    run "$1" "$2 --ksh --local --backup $env_input"        ''
-    run "$1" "$2 --pdksh --local --backup $env_input"      ''
-    run "$1" "$2 --posix --local --backup $env_input"      ''
-    run "$1" "$2 --sh --local --backup $env_input"         ''
-    run "$1" "$2 --zsh --local --backup $env_input"        ''
-    run "$1" "$2 --bat --local --backup $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
-    run "$1" "$2 --cmd --local --backup $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
-    run "$1" "$2 --csh --local --backup $env_input"        ''
-    run "$1" "$2 --tcsh --local --backup $env_input"       ''
-    run "$1" "$2 --elvish --local --backup $env_input"     ''
-    run "$1" "$2 --fish --local --backup $env_input"       ''
-    run "$1" "$2 --launchctl --local --backup $env_input"  ''
-    run "$1" "$2 --murex --local --backup $env_input"      ''
-    run "$1" "$2 --nu --local --backup $env_input"         ''
-    run "$1" "$2 --nushell --local --backup $env_input"    ''
-    run "$1" "$2 --pwsh --local --backup $env_input"       ''
-    run "$1" "$2 --powershell --local --backup $env_input" ''
-    run "$1" "$2 --env --local --backup $env_input"        ''
-    run "$1" "$2 --json --local --backup $env_input"       '{}'
-    run "$1" "$2 $format --local --backup $env_input"      ''
+    run "$1" "$2 ash --local --backup $env_input"        ''
+    run "$1" "$2 bash --local --backup $env_input"       ''
+    run "$1" "$2 dash --local --backup $env_input"       ''
+    run "$1" "$2 ksh --local --backup $env_input"        ''
+    run "$1" "$2 pdksh --local --backup $env_input"      ''
+    run "$1" "$2 posix --local --backup $env_input"      ''
+    run "$1" "$2 sh --local --backup $env_input"         ''
+    run "$1" "$2 zsh --local --backup $env_input"        ''
+    run "$1" "$2 bat --local --backup $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+    run "$1" "$2 cmd --local --backup $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+    run "$1" "$2 csh --local --backup $env_input"        ''
+    run "$1" "$2 tcsh --local --backup $env_input"       ''
+    run "$1" "$2 elvish --local --backup $env_input"     ''
+    run "$1" "$2 fish --local --backup $env_input"       ''
+    run "$1" "$2 launchctl --local --backup $env_input"  ''
+    run "$1" "$2 murex --local --backup $env_input"      ''
+    run "$1" "$2 nu --local --backup $env_input"         ''
+    run "$1" "$2 nushell --local --backup $env_input"    ''
+    run "$1" "$2 pwsh --local --backup $env_input"       ''
+    run "$1" "$2 powershell --local --backup $env_input" ''
+    run "$1" "$2 env --local --backup $env_input"        ''
+    run "$1" "$2 json --local --backup $env_input"       '{}'
+    run "$1" "$2 $format --local --backup $env_input"    ''
 
-    run "$1" "$2 --ash $posix_input"        "$posix_output"
-    run "$1" "$2 --bash $posix_input"       "$posix_output"
-    run "$1" "$2 --dash $posix_input"       "$posix_output"
-    run "$1" "$2 --ksh $posix_input"        "$posix_output"
-    run "$1" "$2 --pdksh $posix_input"      "$posix_output"
-    run "$1" "$2 --posix $posix_input"      "$posix_output"
-    run "$1" "$2 --sh $posix_input"         "$posix_output"
-    run "$1" "$2 --zsh $posix_input"        "$posix_output"
-    run "$1" "$2 --bat $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
-    run "$1" "$2 --cmd $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
-    run "$1" "$2 --csh $posix_input"        "$csh_output"
-    run "$1" "$2 --tcsh $posix_input"       "$csh_output"
-    run "$1" "$2 --elvish $posix_input"     "$elvish_output"
-    run "$1" "$2 --fish $posix_input"       "$fish_output"
-    run "$1" "$2 --launchctl $posix_input"  "$launchctl_output"
-    run "$1" "$2 --murex $posix_input"      "$murex_output"
-    run "$1" "$2 --nu $posix_input"         "$nu_output"
-    run "$1" "$2 --nushell $posix_input"    "$nu_output"
-    run "$1" "$2 --pwsh $posix_input"       "$pwsh_output"
-    run "$1" "$2 --powershell $posix_input" "$pwsh_output"
-    run "$1" "$2 --env $posix_input"        "$env_output"
-    run "$1" "$2 --json $posix_input"       "$json_output"
-    run "$1" "$2 $format $posix_input"      "$format_output"
+    run "$1" "$2 ash $posix_input"        "$posix_output"
+    run "$1" "$2 bash $posix_input"       "$posix_output"
+    run "$1" "$2 dash $posix_input"       "$posix_output"
+    run "$1" "$2 ksh $posix_input"        "$posix_output"
+    run "$1" "$2 pdksh $posix_input"      "$posix_output"
+    run "$1" "$2 posix $posix_input"      "$posix_output"
+    run "$1" "$2 sh $posix_input"         "$posix_output"
+    run "$1" "$2 zsh $posix_input"        "$posix_output"
+    run "$1" "$2 bat $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+    run "$1" "$2 cmd $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+    run "$1" "$2 csh $posix_input"        "$csh_output"
+    run "$1" "$2 tcsh $posix_input"       "$csh_output"
+    run "$1" "$2 elvish $posix_input"     "$elvish_output"
+    run "$1" "$2 fish $posix_input"       "$fish_output"
+    run "$1" "$2 launchctl $posix_input"  "$launchctl_output"
+    run "$1" "$2 murex $posix_input"      "$murex_output"
+    run "$1" "$2 nu $posix_input"         "$nu_output"
+    run "$1" "$2 nushell $posix_input"    "$nu_output"
+    run "$1" "$2 pwsh $posix_input"       "$pwsh_output"
+    run "$1" "$2 powershell $posix_input" "$pwsh_output"
+    run "$1" "$2 env $posix_input"        "$env_output"
+    run "$1" "$2 json $posix_input"       "$json_output"
+    run "$1" "$2 $format $posix_input"    "$format_output"
 
-    run "$1" "$2 --ash --backup $posix_input"        "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --bash --backup $posix_input"       "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --dash --backup $posix_input"       "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --ksh --backup $posix_input"        "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --pdksh --backup $posix_input"      "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --posix --backup $posix_input"      "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --sh --backup $posix_input"         "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --zsh --backup $posix_input"        "$posix_output${LF}$posix_backup_output"
-    run "$1" "$2 --bat --backup $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
-    run "$1" "$2 --cmd --backup $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
-    run "$1" "$2 --csh --backup $posix_input"        "$csh_output${LF}$csh_backup_output"
-    run "$1" "$2 --tcsh --backup $posix_input"       "$csh_output${LF}$csh_backup_output"
-    run "$1" "$2 --elvish --backup $posix_input"     "$elvish_output${LF}$elvish_backup_output"
-    run "$1" "$2 --fish --backup $posix_input"       "$fish_output${LF}$fish_backup_output"
-    run "$1" "$2 --launchctl --backup $posix_input"  "$launchctl_output${LF}$launchctl_backup_output"
-    run "$1" "$2 --murex --backup $posix_input"      "$murex_output${LF}$murex_backup_output"
-    run "$1" "$2 --nu --backup $posix_input"         "$nu_output${LF}$nu_backup_output"
-    run "$1" "$2 --nushell --backup $posix_input"    "$nu_output${LF}$nu_backup_output"
-    run "$1" "$2 --pwsh --backup $posix_input"       "$pwsh_output${LF}$pwsh_backup_output"
-    run "$1" "$2 --powershell --backup $posix_input" "$pwsh_output${LF}$pwsh_backup_output"
-    run "$1" "$2 --env --backup $posix_input"        "$env_output${LF}$env_backup_output"
-    run "$1" "$2 --json --backup $posix_input"       "$json_backup_output"
-    run "$1" "$2 $format --backup $posix_input"      "$format_output${LF}$format_backup_output"
+    run "$1" "$2 ash --backup $posix_input"        "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 bash --backup $posix_input"       "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 dash --backup $posix_input"       "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 ksh --backup $posix_input"        "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 pdksh --backup $posix_input"      "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 posix --backup $posix_input"      "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 sh --backup $posix_input"         "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 zsh --backup $posix_input"        "$posix_output${LF}$posix_backup_output"
+    run "$1" "$2 bat --backup $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
+    run "$1" "$2 cmd --backup $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_backup_output${LF}$cmd_output_suffix"
+    run "$1" "$2 csh --backup $posix_input"        "$csh_output${LF}$csh_backup_output"
+    run "$1" "$2 tcsh --backup $posix_input"       "$csh_output${LF}$csh_backup_output"
+    run "$1" "$2 elvish --backup $posix_input"     "$elvish_output${LF}$elvish_backup_output"
+    run "$1" "$2 fish --backup $posix_input"       "$fish_output${LF}$fish_backup_output"
+    run "$1" "$2 launchctl --backup $posix_input"  "$launchctl_output${LF}$launchctl_backup_output"
+    run "$1" "$2 murex --backup $posix_input"      "$murex_output${LF}$murex_backup_output"
+    run "$1" "$2 nu --backup $posix_input"         "$nu_output${LF}$nu_backup_output"
+    run "$1" "$2 nushell --backup $posix_input"    "$nu_output${LF}$nu_backup_output"
+    run "$1" "$2 pwsh --backup $posix_input"       "$pwsh_output${LF}$pwsh_backup_output"
+    run "$1" "$2 powershell --backup $posix_input" "$pwsh_output${LF}$pwsh_backup_output"
+    run "$1" "$2 env --backup $posix_input"        "$env_output${LF}$env_backup_output"
+    run "$1" "$2 json --backup $posix_input"       "$json_backup_output"
+    run "$1" "$2 $format --backup $posix_input"    "$format_output${LF}$format_backup_output"
 }
 
 start
@@ -745,104 +745,104 @@ script() {
 
 sh=$(detect sh) || msg warn 'sh not found; skipping tests...'
 run_posix_tests "$sh" "sh srcenv"
-run "$sh" "sh -c $(script "$posix_script"      '--sh test.env'          )" "$json_output"
-run "$sh" "sh -c $(script "$posix_script"      '--sh test.env.sh'       )" "$json_output"
-run "$sh" "sh -c $(script "$posix_undo_script" '--sh test.env'    '--sh')" '{}'
-run "$sh" "sh -c $(script "$posix_undo_script" '--sh test.env.sh' '--sh')" '{}'
+run "$sh" "sh -c $(script "$posix_script"      'sh test.env'        )" "$json_output"
+run "$sh" "sh -c $(script "$posix_script"      'sh test.env.sh'     )" "$json_output"
+run "$sh" "sh -c $(script "$posix_undo_script" 'sh test.env'    'sh')" '{}'
+run "$sh" "sh -c $(script "$posix_undo_script" 'sh test.env.sh' 'sh')" '{}'
 
 ash=$(detect ash) || msg warn 'Ash not found; skipping tests...'
 run_posix_tests "$ash" "ash srcenv"
-run "$ash" "ash -c $(script "$posix_script"      '--ash test.env'           )" "$json_output"
-run "$ash" "ash -c $(script "$posix_script"      '--ash test.env.sh'        )" "$json_output"
-run "$ash" "ash -c $(script "$posix_undo_script" '--ash test.env'    '--ash')" '{}'
-run "$ash" "ash -c $(script "$posix_undo_script" '--ash test.env.sh' '--ash')" '{}'
+run "$ash" "ash -c $(script "$posix_script"      'ash test.env'         )" "$json_output"
+run "$ash" "ash -c $(script "$posix_script"      'ash test.env.sh'      )" "$json_output"
+run "$ash" "ash -c $(script "$posix_undo_script" 'ash test.env'    'ash')" '{}'
+run "$ash" "ash -c $(script "$posix_undo_script" 'ash test.env.sh' 'ash')" '{}'
 
 bash=$(detect bash) || msg warn 'Bash not found; skipping tests...'
 run_posix_tests "$bash" "bash srcenv"
-run "$bash" "bash -c $(script "$posix_script"      '--bash test.env'            )" "$json_output"
-run "$bash" "bash -c $(script "$posix_script"      '--bash test.env.sh'         )" "$json_output"
-run "$bash" "bash -c $(script "$posix_undo_script" '--bash test.env'    '--bash')" '{}'
-run "$bash" "bash -c $(script "$posix_undo_script" '--bash test.env.sh' '--bash')" '{}'
+run "$bash" "bash -c $(script "$posix_script"      'bash test.env'          )" "$json_output"
+run "$bash" "bash -c $(script "$posix_script"      'bash test.env.sh'       )" "$json_output"
+run "$bash" "bash -c $(script "$posix_undo_script" 'bash test.env'    'bash')" '{}'
+run "$bash" "bash -c $(script "$posix_undo_script" 'bash test.env.sh' 'bash')" '{}'
 
 dash=$(detect dash) || msg warn 'Dash not found; skipping tests...'
 run_posix_tests "$dash" "dash srcenv"
-run "$dash" "dash -c $(script "$posix_script"      '--dash test.env'            )" "$json_output"
-run "$dash" "dash -c $(script "$posix_script"      '--dash test.env.sh'         )" "$json_output"
-run "$dash" "dash -c $(script "$posix_undo_script" '--dash test.env'    '--dash')" '{}'
-run "$dash" "dash -c $(script "$posix_undo_script" '--dash test.env.sh' '--dash')" '{}'
+run "$dash" "dash -c $(script "$posix_script"      'dash test.env'          )" "$json_output"
+run "$dash" "dash -c $(script "$posix_script"      'dash test.env.sh'       )" "$json_output"
+run "$dash" "dash -c $(script "$posix_undo_script" 'dash test.env'    'dash')" '{}'
+run "$dash" "dash -c $(script "$posix_undo_script" 'dash test.env.sh' 'dash')" '{}'
 
 ksh=$(detect ksh) || msg warn 'Ksh not found; skipping tests...'
 run_posix_tests "$ksh" "ksh srcenv"
-run "$ksh" "ksh -c $(script "$posix_script"      '--ksh test.env'           )" "$json_output"
-run "$ksh" "ksh -c $(script "$posix_script"      '--ksh test.env.sh'        )" "$json_output"
-run "$ksh" "ksh -c $(script "$posix_undo_script" '--ksh test.env'    '--ksh')" '{}'
-run "$ksh" "ksh -c $(script "$posix_undo_script" '--ksh test.env.sh' '--ksh')" '{}'
+run "$ksh" "ksh -c $(script "$posix_script"      'ksh test.env'         )" "$json_output"
+run "$ksh" "ksh -c $(script "$posix_script"      'ksh test.env.sh'      )" "$json_output"
+run "$ksh" "ksh -c $(script "$posix_undo_script" 'ksh test.env'    'ksh')" '{}'
+run "$ksh" "ksh -c $(script "$posix_undo_script" 'ksh test.env.sh' 'ksh')" '{}'
 
 mksh=$(detect mksh) || msg warn 'Mksh not found; skipping tests...'
 run_posix_tests "$mksh" "mksh srcenv"
-run "$mksh" "mksh -c $(script "$posix_script"      '--mksh test.env'            )" "$json_output"
-run "$mksh" "mksh -c $(script "$posix_script"      '--mksh test.env.sh'         )" "$json_output"
-run "$mksh" "mksh -c $(script "$posix_undo_script" '--mksh test.env'    '--mksh')" '{}'
-run "$mksh" "mksh -c $(script "$posix_undo_script" '--mksh test.env.sh' '--mksh')" '{}'
+run "$mksh" "mksh -c $(script "$posix_script"      'mksh test.env'          )" "$json_output"
+run "$mksh" "mksh -c $(script "$posix_script"      'mksh test.env.sh'       )" "$json_output"
+run "$mksh" "mksh -c $(script "$posix_undo_script" 'mksh test.env'    'mksh')" '{}'
+run "$mksh" "mksh -c $(script "$posix_undo_script" 'mksh test.env.sh' 'mksh')" '{}'
 
 zsh=$(detect zsh) || msg warn 'Zsh not found; skipping tests...'
 run_posix_tests "$zsh" "zsh srcenv"
-run "$zsh" "zsh -c $(script "$posix_script"      '--zsh test.env'           )" "$json_output"
-run "$zsh" "zsh -c $(script "$posix_script"      '--zsh test.env.sh'        )" "$json_output"
-run "$zsh" "zsh -c $(script "$posix_undo_script" '--zsh test.env'    '--zsh')" '{}'
-run "$zsh" "zsh -c $(script "$posix_undo_script" '--zsh test.env.sh' '--zsh')" '{}'
+run "$zsh" "zsh -c $(script "$posix_script"      'zsh test.env'         )" "$json_output"
+run "$zsh" "zsh -c $(script "$posix_script"      'zsh test.env.sh'      )" "$json_output"
+run "$zsh" "zsh -c $(script "$posix_undo_script" 'zsh test.env'    'zsh')" '{}'
+run "$zsh" "zsh -c $(script "$posix_undo_script" 'zsh test.env.sh' 'zsh')" '{}'
 
 csh=$(detect csh) || msg warn 'Csh not found; skipping tests...'
-run "$csh" "csh -c $(script "$csh_script"      '--csh test.env'           )" "$json_output"
-run "$csh" "csh -c $(script "$csh_script"      '--csh test.env.sh'        )" "$json_output"
-run "$csh" "csh -c $(script "$csh_undo_script" '--csh test.env'    '--csh')" '{}'
-run "$csh" "csh -c $(script "$csh_undo_script" '--csh test.env.sh' '--csh')" '{}'
+run "$csh" "csh -c $(script "$csh_script"      'csh test.env'         )" "$json_output"
+run "$csh" "csh -c $(script "$csh_script"      'csh test.env.sh'      )" "$json_output"
+run "$csh" "csh -c $(script "$csh_undo_script" 'csh test.env'    'csh')" '{}'
+run "$csh" "csh -c $(script "$csh_undo_script" 'csh test.env.sh' 'csh')" '{}'
 
 tcsh=$(detect tcsh) || msg warn 'Tcsh not found; skipping tests...'
-run "$tcsh" "tcsh -c $(script "$csh_script"      '--tcsh test.env'            )" "$json_output"
-run "$tcsh" "tcsh -c $(script "$csh_script"      '--tcsh test.env.sh'         )" "$json_output"
-run "$tcsh" "tcsh -c $(script "$csh_undo_script" '--tcsh test.env'    '--tcsh')" '{}'
-run "$tcsh" "tcsh -c $(script "$csh_undo_script" '--tcsh test.env.sh' '--tcsh')" '{}'
+run "$tcsh" "tcsh -c $(script "$csh_script"      'tcsh test.env'          )" "$json_output"
+run "$tcsh" "tcsh -c $(script "$csh_script"      'tcsh test.env.sh'       )" "$json_output"
+run "$tcsh" "tcsh -c $(script "$csh_undo_script" 'tcsh test.env'    'tcsh')" '{}'
+run "$tcsh" "tcsh -c $(script "$csh_undo_script" 'tcsh test.env.sh' 'tcsh')" '{}'
 
 elvish=$(detect elvish) || msg warn 'Elvish not found; skipping tests...'
-run "$elvish" "elvish -c $(script "$elvish_script"      '--elvish test.env'              )" "$json_output"
-run "$elvish" "elvish -c $(script "$elvish_script"      '--elvish test.env.sh'           )" "$json_output"
-run "$elvish" "elvish -c $(script "$elvish_undo_script" '--elvish test.env'    '--elvish')" '{}'
-run "$elvish" "elvish -c $(script "$elvish_undo_script" '--elvish test.env.sh' '--elvish')" '{}'
+run "$elvish" "elvish -c $(script "$elvish_script"      'elvish test.env'            )" "$json_output"
+run "$elvish" "elvish -c $(script "$elvish_script"      'elvish test.env.sh'         )" "$json_output"
+run "$elvish" "elvish -c $(script "$elvish_undo_script" 'elvish test.env'    'elvish')" '{}'
+run "$elvish" "elvish -c $(script "$elvish_undo_script" 'elvish test.env.sh' 'elvish')" '{}'
 
 fish=$(detect fish) || msg warn 'Fish not found; skipping tests...'
-run "$fish" "fish -c $(script "$fish_script"      '--fish test.env'            )" "$json_output"
-run "$fish" "fish -c $(script "$fish_script"      '--fish test.env.sh'         )" "$json_output"
-run "$fish" "fish -c $(script "$fish_undo_script" '--fish test.env'    '--fish')" '{}'
-run "$fish" "fish -c $(script "$fish_undo_script" '--fish test.env.sh' '--fish')" '{}'
+run "$fish" "fish -c $(script "$fish_script"      'fish test.env'          )" "$json_output"
+run "$fish" "fish -c $(script "$fish_script"      'fish test.env.sh'       )" "$json_output"
+run "$fish" "fish -c $(script "$fish_undo_script" 'fish test.env'    'fish')" '{}'
+run "$fish" "fish -c $(script "$fish_undo_script" 'fish test.env.sh' 'fish')" '{}'
 
 murex=$(detect murex) || msg warn 'Murex not found; skipping tests...'
-run "$murex" "murex -c $(script "$murex_script"      '--murex test.env'             )" "$json_output"
-run "$murex" "murex -c $(script "$murex_script"      '--murex test.env.sh'          )" "$json_output"
-run "$murex" "murex -c $(script "$murex_undo_script" '--murex test.env'    '--murex')" '{}'
-run "$murex" "murex -c $(script "$murex_undo_script" '--murex test.env.sh' '--murex')" '{}'
+run "$murex" "murex -c $(script "$murex_script"      'murex test.env'           )" "$json_output"
+run "$murex" "murex -c $(script "$murex_script"      'murex test.env.sh'        )" "$json_output"
+run "$murex" "murex -c $(script "$murex_undo_script" 'murex test.env'    'murex')" '{}'
+run "$murex" "murex -c $(script "$murex_undo_script" 'murex test.env.sh' 'murex')" '{}'
 
 nu=$(detect nu) || msg warn 'Nushell not found; skipping tests...'
-run "$nu" "nu -c $(script "$nu_json_script"  '--json test.env'            )" "$json_output"
-run "$nu" "nu -c $(script "$nu_json_script"  '--json test.env.sh'         )" "$json_output"
-run "$nu" "nu -c $(script "$nu_undo_script"  '--json test.env'    '--json')" '{}'
-run "$nu" "nu -c $(script "$nu_undo_script"  '--json test.env.sh' '--json')" '{}'
-run "$nu" "nu -c $(script "$nu_setup_script" '--nu test.env'              )" ''
-run "$nu" "nu -c $(script "$nu_script"                                    )" "$json_output"
-run "$nu" "nu -c $(script "$nu_setup_script" '--nu test.env.sh'           )" ''
-run "$nu" "nu -c $(script "$nu_script"                                    )" "$json_output"
+run "$nu" "nu -c $(script "$nu_json_script"  'json test.env'          )" "$json_output"
+run "$nu" "nu -c $(script "$nu_json_script"  'json test.env.sh'       )" "$json_output"
+run "$nu" "nu -c $(script "$nu_undo_script"  'json test.env'    'json')" '{}'
+run "$nu" "nu -c $(script "$nu_undo_script"  'json test.env.sh' 'json')" '{}'
+run "$nu" "nu -c $(script "$nu_setup_script" 'nu test.env'            )" ''
+run "$nu" "nu -c $(script "$nu_script"                                )" "$json_output"
+run "$nu" "nu -c $(script "$nu_setup_script" 'nu test.env.sh'         )" ''
+run "$nu" "nu -c $(script "$nu_script"                                )" "$json_output"
 
 pwsh=$(detect pwsh) || msg warn 'PowerShell not found; skipping tests...'
-run "$pwsh" "pwsh -c $(script "$pwsh_script"      '--pwsh test.env'            )" "$json_output"
-run "$pwsh" "pwsh -c $(script "$pwsh_script"      '--pwsh test.env.sh'         )" "$json_output"
-run "$pwsh" "pwsh -c $(script "$pwsh_undo_script" '--pwsh test.env'    '--pwsh')" '{}'
-run "$pwsh" "pwsh -c $(script "$pwsh_undo_script" '--pwsh test.env.sh' '--pwsh')" '{}'
+run "$pwsh" "pwsh -c $(script "$pwsh_script"      'pwsh test.env'          )" "$json_output"
+run "$pwsh" "pwsh -c $(script "$pwsh_script"      'pwsh test.env.sh'       )" "$json_output"
+run "$pwsh" "pwsh -c $(script "$pwsh_undo_script" 'pwsh test.env'    'pwsh')" '{}'
+run "$pwsh" "pwsh -c $(script "$pwsh_undo_script" 'pwsh test.env.sh' 'pwsh')" '{}'
 
 powershell=$(detect powershell) || msg warn 'Windows PowerShell not found; skipping tests...'
-run "$powershell" "powershell -c $(script "$powershell_script"      '--powershell test.env'                  )" "$json_output"
-run "$powershell" "powershell -c $(script "$powershell_script"      '--powershell test.env.sh'               )" "$json_output"
-run "$powershell" "powershell -c $(script "$powershell_undo_script" '--powershell test.env'    '--powershell')" '{}'
-run "$powershell" "powershell -c $(script "$powershell_undo_script" '--powershell test.env.sh' '--powershell')" '{}'
+run "$powershell" "powershell -c $(script "$powershell_script"      'powershell test.env'                )" "$json_output"
+run "$powershell" "powershell -c $(script "$powershell_script"      'powershell test.env.sh'             )" "$json_output"
+run "$powershell" "powershell -c $(script "$powershell_undo_script" 'powershell test.env'    'powershell')" '{}'
+run "$powershell" "powershell -c $(script "$powershell_undo_script" 'powershell test.env.sh' 'powershell')" '{}'
 
 end
 

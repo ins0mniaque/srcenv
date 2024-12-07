@@ -10,87 +10,92 @@ NAME
 SYNOPSIS
 ========
 
-| **srcenv** \[_options_] \[_files_]
+| **srcenv** \<_shell_\> \[_options_] \[_files_]
+| **srcenv** init \<_shell_\>
 | **srcenv** \[**-h**|**\--help**|**-v**|**\--version**]
 
 DESCRIPTION
 ===========
 
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
-and prints a script exporting the environment variables that have changed since
-the snapshot, for one of the following shells:
-
-    bash, csh/tcsh, dash, elvish, fish, murex, nushell, powershell, zsh
+and prints a shell specific script exporting the environment variables that have
+changed since the snapshot.
 
 srcenv depends on jq(1) being available; see <https://jqlang.github.io/jq> for
 installation options.
 
-Options
--------
+Commands
+--------
 
-\--ash
+init
 
-:   Format the output as an Ash script.
+:   Generate the initialization script.
 
-\--bash
+Shells
+------
+
+ash, dash
+
+:   Format the output as an Ash/Dash script.
+
+bash
 
 :   Format the output as a Bash script.
 
-\--bat, \--cmd
+bat, cmd
 
 :   Format the output as a Windows batch script.
 
-\--csh, \--tcsh
+csh, tcsh
 
 :   Format the output as a Csh/Tcsh script.
 
-\--dash
-
-:   Format the output as a Dash script.
-
-\--elvish
+elvish
 
 :   Format the output as an Elvish script.
 
-\--env
+env
 
 :   Format the output as a .env file.
 
-\--fish
+fish
 
 :   Format the output as a Fish script.
 
-\--json
+json
 
 :   Format the output as JSON.
 
-\--ksh, \--pdksh, \--mksh
+ksh, pdksh, mksh
 
 :   Format the output as a Ksh script.
 
-\--murex
+murex
 
 :   Format the output as a Murex script.
 
-\--launchctl
+launchctl
 
 :   Format the output as a launchctl calls (macOS).
 
-\--nu, \--nushell
+nu, nushell
 
 :   Format the output as a Nushell script.
 
-\--posix, \--sh
+posix, sh
 
 :   Format the output as a POSIX shell script.
 
-\--pwsh, \--powershell
+pwsh, powershell
 
 :   Format the output as a PowerShell script.
 
-\--zsh
+zsh
 
 :   Format the output as a Zsh script.
+
+Options
+-------
 
 -f FORMAT, -f=FORMAT, \--format FORMAT, \--format=FORMAT
 
@@ -143,19 +148,19 @@ The following examples show how to source `.env` in different shells:
 
 Bash:
 
-:   `source <(srcenv --bash .env)`
+:   `source <(srcenv bash .env)`
 
 Fish:
 
-:   `srcenv --fish .env | source`
+:   `srcenv fish .env | source`
 
 PowerShell:
 
-:   `Invoke-Expression (&srcenv --pwsh .env)`
+:   `Invoke-Expression (&srcenv pwsh .env)`
 
 Zsh:
 
-:   `source <(srcenv --zsh .env)`
+:   `source <(srcenv zsh .env)`
 
 FORMAT
 ======
@@ -178,9 +183,9 @@ Double quoted value:
 
 :   `(.[$k]|@json)`
 
-Default format:
+POSIX format:
 
-:   `\($k)=\(.[$k]|@sh)??\($k)=`
+:   `export \($k)=\(.[$k]|@sh)??unset \($k)`
 
 SEE ALSO
 ========

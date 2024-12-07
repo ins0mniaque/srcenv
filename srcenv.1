@@ -6,7 +6,11 @@
 \&.env scripts
 .SH SYNOPSIS
 .PP
-\f[B]srcenv\f[R] [\f[I]options\f[R]] [\f[I]files\f[R]]
+\f[B]srcenv\f[R] <\f[I]shell\f[R]> [\f[I]options\f[R]] [\f[I]files\f[R]]
+.PD 0
+.P
+.PD
+\f[B]srcenv\f[R] init <\f[I]shell\f[R]>
 .PD 0
 .P
 .PD
@@ -14,66 +18,64 @@
 [\f[B]\-h\f[R]|\f[B]\-\-help\f[R]|\f[B]\-v\f[R]|\f[B]\-\-version\f[R]]
 .SH DESCRIPTION
 srcenv takes a snapshot of the POSIX shell environment, sources the .env
-scripts and prints a script exporting the environment variables that
-have changed since the snapshot, for one of the following shells:
-.IP
-.EX
-bash, csh/tcsh, dash, elvish, fish, murex, nushell, powershell, zsh
-.EE
+scripts and prints a shell specific script exporting the environment
+variables that have changed since the snapshot.
 .PP
 srcenv depends on jq(1) being available; see \c
 .UR https://jqlang.github.io/jq
 .UE \c
 \ for installation options.
-.SS Options
+.SS Commands
 .TP
-\-\-ash
-Format the output as an Ash script.
+init
+Generate the initialization script.
+.SS Shells
 .TP
-\-\-bash
+ash, dash
+Format the output as an Ash/Dash script.
+.TP
+bash
 Format the output as a Bash script.
 .TP
-\-\-bat, \-\-cmd
+bat, cmd
 Format the output as a Windows batch script.
 .TP
-\-\-csh, \-\-tcsh
+csh, tcsh
 Format the output as a Csh/Tcsh script.
 .TP
-\-\-dash
-Format the output as a Dash script.
-.TP
-\-\-elvish
+elvish
 Format the output as an Elvish script.
 .TP
-\-\-env
+env
 Format the output as a .env file.
 .TP
-\-\-fish
+fish
 Format the output as a Fish script.
 .TP
-\-\-json
+json
 Format the output as JSON.
 .TP
-\-\-ksh, \-\-pdksh, \-\-mksh
+ksh, pdksh, mksh
 Format the output as a Ksh script.
 .TP
-\-\-murex
+murex
 Format the output as a Murex script.
 .TP
-\-\-launchctl
+launchctl
 Format the output as a launchctl calls (macOS).
 .TP
-\-\-nu, \-\-nushell
+nu, nushell
 Format the output as a Nushell script.
 .TP
-\-\-posix, \-\-sh
+posix, sh
 Format the output as a POSIX shell script.
 .TP
-\-\-pwsh, \-\-powershell
+pwsh, powershell
 Format the output as a PowerShell script.
 .TP
-\-\-zsh
+zsh
 Format the output as a Zsh script.
+.SS Options
 .TP
 \-f FORMAT, \-f=FORMAT, \-\-format FORMAT, \-\-format=FORMAT
 Format the output as anything (jq interpolated string).
@@ -113,16 +115,16 @@ The following examples show how to source \f[CR].env\f[R] in different
 shells:
 .TP
 Bash:
-\f[CR]source <(srcenv \-\-bash .env)\f[R]
+\f[CR]source <(srcenv bash .env)\f[R]
 .TP
 Fish:
-\f[CR]srcenv \-\-fish .env | source\f[R]
+\f[CR]srcenv fish .env | source\f[R]
 .TP
 PowerShell:
-\f[CR]Invoke\-Expression (&srcenv \-\-pwsh .env)\f[R]
+\f[CR]Invoke\-Expression (&srcenv pwsh .env)\f[R]
 .TP
 Zsh:
-\f[CR]source <(srcenv \-\-zsh .env)\f[R]
+\f[CR]source <(srcenv zsh .env)\f[R]
 .SH FORMAT
 The format is a jq(1) interpolated string
 \f[CR]\[ga]\f[R]\[rs](\&...)\f[CR]\[ga]\f[R] where the key is
@@ -144,8 +146,8 @@ Single quoted value:
 Double quoted value:
 \f[CR](.[$k]|\[at]json)\f[R]
 .TP
-Default format:
-\f[CR]\[rs]($k)=\[rs](.[$k]|\[at]sh)??\[rs]($k)=\f[R]
+POSIX format:
+\f[CR]export \[rs]($k)=\[rs](.[$k]|\[at]sh)??unset \[rs]($k)\f[R]
 .SH SEE ALSO
 Repository: https://github.com/ins0mniaque/srcenv
 .PP

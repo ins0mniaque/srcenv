@@ -12,14 +12,10 @@ version() { echo 'srcenv 1.4.9'; }
 header() { echo >&2 'srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.'; }
 
 desc() {
-    colors NORMAL DIM
-
     echo >&2 "\
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
-and prints a script exporting the environment variables that have changed since
-the snapshot, for one of the following shells:
-
-    ${DIM}bash, csh/tcsh, dash, elvish, fish, murex, nushell, powershell, zsh${NORMAL}
+and prints a shell specific script exporting the environment variables that have
+changed since the snapshot.
 "
 }
 
@@ -41,11 +37,12 @@ usage() {
     colors NORMAL BOLD ITALIC UNDERLINE YELLOW
 
     warn=; command -v "$jq" > /dev/null || \
-    warn=$(printf "%$((40 + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
+    warn=$(printf "%$((32 + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
                   "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
 
     echo >&2 "
-${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
+${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMAL}> [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
+              init <${ITALIC}shell${NORMAL}>
               [-h|--help|-v|--version]
 "
 }
@@ -54,23 +51,27 @@ options() {
     colors NORMAL BOLD ITALIC UNDERLINE
 
     echo >&2 "\
+${BOLD}${UNDERLINE}Commands${NORMAL}:
+  ${BOLD}init              ${NORMAL}Generate the initialization script
+
+${BOLD}${UNDERLINE}Shells${NORMAL}:
+  ${BOLD}ash, dash         ${NORMAL}Format the output as an Ash/Dash script
+  ${BOLD}bash              ${NORMAL}Format the output as a Bash script
+  ${BOLD}bat, cmd          ${NORMAL}Format the output as a Windows batch script
+  ${BOLD}csh, tcsh         ${NORMAL}Format the output as a Csh/Tcsh script
+  ${BOLD}elvish            ${NORMAL}Format the output as an Elvish script
+  ${BOLD}env               ${NORMAL}Format the output as a .env file
+  ${BOLD}fish              ${NORMAL}Format the output as a Fish script
+  ${BOLD}json              ${NORMAL}Format the output as JSON
+  ${BOLD}ksh, pdksh, mksh  ${NORMAL}Format the output as a Ksh script
+  ${BOLD}launchctl         ${NORMAL}Format the output as a launchctl calls ${ITALIC}(macOS)${NORMAL}
+  ${BOLD}murex             ${NORMAL}Format the output as a Murex script
+  ${BOLD}nu, nushell       ${NORMAL}Format the output as a Nushell script
+  ${BOLD}posix, sh         ${NORMAL}Format the output as a POSIX shell script
+  ${BOLD}pwsh, powershell  ${NORMAL}Format the output as a PowerShell script
+  ${BOLD}zsh               ${NORMAL}Format the output as a Zsh script
+
 ${BOLD}${UNDERLINE}Options${NORMAL}:
-  ${BOLD}--ash                       ${NORMAL}Format the output as an Ash script
-  ${BOLD}--bash                      ${NORMAL}Format the output as a Bash script
-  ${BOLD}--bat, --cmd                ${NORMAL}Format the output as a Windows batch script
-  ${BOLD}--csh, --tcsh               ${NORMAL}Format the output as a Csh/Tcsh script
-  ${BOLD}--dash                      ${NORMAL}Format the output as a Dash script
-  ${BOLD}--elvish                    ${NORMAL}Format the output as an Elvish script
-  ${BOLD}--env                       ${NORMAL}Format the output as a .env file
-  ${BOLD}--fish                      ${NORMAL}Format the output as a Fish script
-  ${BOLD}--json                      ${NORMAL}Format the output as JSON
-  ${BOLD}--ksh, --pdksh, --mksh      ${NORMAL}Format the output as a Ksh script
-  ${BOLD}--launchctl                 ${NORMAL}Format the output as a launchctl calls ${ITALIC}(macOS)${NORMAL}
-  ${BOLD}--murex                     ${NORMAL}Format the output as a Murex script
-  ${BOLD}--nu, --nushell             ${NORMAL}Format the output as a Nushell script
-  ${BOLD}--posix, --sh               ${NORMAL}Format the output as a POSIX shell script
-  ${BOLD}--pwsh, --powershell        ${NORMAL}Format the output as a PowerShell script
-  ${BOLD}--zsh                       ${NORMAL}Format the output as a Zsh script
   ${BOLD}-f FORMAT, --format FORMAT,
   ${BOLD}-f=FORMAT, --format=FORMAT  ${NORMAL}Format the output as anything ${ITALIC}(jq interpolated string)${NORMAL}
                               ${ITALIC}${DIM}e.g. '\(\$k)=\(.[\$k]|@sh)??\(\$k)='${NORMAL}
@@ -107,6 +108,18 @@ noformat() {
     colors NORMAL BOLD RED
 
     echo >&2 "${BOLD}${RED}error:${NORMAL} no shell or format specified"
+}
+
+noshell() {
+    colors NORMAL BOLD RED
+
+    echo >&2 "${BOLD}${RED}error:${NORMAL} no shell specified"
+}
+
+noinit() {
+    colors NORMAL BOLD RED YELLOW
+
+    echo >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}init${NORMAL} not supported for shell ${YELLOW}$shell${NORMAL}"
 }
 
 invalid() {
@@ -190,21 +203,74 @@ colors() {
 
 # endregion Help / Usage
 
-init() {
-    prefix=
-    suffix=
-    format=
-    export=
-    backup=
-    undo=
+# region init()
 
-    diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
-    ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
-    keys='keys[] as $k'
-    sort='to_entries | sort_by(.key) | from_entries'
+init() {
+    case $shell in
+        ash|dash|\
+        bash|\
+        ksh|pdksh|mksh|\
+        posix|sh|\
+        zsh|\
+        csh|tcsh|\
+        elvish|\
+        fish|\
+        murex|\
+        nu|nushell|\
+        pwsh|powershell|\
+        env|\
+        json|\
+        bat|cmd|\
+        launchctl) noinit; return 1 ;;
+    esac
 }
 
+# endregion init()
+
+# region setformat()
+
 fmt() { format='if .[$k] != null then "'$1'" else "'$2'" end'; }
+
+setformat() {
+    case $shell in
+        ash|dash|\
+        bash|\
+        ksh|pdksh|mksh|\
+        posix|sh|\
+        zsh)             fmt 'export \($k)=\(.[$k]|@sh)' \
+                             'unset \($k)' ;;
+        csh|tcsh)        fmt 'setenv \($k) \(.[$k]|@sh|gsub("\\n"; "\\\n"))' \
+                             'unsetenv \($k)' ;;
+        elvish)          fmt 'set-env \($k) \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
+                             'unset-env \($k)' ;;
+        fish)            fmt 'set -gx \($k) \(.[$k]|@sh)' \
+                             'set -e \($k)' ;;
+        murex)           fmt 'out \(.[$k]|@sh) -> export \($k)' \
+                             '!export \($k)' ;;
+        nu|nushell)      fmt '$env.\($k) = r#'"'"'\(.[$k])'"'"'#' \
+                             '$env.\($k) = null' ;;
+        pwsh|powershell) fmt '$Env:\($k) = \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
+                             '$Env:\($k) = $null' ;;
+        env)             fmt '\($k)=\(.[$k]|@sh)' \
+                             '\($k)=' ;;
+        json)            format=. ;;
+        bat|cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
+                             'set \($k)=';
+                         prefix='"set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%\n" + ([';
+                         suffix='] | join("\n")) + "\nset LFM=\nset LF="' ;;
+        launchctl)       fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
+                             'launchctl unsetenv \($k)' ;;
+    esac
+}
+
+# endregion setformat()
+
+# region run()
+
+diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
+keys='keys[] as $k'
+sort='to_entries | sort_by(.key) | from_entries'
 
 setbackup() {
     if [ -z "$SRCENV_UNDO" ]; then
@@ -222,36 +288,16 @@ parse() {
 }
 
 run() {
+    prefix=; suffix=; format=; export=; backup=; undo=
+
+    setformat
+
     while [ $# -gt 0 ] && [ "$1" != -- ]; do
         case $1 in
-            --ash|\
-            --bash|\
-            --dash|\
-            --ksh|--pdksh|--mksh|\
-            --posix|--sh|\
-            --zsh)               fmt 'export \($k)=\(.[$k]|@sh)'       'unset \($k)';    shift ;;
-            --csh|--tcsh)        fmt 'setenv \($k) \(.[$k]|@sh|gsub("\\n"; "\\\n"))' \
-                                     'unsetenv \($k)';                                   shift ;;
-            --elvish)            fmt 'set-env \($k) \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
-                                     'unset-env \($k)';                                  shift ;;
-            --fish)              fmt 'set -gx \($k) \(.[$k]|@sh)'      'set -e \($k)';   shift ;;
-            --murex)             fmt 'out \(.[$k]|@sh) -> export \($k)' '!export \($k)'; shift ;;
-            --nu|--nushell)      fmt '$env.\($k) = r#'"'"'\(.[$k])'"'"'#' \
-                                     '$env.\($k) = null';                                shift ;;
-            --pwsh|--powershell) fmt '$Env:\($k) = \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
-                                     '$Env:\($k) = $null';                               shift ;;
-            --env)               fmt '\($k)=\(.[$k]|@sh)'              '\($k)=';         shift ;;
-            --json)              format=.;                                               shift ;;
-            --bat|--cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
-                                     'set \($k)=';
-                                 prefix='"set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%\n" + ([';
-                                 suffix='] | join("\n")) + "\nset LFM=\nset LF="'; shift ;;
-            --launchctl)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
-                                     'launchctl unsetenv \($k)'; shift ;;
-            -f|--format)         value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
-                                 fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
-            -f=*|--format=*)     value=$(parse "${1%%=*}" "${1#*=}") || exit $?
-                                 fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
+            -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
+                             fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
+            -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
+                             fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
 
             -b|--backup)   backup=1;                                  shift ;;
             -u|--undo)     undo='env.SRCENV_UNDO | fromjson | . += '; shift ;;
@@ -354,8 +400,42 @@ src() {
     return "$exitcode"
 }
 
+# endregion run()
+
 [ ! -t 0 ] && set -- "$@" -
 [ $# = 0 ] && set -- --help
+
+case $1 in
+    init) cmd=$1; shift ;;
+    *)    cmd= ;;
+esac
+
+case $1 in
+    ash|dash|\
+    bash|\
+    ksh|pdksh|mksh|\
+    posix|sh|\
+    zsh|\
+    csh|tcsh|\
+    elvish|\
+    fish|\
+    murex|\
+    nu|nushell|\
+    pwsh|powershell|\
+    env|\
+    json|\
+    bat|cmd|\
+    launchctl) shell=$1; shift ;;
+    *)         shell= ;;
+esac
+
+if [ "$cmd" = init ]; then
+    if [ -z "$shell" ]; then
+        noshell; usage; help; exit 2
+    fi
+
+    init; exit $?
+fi
 
 jq=${SRCENV_JQ:-jq}
 
@@ -388,8 +468,7 @@ capture() {
     return "$exitcode"
 }
 
-init
-capture run ${auto:+"$auto"} "$@"
+capture run "$@"
 
 [ -n "$stderr" ] && err "$stderr" "$exitcode"
 [ -n "$stdout" ] && printf '%s\n' "$stdout"
