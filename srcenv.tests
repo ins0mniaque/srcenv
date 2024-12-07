@@ -225,6 +225,13 @@ snapshot=$(jq -n env); eval "$(./srcenv %s)"
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
+{ posix_init_script="$(cat) '$diff'"; } << 'EOF'
+eval "$(./srcenv init %s)"; src --version >&2
+snapshot=$(jq -n env)
+src %s
+jq %s --argjson snapshot "$snapshot" -n
+EOF
+
 { posix_undo_script="$(cat) '$diff'"; } << 'EOF'
 snapshot=$(jq -n env); eval "$(./srcenv %s --backup)"; eval "$(./srcenv %s --undo)"
 jq %s --argjson snapshot "$snapshot" -n
@@ -748,6 +755,8 @@ sh=$(detect sh) || msg warn 'sh not found; skipping tests...'
 run_posix_tests "$sh" "sh srcenv"
 run "$sh" "sh -c $(script "$posix_script"      'sh test.env'        )" "$json_output"
 run "$sh" "sh -c $(script "$posix_script"      'sh test.env.sh'     )" "$json_output"
+run "$sh" "sh -c $(script "$posix_init_script" 'sh' 'test.env'      )" "$json_backup_output"
+run "$sh" "sh -c $(script "$posix_init_script" 'sh' 'test.env.sh'   )" "$json_backup_output"
 run "$sh" "sh -c $(script "$posix_undo_script" 'sh test.env'    'sh')" '{}'
 run "$sh" "sh -c $(script "$posix_undo_script" 'sh test.env.sh' 'sh')" '{}'
 
@@ -755,6 +764,8 @@ ash=$(detect ash) || msg warn 'Ash not found; skipping tests...'
 run_posix_tests "$ash" "ash srcenv"
 run "$ash" "ash -c $(script "$posix_script"      'ash test.env'         )" "$json_output"
 run "$ash" "ash -c $(script "$posix_script"      'ash test.env.sh'      )" "$json_output"
+run "$ash" "ash -c $(script "$posix_init_script" 'ash' 'test.env'       )" "$json_backup_output"
+run "$ash" "ash -c $(script "$posix_init_script" 'ash' 'test.env.sh'    )" "$json_backup_output"
 run "$ash" "ash -c $(script "$posix_undo_script" 'ash test.env'    'ash')" '{}'
 run "$ash" "ash -c $(script "$posix_undo_script" 'ash test.env.sh' 'ash')" '{}'
 
@@ -762,6 +773,8 @@ bash=$(detect bash) || msg warn 'Bash not found; skipping tests...'
 run_posix_tests "$bash" "bash srcenv"
 run "$bash" "bash -c $(script "$posix_script"      'bash test.env'          )" "$json_output"
 run "$bash" "bash -c $(script "$posix_script"      'bash test.env.sh'       )" "$json_output"
+run "$bash" "bash -c $(script "$posix_init_script" 'bash' 'test.env'        )" "$json_backup_output"
+run "$bash" "bash -c $(script "$posix_init_script" 'bash' 'test.env.sh'     )" "$json_backup_output"
 run "$bash" "bash -c $(script "$posix_undo_script" 'bash test.env'    'bash')" '{}'
 run "$bash" "bash -c $(script "$posix_undo_script" 'bash test.env.sh' 'bash')" '{}'
 
@@ -769,6 +782,8 @@ dash=$(detect dash) || msg warn 'Dash not found; skipping tests...'
 run_posix_tests "$dash" "dash srcenv"
 run "$dash" "dash -c $(script "$posix_script"      'dash test.env'          )" "$json_output"
 run "$dash" "dash -c $(script "$posix_script"      'dash test.env.sh'       )" "$json_output"
+run "$dash" "dash -c $(script "$posix_init_script" 'dash' 'test.env'        )" "$json_backup_output"
+run "$dash" "dash -c $(script "$posix_init_script" 'dash' 'test.env.sh'     )" "$json_backup_output"
 run "$dash" "dash -c $(script "$posix_undo_script" 'dash test.env'    'dash')" '{}'
 run "$dash" "dash -c $(script "$posix_undo_script" 'dash test.env.sh' 'dash')" '{}'
 
@@ -776,6 +791,8 @@ ksh=$(detect ksh) || msg warn 'Ksh not found; skipping tests...'
 run_posix_tests "$ksh" "ksh srcenv"
 run "$ksh" "ksh -c $(script "$posix_script"      'ksh test.env'         )" "$json_output"
 run "$ksh" "ksh -c $(script "$posix_script"      'ksh test.env.sh'      )" "$json_output"
+run "$ksh" "ksh -c $(script "$posix_init_script" 'ksh' 'test.env'       )" "$json_backup_output"
+run "$ksh" "ksh -c $(script "$posix_init_script" 'ksh' 'test.env.sh'    )" "$json_backup_output"
 run "$ksh" "ksh -c $(script "$posix_undo_script" 'ksh test.env'    'ksh')" '{}'
 run "$ksh" "ksh -c $(script "$posix_undo_script" 'ksh test.env.sh' 'ksh')" '{}'
 
@@ -783,6 +800,8 @@ mksh=$(detect mksh) || msg warn 'Mksh not found; skipping tests...'
 run_posix_tests "$mksh" "mksh srcenv"
 run "$mksh" "mksh -c $(script "$posix_script"      'mksh test.env'          )" "$json_output"
 run "$mksh" "mksh -c $(script "$posix_script"      'mksh test.env.sh'       )" "$json_output"
+run "$mksh" "mksh -c $(script "$posix_init_script" 'mksh' 'test.env'        )" "$json_backup_output"
+run "$mksh" "mksh -c $(script "$posix_init_script" 'mksh' 'test.env.sh'     )" "$json_backup_output"
 run "$mksh" "mksh -c $(script "$posix_undo_script" 'mksh test.env'    'mksh')" '{}'
 run "$mksh" "mksh -c $(script "$posix_undo_script" 'mksh test.env.sh' 'mksh')" '{}'
 
@@ -790,6 +809,8 @@ zsh=$(detect zsh) || msg warn 'Zsh not found; skipping tests...'
 run_posix_tests "$zsh" "zsh srcenv"
 run "$zsh" "zsh -c $(script "$posix_script"      'zsh test.env'         )" "$json_output"
 run "$zsh" "zsh -c $(script "$posix_script"      'zsh test.env.sh'      )" "$json_output"
+run "$zsh" "zsh -c $(script "$posix_init_script" 'zsh' 'test.env'       )" "$json_backup_output"
+run "$zsh" "zsh -c $(script "$posix_init_script" 'zsh' 'test.env.sh'    )" "$json_backup_output"
 run "$zsh" "zsh -c $(script "$posix_undo_script" 'zsh test.env'    'zsh')" '{}'
 run "$zsh" "zsh -c $(script "$posix_undo_script" 'zsh test.env.sh' 'zsh')" '{}'
 

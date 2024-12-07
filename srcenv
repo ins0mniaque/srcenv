@@ -211,7 +211,13 @@ init() {
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
-        zsh|\
+        zsh) echo "\
+src() {
+    case \$1 in
+        ''|-\?|-h|--help|-v|--version) srcenv \"\$@\" ;;
+        *) eval \"\$(srcenv $shell --backup \${SRCENV_UNDO:+--undo} \"\$@\")\" ;;
+    esac
+}" ;;
         csh|tcsh|\
         elvish|\
         fish|\
@@ -336,7 +342,7 @@ run() {
         noinput; usage; help; exit 2
     fi
 
-    if [ -z "$format"  ]; then
+    if [ -z "$format" ]; then
         noformat; usage; help; exit 2
     fi
 
