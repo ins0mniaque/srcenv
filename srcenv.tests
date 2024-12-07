@@ -225,6 +225,11 @@ snapshot=$(jq -n env); eval "$(./srcenv %s)"
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
+{ posix_undo_script="$(cat) '$diff'"; } << 'EOF'
+snapshot=$(jq -n env); eval "$(./srcenv --backup %s)"; eval "$(./srcenv --undo %s)"
+jq %s --argjson snapshot "$snapshot" -n
+EOF
+
 { csh_script="$(cat) '$diff'"; } << 'EOF'
 set snapshot = "`jq -n env`"; set sourced = "`./srcenv %s`"
 printf '%%s\\n' $sourced:q > test.csh.env
@@ -248,16 +253,14 @@ jq -n env -> set snapshot; ./srcenv %s -> source
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
-{ nu_setup_script="$(cat) $env_input"; } << 'EOF'
+{ nu_setup_script=$(cat); } << 'EOF'
 ./srcenv %s | save -f test.nu.env
-let unused = '%s'
-./srcenv --json
+let SRCENV_JQ_OPTS = '%s'
 EOF
 
 { nu_script="$(cat) '$diff'"; } << 'EOF'
 let snapshot = (jq -n env); source test.nu.env
 rm -f test.nu.env
-let unused = '%s'
 jq %s --argjson snapshot $snapshot -n
 EOF
 
@@ -670,88 +673,99 @@ run_output_tests './srcenv'
 
 detect() { command -v "$1" > /dev/null && echo 1; }
 escape() { printf "'%s'\\n" "$(printf '%s' "$1" | sed -e "s/'/'\\\\''/g")"; }
-
-# shellcheck disable=SC2059
-run_script() {
-    script=$(printf "$3" "$4" "$SRCENV_JQ_OPTS")
-
-    run "$1" "$2 $(escape "$script")" "$json_output"
+script() {
+    # shellcheck disable=SC2059
+    escape "$(printf "$@" "$SRCENV_JQ_OPTS")"
 }
 
 sh=$(detect sh) || msg warn 'sh not found; skipping tests...'
 run_posix_tests "$sh" "sh srcenv"
-run_script "$sh" 'sh -c' "$posix_script" '--sh test.env'
-run_script "$sh" 'sh -c' "$posix_script" '--sh test.env.sh'
+run "$sh" "sh -c $(script "$posix_script"      '--sh test.env'          )" "$json_output"
+run "$sh" "sh -c $(script "$posix_script"      '--sh test.env.sh'       )" "$json_output"
+run "$sh" "sh -c $(script "$posix_undo_script" '--sh test.env'    '--sh')" '{}'
+run "$sh" "sh -c $(script "$posix_undo_script" '--sh test.env.sh' '--sh')" '{}'
 
 ash=$(detect ash) || msg warn 'Ash not found; skipping tests...'
 run_posix_tests "$ash" "ash srcenv"
-run_script "$ash" 'ash -c' "$posix_script" '--ash test.env'
-run_script "$ash" 'ash -c' "$posix_script" '--ash test.env.sh'
+run "$ash" "ash -c $(script "$posix_script" '--ash test.env'   )"              "$json_output"
+run "$ash" "ash -c $(script "$posix_script" '--ash test.env.sh')"              "$json_output"
+run "$ash" "ash -c $(script "$posix_undo_script" '--ash test.env'    '--ash')" '{}'
+run "$ash" "ash -c $(script "$posix_undo_script" '--ash test.env.sh' '--ash')" '{}'
 
 bash=$(detect bash) || msg warn 'Bash not found; skipping tests...'
 run_posix_tests "$bash" "bash srcenv"
-run_script "$bash" 'bash -c' "$posix_script" '--bash test.env'
-run_script "$bash" 'bash -c' "$posix_script" '--bash test.env.sh'
+run "$bash" "bash -c $(script "$posix_script" '--bash test.env'   )"               "$json_output"
+run "$bash" "bash -c $(script "$posix_script" '--bash test.env.sh')"               "$json_output"
+run "$bash" "bash -c $(script "$posix_undo_script" '--bash test.env'    '--bash')" '{}'
+run "$bash" "bash -c $(script "$posix_undo_script" '--bash test.env.sh' '--bash')" '{}'
 
 dash=$(detect dash) || msg warn 'Dash not found; skipping tests...'
 run_posix_tests "$dash" "dash srcenv"
-run_script "$dash" 'dash -c' "$posix_script" '--dash test.env'
-run_script "$dash" 'dash -c' "$posix_script" '--dash test.env.sh'
+run "$dash" "dash -c $(script "$posix_script" '--dash test.env'   )"               "$json_output"
+run "$dash" "dash -c $(script "$posix_script" '--dash test.env.sh')"               "$json_output"
+run "$dash" "dash -c $(script "$posix_undo_script" '--dash test.env'    '--dash')" '{}'
+run "$dash" "dash -c $(script "$posix_undo_script" '--dash test.env.sh' '--dash')" '{}'
 
 ksh=$(detect ksh) || msg warn 'Ksh not found; skipping tests...'
 run_posix_tests "$ksh" "ksh srcenv"
-run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env'
-run_script "$ksh" 'ksh -c' "$posix_script" '--ksh test.env.sh'
+run "$ksh" "ksh -c $(script "$posix_script" '--ksh test.env'   )"              "$json_output"
+run "$ksh" "ksh -c $(script "$posix_script" '--ksh test.env.sh')"              "$json_output"
+run "$ksh" "ksh -c $(script "$posix_undo_script" '--ksh test.env'    '--ksh')" '{}'
+run "$ksh" "ksh -c $(script "$posix_undo_script" '--ksh test.env.sh' '--ksh')" '{}'
 
 mksh=$(detect mksh) || msg warn 'Mksh not found; skipping tests...'
 run_posix_tests "$mksh" "mksh srcenv"
-run_script "$mksh" 'mksh -c' "$posix_script" '--mksh test.env'
-run_script "$mksh" 'mksh -c' "$posix_script" '--mksh test.env.sh'
+run "$mksh" "mksh -c $(script "$posix_script" '--mksh test.env'   )"               "$json_output"
+run "$mksh" "mksh -c $(script "$posix_script" '--mksh test.env.sh')"               "$json_output"
+run "$mksh" "mksh -c $(script "$posix_undo_script" '--mksh test.env'    '--mksh')" '{}'
+run "$mksh" "mksh -c $(script "$posix_undo_script" '--mksh test.env.sh' '--mksh')" '{}'
 
 zsh=$(detect zsh) || msg warn 'Zsh not found; skipping tests...'
 run_posix_tests "$zsh" "zsh srcenv"
-run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env'
-run_script "$zsh" 'zsh -c' "$posix_script" '--zsh test.env.sh'
+run "$zsh" "zsh -c $(script "$posix_script" '--zsh test.env'   )"              "$json_output"
+run "$zsh" "zsh -c $(script "$posix_script" '--zsh test.env.sh')"              "$json_output"
+run "$zsh" "zsh -c $(script "$posix_undo_script" '--zsh test.env'    '--zsh')" '{}'
+run "$zsh" "zsh -c $(script "$posix_undo_script" '--zsh test.env.sh' '--zsh')" '{}'
 
 csh=$(detect csh) || msg warn 'Csh not found; skipping tests...'
-run_script "$csh" 'csh -c' "$csh_script" '--csh test.env'
-run_script "$csh" 'csh -c' "$csh_script" '--csh test.env.sh'
+run "$csh" "csh -c $(script "$csh_script" '--csh test.env'   )" "$json_output"
+run "$csh" "csh -c $(script "$csh_script" '--csh test.env.sh')" "$json_output"
 
 tcsh=$(detect tcsh) || msg warn 'Tcsh not found; skipping tests...'
-run_script "$tcsh" 'tcsh -c' "$csh_script" '--tcsh test.env'
-run_script "$tcsh" 'tcsh -c' "$csh_script" '--tcsh test.env.sh'
+run "$tcsh" "tcsh -c $(script "$csh_script" '--tcsh test.env'   )" "$json_output"
+run "$tcsh" "tcsh -c $(script "$csh_script" '--tcsh test.env.sh')" "$json_output"
 
 elvish=$(detect elvish) || msg warn 'Elvish not found; skipping tests...'
-run_script "$elvish" 'elvish -c' "$elvish_script" '--elvish test.env'
-run_script "$elvish" 'elvish -c' "$elvish_script" '--elvish test.env.sh'
+run "$elvish" "elvish -c $(script "$elvish_script" '--elvish test.env'   )" "$json_output"
+run "$elvish" "elvish -c $(script "$elvish_script" '--elvish test.env.sh')" "$json_output"
 
 fish=$(detect fish) || msg warn 'Fish not found; skipping tests...'
-run_script "$fish" 'fish -c' "$fish_script" '--fish test.env'
-run_script "$fish" 'fish -c' "$fish_script" '--fish test.env.sh'
+run "$fish" "fish -c $(script "$fish_script" '--fish test.env'   )" "$json_output"
+run "$fish" "fish -c $(script "$fish_script" '--fish test.env.sh')" "$json_output"
 
 murex=$(detect murex) || msg warn 'Murex not found; skipping tests...'
-run_script "$murex" 'murex -c' "$murex_script" '--murex test.env'
-run_script "$murex" 'murex -c' "$murex_script" '--murex test.env.sh'
+run "$murex" "murex -c $(script "$murex_script" '--murex test.env'   )" "$json_output"
+run "$murex" "murex -c $(script "$murex_script" '--murex test.env.sh')" "$json_output"
 
 nu=$(detect nu) || msg warn 'Nushell not found; skipping tests...'
-run_script "$nu" 'nu -c' "$nu_json_script"  '--json test.env'
-run_script "$nu" 'nu -c' "$nu_json_script"  '--json test.env.sh'
-run_script "$nu" 'nu -c' "$nu_setup_script" '--nu test.env'
-run_script "$nu" 'nu -c' "$nu_script"
-run_script "$nu" 'nu -c' "$nu_setup_script" '--nu test.env'
-run_script "$nu" 'nu -c' "$nu_script"
-run_script "$nu" 'nu -c' "$nu_setup_script" '--nu test.env'
-run_script "$nu" 'nu -c' "$nu_script"
-run_script "$nu" 'nu -c' "$nu_setup_script" '--nu test.env'
-run_script "$nu" 'nu -c' "$nu_script"
+run "$nu" "nu -c $(script "$nu_json_script"  '--json test.env'   )" "$json_output"
+run "$nu" "nu -c $(script "$nu_json_script"  '--json test.env.sh')" "$json_output"
+run "$nu" "nu -c $(script "$nu_setup_script" '--nu test.env'     )" ''
+run "$nu" "nu -c $(script "$nu_script"                           )" "$json_output"
+run "$nu" "nu -c $(script "$nu_setup_script" '--nu test.env'     )" ''
+run "$nu" "nu -c $(script "$nu_script"                           )" "$json_output"
+run "$nu" "nu -c $(script "$nu_setup_script" '--nu test.env'     )" ''
+run "$nu" "nu -c $(script "$nu_script"                           )" "$json_output"
+run "$nu" "nu -c $(script "$nu_setup_script" '--nu test.env'     )" ''
+run "$nu" "nu -c $(script "$nu_script"                           )" "$json_output"
 
 pwsh=$(detect pwsh) || msg warn 'PowerShell not found; skipping tests...'
-run_script "$pwsh" 'pwsh -c' "$pwsh_script" '--pwsh test.env'
-run_script "$pwsh" 'pwsh -c' "$pwsh_script" '--pwsh test.env.sh'
+run "$pwsh" "pwsh -c $(script "$pwsh_script" '--pwsh test.env'   )" "$json_output"
+run "$pwsh" "pwsh -c $(script "$pwsh_script" '--pwsh test.env.sh')" "$json_output"
 
 powershell=$(detect powershell) || msg warn 'Windows PowerShell not found; skipping tests...'
-run_script "$powershell" 'powershell -c' "$powershell_script" '--powershell test.env'
-run_script "$powershell" 'powershell -c' "$powershell_script" '--powershell test.env.sh'
+run "$powershell" "powershell -c $(script "$powershell_script" '--powershell test.env'   )" "$json_output"
+run "$powershell" "powershell -c $(script "$powershell_script" '--powershell test.env.sh')" "$json_output"
 
 end
 
