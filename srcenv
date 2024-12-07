@@ -273,11 +273,7 @@ keys='keys[] as $k'
 sort='to_entries | sort_by(.key) | from_entries'
 
 setbackup() {
-    if [ -z "$SRCENV_UNDO" ]; then
-        backup='| ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_UNDO: ($ffid | . += { SRCENV_UNDO: null } | '$sort' | tostring) } else . end'
-    else
-        backup='| . += { SRCENV_UNDO: ('$ffid' | . += { SRCENV_UNDO: null } | '$sort' | tostring) }'
-    fi
+    backup='| ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_UNDO: ($ffid | . += { SRCENV_UNDO: null } | '$sort' | tostring) } else . end'
 }
 
 parse() {
