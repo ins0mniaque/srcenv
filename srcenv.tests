@@ -505,6 +505,23 @@ EOF
 $Env:SRCENV_UNDO = '{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}'
 EOF
 
+format='--format '\''\($k)☕\(.[$k])??\($k)☕'\'
+
+{ format_output=$(cat); } << 'EOF'
+SRCENV_TEST_A☕6
+SRCENV_TEST_B☕7
+SRCENV_TEST_C☕42
+SRCENV_TEST_ESCAPE☕$NOT_EXPANDED\t\r\n'"
+SRCENV_TEST_MULTILINE☕
+6
+7
+42
+EOF
+
+{ format_backup_output=$(cat); } << 'EOF'
+SRCENV_UNDO☕{"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null,"SRCENV_UNDO":null}
+EOF
+
 # endregion Outputs
 
 # region Tests
@@ -591,6 +608,7 @@ run_output_tests() {
     run "$1" "$2 --powershell $env_input" "$pwsh_output"
     run "$1" "$2 --env $env_input"        "$env_output"
     run "$1" "$2 --json $env_input"       "$json_output"
+    run "$1" "$2 $format $env_input"      "$format_output"
 
     run "$1" "$2 --ash --backup $env_input"        "$posix_output${LF}$posix_backup_output"
     run "$1" "$2 --bash --backup $env_input"       "$posix_output${LF}$posix_backup_output"
@@ -614,6 +632,7 @@ run_output_tests() {
     run "$1" "$2 --powershell --backup $env_input" "$pwsh_output${LF}$pwsh_backup_output"
     run "$1" "$2 --env --backup $env_input"        "$env_output${LF}$env_backup_output"
     run "$1" "$2 --json --backup $env_input"       "$json_backup_output"
+    run "$1" "$2 $format --backup $env_input"      "$format_output${LF}$format_backup_output"
 
     run "$1" "$2 --ash --local $env_input"        ''
     run "$1" "$2 --bash --local $env_input"       ''
@@ -637,6 +656,7 @@ run_output_tests() {
     run "$1" "$2 --powershell --local $env_input" ''
     run "$1" "$2 --env --local $env_input"        ''
     run "$1" "$2 --json --local $env_input"       '{}'
+    run "$1" "$2 $format --local $env_input"      ''
 
     run "$1" "$2 --ash --local --backup $env_input"        ''
     run "$1" "$2 --bash --local --backup $env_input"       ''
@@ -660,6 +680,7 @@ run_output_tests() {
     run "$1" "$2 --powershell --local --backup $env_input" ''
     run "$1" "$2 --env --local --backup $env_input"        ''
     run "$1" "$2 --json --local --backup $env_input"       '{}'
+    run "$1" "$2 $format --local --backup $env_input"      ''
 
     run "$1" "$2 --ash $posix_input"        "$posix_output"
     run "$1" "$2 --bash $posix_input"       "$posix_output"
@@ -683,6 +704,7 @@ run_output_tests() {
     run "$1" "$2 --powershell $posix_input" "$pwsh_output"
     run "$1" "$2 --env $posix_input"        "$env_output"
     run "$1" "$2 --json $posix_input"       "$json_output"
+    run "$1" "$2 $format $posix_input"      "$format_output"
 
     run "$1" "$2 --ash --backup $posix_input"        "$posix_output${LF}$posix_backup_output"
     run "$1" "$2 --bash --backup $posix_input"       "$posix_output${LF}$posix_backup_output"
@@ -706,6 +728,7 @@ run_output_tests() {
     run "$1" "$2 --powershell --backup $posix_input" "$pwsh_output${LF}$pwsh_backup_output"
     run "$1" "$2 --env --backup $posix_input"        "$env_output${LF}$env_backup_output"
     run "$1" "$2 --json --backup $posix_input"       "$json_backup_output"
+    run "$1" "$2 $format --backup $posix_input"      "$format_output${LF}$format_backup_output"
 }
 
 start
