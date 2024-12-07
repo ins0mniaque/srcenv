@@ -11,9 +11,9 @@ A cross-shell tool for sourcing POSIX compliant .env scripts.
 
 ## Description
 
-srcenv takes a snapshot of the POSIX shell environment, sources .env scripts and
-prints a script exporting the environment variables that have changed since the
-snapshot, for one of the following shells: Bash, Csh/Tcsh, Dash, Elvish, Fish, Murex, Nushell, PowerShell, Zsh.
+srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
+and prints a shell specific script exporting the environment variables that have
+changed since the snapshot.
 
 ## Installation
 
@@ -51,12 +51,12 @@ git clone https://github.com/ins0mniaque/srcenv
 
 The following table shows how to source `.env` in different shells:
 
-| Shell      | Command                                   |
-|------------|-------------------------------------------|
-| Bash       | `source <(srcenv --bash .env)`            |
-| Fish       | `srcenv --fish .env \| source`            |
-| PowerShell | `Invoke-Expression (&srcenv --pwsh .env)` |
-| Zsh        | `source <(srcenv --zsh .env)`             |
+| Shell      | Command                                 |
+|------------|-----------------------------------------|
+| Bash       | `source <(srcenv bash .env)`            |
+| Fish       | `srcenv fish .env \| source`            |
+| PowerShell | `Invoke-Expression (&srcenv pwsh .env)` |
+| Zsh        | `source <(srcenv zsh .env)`             |
 
 For a list of supported shells, see `srcenv --help`.
 
