@@ -206,16 +206,26 @@ colors() {
 # region init()
 
 init() {
+    cmd=src
+
+    while [ $# -gt 0 ]; do
+        case $1 in
+            -c|--cmd)     cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            -c=*|--cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             shift ;;
+            *)            invalid "$1" 'invalid option -- -'; usage; help;          exit 2 ;;
+        esac
+    done
+
     case $shell in
         ash|dash|\
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
         zsh) echo "\
-src() {
+$cmd() {
     case \$1 in
-        ''|-\?|-h|--help|-v|--version) srcenv \"\$@\" ;;
-        *) eval \"\$(srcenv $shell --backup \${SRCENV_UNDO:+--undo} \"\$@\")\" ;;
+        ''|-\?|-h|--help|-v|--version) $0 \"\$@\" ;;
+        *) eval \"\$($0 $shell --backup \${SRCENV_UNDO:+--undo} \"\$@\")\" ;;
     esac
 }" ;;
         csh|tcsh|\
@@ -438,7 +448,7 @@ if [ "$cmd" = init ]; then
         noshell; usage; help; exit 2
     fi
 
-    init; exit $?
+    init "$@"; exit $?
 fi
 
 DLM=$(printf '\032')
