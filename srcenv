@@ -416,9 +416,6 @@ src() {
 
 jq=${SRCENV_JQ:-jq}
 
-[ ! -t 0 ] && set -- "$@" -
-[ $# = 0 ] && set -- --help
-
 case $1 in
     init) cmd=$1; shift ;;
     *)    cmd= ;;
@@ -450,6 +447,9 @@ if [ "$cmd" = init ]; then
 
     init "$@"; exit $?
 fi
+
+[ ! -t 0 ] && set -- "$@" -
+[ $# = 0 ] && set -- --help
 
 DLM=$(printf '\032')
 LF='
