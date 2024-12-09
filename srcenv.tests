@@ -238,22 +238,12 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { csh_script="$(cat) '$diff'"; } << 'EOF'
-set snapshot = "`jq -n env`"; set sourced = "`./srcenv %s`"
-printf '%%s\\n' $sourced:q > test.csh.env
-source test.csh.env
-rm -f test.csh.env
+set snapshot = "`jq -n env`"; ./srcenv %s | source /dev/stdin
 jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 
 { csh_undo_script="$(cat) '$diff'"; } << 'EOF'
-set snapshot = "`jq -n env`"; set backed = "`./srcenv %s --backup`"
-printf '%%s\\n' $backed:q > test.csh.env
-source test.csh.env
-rm -f test.csh.env
-set sourced =  "`./srcenv %s --undo`"
-printf '%%s\\n' $sourced:q > test.csh.env
-source test.csh.env
-rm -f test.csh.env
+set snapshot = "`jq -n env`"; ./srcenv %s --backup | source /dev/stdin; ./srcenv %s --undo | source /dev/stdin
 jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 
