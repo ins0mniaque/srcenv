@@ -545,7 +545,8 @@ run_posix_tests() {
     run "$1" "$2 sh not_a_file"              '' 1
     run "$1" "$2 sh --input not_a_command"   '' 127
     run "$and_no_stdin" "$2 --export"        '' 2
-    run "$1" "$2 sh --undo"                  '' 5
+    run "$1" "$2 sh --undo"                  ''
+    run "$1" "SRCENV_UNDO='' $2 sh --undo"   '' 5
     run "$1" "$2 --undo"                     '' 2
 
     run "$1" "$2 sh --input 'echo something'"                ''
