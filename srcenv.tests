@@ -309,7 +309,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { powershell_script="$(cat) '. as \$snapshot | $diff'"; } << 'EOF'
-$snapshot="$(jq -n env)"; Invoke-Expression ((sh srcenv %s) -join "`n")
+$snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s) -join "`n")
 echo "$snapshot" | jq %s
 EOF
 
