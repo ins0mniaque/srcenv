@@ -835,14 +835,12 @@ run "$murex" "murex -c $(script "$murex_undo_script" 'murex test.env'    'murex'
 run "$murex" "murex -c $(script "$murex_undo_script" 'murex test.env.sh' 'murex')" '{}'
 
 nu=$(detect nu) || msg warn 'Nushell not found; skipping tests...'
+run "$nu" "nu -c $(script "$nu_setup_script" 'nu test.env'   ); nu -c $(script "$nu_script")" "$json_output"
+run "$nu" "nu -c $(script "$nu_setup_script" 'nu test.env.sh'); nu -c $(script "$nu_script")" "$json_output"
 run "$nu" "nu -c $(script "$nu_json_script"  'json test.env'          )" "$json_output"
 run "$nu" "nu -c $(script "$nu_json_script"  'json test.env.sh'       )" "$json_output"
 run "$nu" "nu -c $(script "$nu_undo_script"  'json test.env'    'json')" '{}'
 run "$nu" "nu -c $(script "$nu_undo_script"  'json test.env.sh' 'json')" '{}'
-run "$nu" "nu -c $(script "$nu_setup_script" 'nu test.env'            )" ''
-run "$nu" "nu -c $(script "$nu_script"                                )" "$json_output"
-run "$nu" "nu -c $(script "$nu_setup_script" 'nu test.env.sh'         )" ''
-run "$nu" "nu -c $(script "$nu_script"                                )" "$json_output"
 
 pwsh=$(detect pwsh) || msg warn 'PowerShell not found; skipping tests...'
 run "$pwsh" "pwsh -c $(script "$pwsh_script"      'pwsh test.env'          )" "$json_output"
