@@ -88,10 +88,10 @@ Source from STDIN.
 Source from string value of INPUT.
 .TP
 \-b, \-\-backup
-Backup changes in SRCENV_UNDO for undo.
+Backup changes to SRCENV_RESTORE for restore.
 .TP
-\-u, \-\-undo
-Undo backed up changes from SRCENV_UNDO.
+\-r, \-\-restore
+Restore backed up changes from SRCENV_RESTORE.
 .TP
 \-e, \-\-export
 Export all variables (Default for .env/.envrc files).
@@ -102,7 +102,7 @@ Do not export all variables.
 \-s, \-\-sort
 Sort the environment variables alphabetically (Default).
 .TP
-\-U, \-\-unsorted
+\-u, \-\-unsorted
 Keep the environment variables unsorted.
 .TP
 \-h, \-\-help

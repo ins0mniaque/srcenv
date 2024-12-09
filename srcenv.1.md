@@ -111,11 +111,11 @@ Options
 
 -b, \--backup
 
-:   Backup changes in SRCENV_UNDO for undo.
+:   Backup changes to SRCENV_RESTORE for restore.
 
--u, \--undo
+-r, \--restore
 
-:   Undo backed up changes from SRCENV_UNDO.
+:   Restore backed up changes from SRCENV_RESTORE.
 
 -e, \--export
 
@@ -129,7 +129,7 @@ Options
 
 :   Sort the environment variables alphabetically (Default).
 
--U, \--unsorted
+-u, \--unsorted
 
 :   Keep the environment variables unsorted.
 

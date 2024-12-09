@@ -79,12 +79,12 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-                           ${NORMAL}Source from STDIN
   ${BOLD}-i INPUT, --input INPUT,
   ${BOLD}-i=INPUT, --input=INPUT     ${NORMAL}Source from string value of INPUT
-  ${BOLD}-b, --backup                ${NORMAL}Backup changes in SRCENV_UNDO for undo
-  ${BOLD}-u, --undo                  ${NORMAL}Undo backed up changes from SRCENV_UNDO
+  ${BOLD}-b, --backup                ${NORMAL}Backup changes to SRCENV_RESTORE for restore
+  ${BOLD}-r, --restore               ${NORMAL}Restore backed up changes from SRCENV_RESTORE
   ${BOLD}-e, --export                ${NORMAL}Export all variables ${ITALIC}(Default for .env/.envrc files)${NORMAL}
   ${BOLD}-l, --local                 ${NORMAL}Do not export all variables
   ${BOLD}-s, --sort                  ${NORMAL}Sort the environment variables alphabetically ${ITALIC}(Default)${NORMAL}
-  ${BOLD}-U, --unsorted              ${NORMAL}Keep the environment variables unsorted
+  ${BOLD}-u, --unsorted              ${NORMAL}Keep the environment variables unsorted
   ${BOLD}-h, --help                  ${NORMAL}Display help and exit
   ${BOLD}-v, --version               ${NORMAL}Display the version number and exit
 "
@@ -161,7 +161,7 @@ err() {
         $jq:\ *\<unknown\>*parsing*)
                  error=${1#"$jq": }
                  error=${error#error*: }
-                 echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_UNDO${NORMAL} environment variable contains ${RED}invalid JSON${NORMAL}: $error" ;;
+                 echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_RESTORE${NORMAL} environment variable contains ${RED}invalid JSON${NORMAL}: $error" ;;
 
         $jq:\ *) LF='
 '
@@ -224,7 +224,7 @@ init() {
 $cmd() {
     case \$1 in
         ''|-\?|-h|--help|-v|--version) $0 \"\$@\" ;;
-        *) eval \"\$($0 $shell --backup --undo \"\$@\")\" ;;
+        *) eval \"\$($0 $shell --backup --restore \"\$@\")\" ;;
     esac
 }" ;;
         csh|tcsh|\
@@ -287,8 +287,10 @@ ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if
 keys='keys[] as $k'
 sort='to_entries | sort_by(.key) | from_entries'
 
-setbackup() {
-    backup='| ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_UNDO: ($ffid | . += { SRCENV_UNDO: null } | '$sort' | tostring) } else . end'
+build() {
+    [ "$format" = . ] && keys=$sort
+    [ -n "$backup"  ] && backup='| ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
+    [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
 }
 
 parse() {
@@ -299,7 +301,7 @@ parse() {
 }
 
 run() {
-    prefix=; suffix=; format=; export=; backup=; undo=
+    prefix=; suffix=; format=; export=; backup=; restore=
 
     setformat
 
@@ -310,13 +312,13 @@ run() {
             -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
                              fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
 
-            -b|--backup)   backup=1;                                          shift ;;
-            -u|--undo)     undo='env.SRCENV_UNDO // "{}" | fromjson | . += '; shift ;;
-            -e|--export)   export=--export;                                   shift ;;
-            -l|--local)    export=0;                                          shift ;;
+            -b|--backup)   backup=1;        shift ;;
+            -r|--restore)  restore=1;       shift ;;
+            -e|--export)   export=--export; shift ;;
+            -l|--local)    export=0;        shift ;;
             -s|--sort)     keys='keys[] as $k';
                            sort='to_entries | sort_by(.key) | from_entries'; shift ;;
-            -U|--unsorted) keys='keys_unsorted[] as $k'; sort=.;             shift ;;
+            -u|--unsorted) keys='keys_unsorted[] as $k'; sort=.;             shift ;;
             -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
             -v|--version)  version;                                 exit 0 ;;
 
@@ -326,7 +328,7 @@ run() {
                             set -- "$@" -- --input "$value"; shift ;;
             -)              set -- "$@" -- -;                shift ;;
 
-            -*) if opts=$(getopt 'bef:hi:lsuUv' "$1" 2>&1) && shift; then
+            -*) if opts=$(getopt 'bef:hi:lrsuv' "$1" 2>&1) && shift; then
                     # shellcheck disable=SC2086
                     if [ -n "$ZSH_VERSION" ]; then
                         setopt shwordsplit > /dev/null 2>&1
@@ -344,10 +346,9 @@ run() {
         esac
     done
 
-    [ -n "$backup"  ] && setbackup
-    [ "$format" = . ] && keys=$sort
+    build
 
-    if [ $# = 0 ] && [ -z "$undo" ]; then
+    if [ $# = 0 ] && [ -z "$restore" ]; then
         noinput; usage; help; exit 2
     fi
 
@@ -373,7 +374,7 @@ run() {
 
     # shellcheck disable=SC2086
     "$jq" $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" \
-       -rn "$prefix $undo $diff $backup | $keys | $format $suffix"
+       -rn "$prefix $restore $diff $backup | $keys | $format $suffix"
 }
 
 src() {
