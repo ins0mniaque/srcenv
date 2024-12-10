@@ -245,6 +245,7 @@ EOF
 
     { csh_init_script="$(cat) '$diff'"; } << 'EOF'
 ./srcenv init %s | source /dev/stdin
+src --version
 set snapshot = "`jq -n env`"
 src %s
 jq %s --argjson snapshot "$snapshot:q" -n
@@ -264,6 +265,7 @@ EOF
     { csh_init_script="$(cat) '$diff'"; } << 'EOF'
 ./srcenv init %s > nostdin.csh; source nostdin.csh
 rm -f nostdin.csh
+src --version
 set snapshot = "`jq -n env`"
 src %s
 jq %s --argjson snapshot "$snapshot:q" -n
@@ -278,6 +280,13 @@ fi
 
 { elvish_script="$(cat) '$diff'"; } << 'EOF'
 var snapshot = (jq -n env | slurp); eval (./srcenv %s | slurp)
+jq %s --argjson snapshot $snapshot -n
+EOF
+
+{ elvish_init_script="$(cat) '$diff'"; } << 'EOF'
+var src~ = $nil; eval &on-end={|ns| set src~ = $ns[src] } (./srcenv init %s); src --version
+var snapshot = (jq -n env | slurp)
+src %s
 jq %s --argjson snapshot $snapshot -n
 EOF
 
@@ -857,6 +866,8 @@ run "$tcsh" "tcsh -c $(script "$csh_restore_script" 'tcsh test.env.sh' 'tcsh')" 
 elvish=$(detect elvish) || msg warn 'Elvish not found; skipping tests...'
 run "$elvish" "elvish -c $(script "$elvish_script"         'elvish test.env'            )" "$json_output"
 run "$elvish" "elvish -c $(script "$elvish_script"         'elvish test.env.sh'         )" "$json_output"
+run "$elvish" "elvish -c $(script "$elvish_init_script"    'elvish' 'test.env'          )" "$json_backup_output"
+run "$elvish" "elvish -c $(script "$elvish_init_script"    'elvish' 'test.env.sh'       )" "$json_backup_output"
 run "$elvish" "elvish -c $(script "$elvish_restore_script" 'elvish test.env'    'elvish')" '{}'
 run "$elvish" "elvish -c $(script "$elvish_restore_script" 'elvish test.env.sh' 'elvish')" '{}'
 

@@ -251,7 +251,7 @@ init() {
                   else
                       echo "alias $cmd 'set mktemp = \"\`mktemp\`\"; $0 $shell $opts --cmd \"$cmd\" \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
                   fi ;;
-        elvish|\
+        elvish)   echo "var ${cmd} = {|@a| eval ($0 $shell $opts --cmd \"$cmd\" \$@a | slurp) }" ;;
         fish|\
         murex|\
         nu|nushell|\
