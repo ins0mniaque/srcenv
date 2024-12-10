@@ -5,7 +5,13 @@
 # shellcheck disable=SC2016
 # shellcheck disable=SC2317
 
-version() { echo 'srcenv 1.5.0'; }
+version() {
+    if [ -z "$src" ]; then
+        echo 'srcenv 1.5.0'
+    else
+        echo >&2 'srcenv 1.5.0';
+    fi
+}
 
 # region Help / Usage
 
@@ -22,7 +28,7 @@ changed since the snapshot.
 help() {
     colors NORMAL BOLD
 
-    echo >&2 "For listing the command options, use '${0##*/} ${BOLD}--help${NORMAL}'."
+    echo >&2 "For listing the command options, use '${src:-${0##*/}} ${BOLD}--help${NORMAL}'."
 }
 
 man() {
@@ -36,21 +42,35 @@ https://github.com/ins0mniaque/srcenv."
 usage() {
     colors NORMAL BOLD ITALIC UNDERLINE YELLOW
 
-    warn=; command -v "$jq" > /dev/null || \
-    warn=$(printf "%$((32 + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
-                  "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
+    if [ -z "$src" ]; then
+        warn=; command -v "$jq" > /dev/null || \
+        warn=$(printf "%$((32 + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
+                      "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
 
-    echo >&2 "
+        echo >&2 "
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMAL}> [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
               init <${ITALIC}shell${NORMAL}>
               [-h|--help|-v|--version]
 "
+    else
+        warn=; command -v "$jq" > /dev/null || \
+        warn=$(printf "%$((46 - ${#src} + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
+                      "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
+        help=$(printf "%$((32 + ${#src}))s" \
+                      "[-h|--help|-v|--version]")
+
+        echo >&2 "
+${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}$src${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
+$help
+"
+    fi
 }
 
 options() {
     colors NORMAL BOLD ITALIC UNDERLINE
 
-    echo >&2 "\
+    if [ -z "$src" ]; then
+        echo >&2 "\
 ${BOLD}${UNDERLINE}Commands${NORMAL}:
   ${BOLD}init              ${NORMAL}Generate the initialization script
 
@@ -70,7 +90,10 @@ ${BOLD}${UNDERLINE}Shells${NORMAL}:
   ${BOLD}posix, sh         ${NORMAL}Format the output as a POSIX shell script
   ${BOLD}pwsh, powershell  ${NORMAL}Format the output as a PowerShell script
   ${BOLD}zsh               ${NORMAL}Format the output as a Zsh script
+"
+    fi
 
+    echo >&2 "\
 ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-f FORMAT, --format FORMAT,
   ${BOLD}-f=FORMAT, --format=FORMAT  ${NORMAL}Format the output as anything ${ITALIC}(jq interpolated string)${NORMAL}
@@ -220,13 +243,7 @@ init() {
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
-        zsh) echo "\
-$cmd() {
-    case \$1 in
-        ''|-\?|-h|--help|-v|--version) $0 \"\$@\" ;;
-        *) eval \"\$($0 $shell --backup --restore \"\$@\")\" ;;
-    esac
-}" ;;
+        zsh) echo "$cmd() { eval \"\$($0 $shell --cmd \"$cmd\" --backup --restore \"\$@\")\"; }" ;;
         csh|tcsh|\
         elvish|\
         fish|\
@@ -307,6 +324,9 @@ run() {
 
     while [ $# -gt 0 ] && [ "$1" != -- ]; do
         case $1 in
+            -c|--cmd)     src=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            -c=*|--cmd=*) src=$(parse "${1%%=*}" "${1#*=}") || exit $?;             shift ;;
+
             -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                              fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
             -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
@@ -328,7 +348,7 @@ run() {
                             set -- "$@" -- --input "$value"; shift ;;
             -)              set -- "$@" -- -;                shift ;;
 
-            -*) if opts=$(getopt 'bef:hi:lrsuv' "$1" 2>&1) && shift; then
+            -*) if opts=$(getopt 'bc:ef:hi:lrsuv' "$1" 2>&1) && shift; then
                     # shellcheck disable=SC2086
                     if [ -n "$ZSH_VERSION" ]; then
                         setopt shwordsplit > /dev/null 2>&1
@@ -415,6 +435,7 @@ src() {
 # endregion run()
 
 jq=${SRCENV_JQ:-jq}
+src=
 
 case $1 in
     init) cmd=$1; shift ;;

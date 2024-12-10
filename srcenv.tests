@@ -226,7 +226,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { posix_init_script="$(cat) '$diff'"; } << 'EOF'
-eval "$(./srcenv init %s)"; src --version >&2
+eval "$(./srcenv init %s)"; src --version
 snapshot=$(jq -n env)
 src %s
 jq %s --argjson snapshot "$snapshot" -n
