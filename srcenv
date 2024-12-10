@@ -366,10 +366,10 @@ run() {
         esac
     done
 
-    build
-
-    if [ $# = 0 ] && [ -z "$restore" ]; then
-        noinput; usage; help; exit 2
+    if [ $# = 0 ]; then
+        if [ -n "$backup" ] || [ -z "$restore" ]; then
+            noinput; usage; help; exit 2
+        fi
     fi
 
     if [ -z "$format" ]; then
@@ -391,6 +391,8 @@ run() {
             *)             src file "$1"    "$export"             || exit $?; shift ;;
         esac
     done
+
+    build
 
     # shellcheck disable=SC2086
     "$jq" $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" \
@@ -471,6 +473,12 @@ fi
 
 [ ! -t 0 ] && set -- "$@" -
 [ $# = 0 ] && set -- --help
+
+[ $# = 4 ] && \
+[ "$1" = --cmd ] && \
+[ "$3" = --backup ] && \
+[ "$4" = --restore ] && \
+set -- "$@" --help
 
 DLM=$(printf '\032')
 LF='
