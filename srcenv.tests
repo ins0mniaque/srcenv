@@ -284,7 +284,7 @@ jq %s --argjson snapshot $snapshot -n
 EOF
 
 { elvish_init_script="$(cat) '$diff'"; } << 'EOF'
-var src~ = $nil; eval &on-end={|ns| set src~ = $ns[src] } (./srcenv init %s); src --version
+var src~ = { }; eval &on-end={|ns| set src~ = $ns[src] } (./srcenv init %s); src --version
 var snapshot = (jq -n env | slurp)
 src %s
 jq %s --argjson snapshot $snapshot -n
