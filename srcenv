@@ -245,7 +245,7 @@ init() {
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
-        zsh) echo "$cmd() { eval \"\$($0 $shell --cmd \"$cmd\" $opts \"\$@\")\"; }" ;;
+        zsh) echo "$cmd() { eval \"\$($0 $shell $opts --cmd \"$cmd\" \"\$@\")\"; }" ;;
         csh|tcsh|\
         elvish|\
         fish|\
@@ -325,9 +325,10 @@ run() {
     setformat
 
     while [ $# -gt 0 ] && [ "$1" != -- ]; do
+        cmd=
         case $1 in
-            -c|--cmd)     src=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            -c=*|--cmd=*) src=$(parse "${1%%=*}" "${1#*=}") || exit $?;             shift ;;
+            -c|--cmd)     src=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; cmd=1; shift ;;
+            -c=*|--cmd=*) src=$(parse "${1%%=*}" "${1#*=}") || exit $?;             cmd=1; shift ;;
 
             -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                              fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
@@ -373,7 +374,7 @@ run() {
     done
 
     if [ $# = 0 ]; then
-        if [ -n "$src" ]; then
+        if [ -n "$cmd" ]; then
             header; usage; desc; help; man; exit 0
         elif [ -n "$backup" ] || [ -z "$restore" ]; then
             noinput; usage; help; exit 2

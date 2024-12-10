@@ -551,7 +551,7 @@ run_posix_tests() {
     run "$1" "SRCENV_RESTORE='' $2 sh --restore"   '' 5
     run "$1" "$2 --restore"                        '' 2
     run "$and_no_stdin" "$2 sh --backup --restore" '' 2
-    run "$1" "$2 sh --cmd src --backup --restore"  ''
+    run "$1" "$2 sh --backup --restore --cmd src"  ''
 
     run "$1" "$2 sh --input 'echo something'"                ''
     run "$1" "$2 sh --input 'echo something; not_a_command'" '' 127
