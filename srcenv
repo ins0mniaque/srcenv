@@ -245,8 +245,12 @@ init() {
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
-        zsh) echo "$cmd() { eval \"\$($0 $shell $opts --cmd \"$cmd\" \"\$@\")\"; }" ;;
-        csh|tcsh|\
+        zsh)      echo "$cmd() { eval \"\$($0 $shell $opts --cmd \"$cmd\" \"\$@\")\"; }" ;;
+        csh|tcsh) if [ -e /dev/stdin ]; then
+                      echo "alias $cmd '$0 $shell $opts --cmd \"$cmd\" \!* | source /dev/stdin'"
+                  else
+                      echo "alias $cmd 'set mktemp = \"\`mktemp\`\"; $0 $shell $opts --cmd \"$cmd\" \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
+                  fi ;;
         elvish|\
         fish|\
         murex|\
