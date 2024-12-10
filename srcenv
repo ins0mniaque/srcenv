@@ -344,6 +344,7 @@ run() {
             -s|--sort)     keys='keys[] as $k';
                            sort='to_entries | sort_by(.key) | from_entries'; shift ;;
             -u|--unsorted) keys='keys_unsorted[] as $k'; sort=.;             shift ;;
+            --usage)       header; usage; desc; help; man;          exit 0 ;;
             -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
             -v|--version)  version;                                 exit 0 ;;
 
@@ -373,7 +374,7 @@ run() {
 
     if [ $# = 0 ]; then
         if [ -n "$src" ]; then
-            header; usage; desc; options; help; man; exit 0
+            header; usage; desc; help; man; exit 0
         elif [ -n "$backup" ] || [ -z "$restore" ]; then
             noinput; usage; help; exit 2
         fi
@@ -479,7 +480,7 @@ if [ "$cmd" = init ]; then
 fi
 
 [ ! -t 0 ] && set -- "$@" -
-[ $# = 0 ] && set -- --help
+[ $# = 0 ] && set -- --usage
 
 DLM=$(printf '\032')
 LF='
