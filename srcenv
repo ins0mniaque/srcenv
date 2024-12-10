@@ -229,11 +229,13 @@ colors() {
 
 init() {
     cmd=src
+    opts='--backup --restore'
 
     while [ $# -gt 0 ]; do
         case $1 in
             -c|--cmd)     cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; shift ;;
             -c=*|--cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             shift ;;
+            --)           shift; opts="$*";                                         break ;;
             *)            invalid "$1" 'invalid option -- -'; usage; help;          exit 2 ;;
         esac
     done
@@ -243,7 +245,7 @@ init() {
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
-        zsh) echo "$cmd() { eval \"\$($0 $shell --cmd \"$cmd\" --backup --restore \"\$@\")\"; }" ;;
+        zsh) echo "$cmd() { eval \"\$($0 $shell --cmd \"$cmd\" $opts \"\$@\")\"; }" ;;
         csh|tcsh|\
         elvish|\
         fish|\
@@ -332,10 +334,13 @@ run() {
             -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
                              fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
 
-            -b|--backup)   backup=1;        shift ;;
-            -r|--restore)  restore=1;       shift ;;
-            -e|--export)   export=--export; shift ;;
-            -l|--local)    export=0;        shift ;;
+            -b|--backup)   backup=1;          shift ;;
+            -r|--restore)  restore=1;         shift ;;
+            -n)            backup=; restore=; shift ;;
+            --no-backup)   backup=;           shift ;;
+            --no-restore)  restore=;          shift ;;
+            -e|--export)   export=--export;   shift ;;
+            -l|--local)    export=0;          shift ;;
             -s|--sort)     keys='keys[] as $k';
                            sort='to_entries | sort_by(.key) | from_entries'; shift ;;
             -u|--unsorted) keys='keys_unsorted[] as $k'; sort=.;             shift ;;
@@ -348,7 +353,7 @@ run() {
                             set -- "$@" -- --input "$value"; shift ;;
             -)              set -- "$@" -- -;                shift ;;
 
-            -*) if opts=$(getopt 'bc:ef:hi:lrsuv' "$1" 2>&1) && shift; then
+            -*) if opts=$(getopt 'bc:ef:hi:lnrsuv' "$1" 2>&1) && shift; then
                     # shellcheck disable=SC2086
                     if [ -n "$ZSH_VERSION" ]; then
                         setopt shwordsplit > /dev/null 2>&1
@@ -367,7 +372,9 @@ run() {
     done
 
     if [ $# = 0 ]; then
-        if [ -n "$backup" ] || [ -z "$restore" ]; then
+        if [ -n "$src" ]; then
+            header; usage; desc; options; help; man; exit 0
+        elif [ -n "$backup" ] || [ -z "$restore" ]; then
             noinput; usage; help; exit 2
         fi
     fi
@@ -473,12 +480,6 @@ fi
 
 [ ! -t 0 ] && set -- "$@" -
 [ $# = 0 ] && set -- --help
-
-[ $# = 4 ] && \
-[ "$1" = --cmd ] && \
-[ "$3" = --backup ] && \
-[ "$4" = --restore ] && \
-set -- "$@" --help
 
 DLM=$(printf '\032')
 LF='
