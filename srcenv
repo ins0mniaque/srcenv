@@ -255,7 +255,7 @@ init() {
         fish)            echo "function $cmd; $0 $shell $opts --cmd \"$cmd\" \$argv | source; end" ;;
         murex)           echo "function $cmd { $0 $shell $opts --cmd \"$cmd\" @PARAMS -> source }" ;;
         nu|nushell)      echo "def --env --wrapped $cmd [...args] { $0 json $opts --cmd \"$cmd\" ...(\$args) | from json | default {} | load-env }" ;;
-        pwsh|powershell|\
+        pwsh|powershell) echo "function $cmd { \$script=((sh $0 $shell $opts --cmd \"$cmd\" \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
         env|\
         json|\
         bat|cmd|\

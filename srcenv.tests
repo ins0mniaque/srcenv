@@ -363,6 +363,13 @@ $snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s) -join "`n")
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
+{ pwsh_init_script="$(cat) '$diff'"; } << 'EOF'
+Invoke-Expression (sh srcenv init %s); src --version
+$snapshot=$(jq -n env)
+src %s
+jq %s --argjson snapshot "$snapshot" -n
+EOF
+
 { pwsh_restore_script="$(cat) '$diff'"; } << 'EOF'
 $snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s --backup) -join "`n"); Invoke-Expression ((sh srcenv %s --restore) -join "`n")
 jq %s --argjson snapshot "$snapshot" -n
@@ -370,6 +377,13 @@ EOF
 
 { powershell_script="$(cat) '. as \$snapshot | $diff'"; } << 'EOF'
 $snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s) -join "`n")
+echo "$snapshot" | jq %s
+EOF
+
+{ powershell_init_script="$(cat) '$diff'"; } << 'EOF'
+Invoke-Expression (sh srcenv init %s); src --version
+$snapshot=$(jq -n env)
+src %s
 echo "$snapshot" | jq %s
 EOF
 
@@ -922,12 +936,16 @@ run "$nu" "nu -c $(script "$nu_restore_script" 'json test.env.sh' 'json')" '{}'
 pwsh=$(detect pwsh) || msg warn 'PowerShell not found; skipping tests...'
 run "$pwsh" "pwsh -c $(script "$pwsh_script"         'pwsh test.env'          )" "$json_output"
 run "$pwsh" "pwsh -c $(script "$pwsh_script"         'pwsh test.env.sh'       )" "$json_output"
+run "$pwsh" "pwsh -c $(script "$pwsh_init_script"    'pwsh' 'test.env'        )" "$json_backup_output"
+run "$pwsh" "pwsh -c $(script "$pwsh_init_script"    'pwsh' 'test.env.sh'     )" "$json_backup_output"
 run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" 'pwsh test.env'    'pwsh')" '{}'
 run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" 'pwsh test.env.sh' 'pwsh')" '{}'
 
 powershell=$(detect powershell) || msg warn 'Windows PowerShell not found; skipping tests...'
 run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.env'                )" "$json_output"
 run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.env.sh'             )" "$json_output"
+run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' 'test.env'              )" "$json_backup_output"
+run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' 'test.env.sh'           )" "$json_backup_output"
 run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.env'    'powershell')" '{}'
 run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.env.sh' 'powershell')" '{}'
 
