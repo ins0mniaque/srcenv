@@ -252,7 +252,7 @@ init() {
                       echo "alias $cmd 'set mktemp = \"\`mktemp\`\"; $0 $shell $opts --cmd \"$cmd\" \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
                   fi ;;
         elvish)   echo "var ${cmd} = {|@a| eval ($0 $shell $opts --cmd \"$cmd\" \$@a | slurp) }" ;;
-        fish|\
+        fish)     echo "function $cmd; $0 $shell $opts --cmd \"$cmd\" \$argv | source; end" ;;
         murex|\
         nu|nushell|\
         pwsh|powershell|\
