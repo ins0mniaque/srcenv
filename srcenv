@@ -245,16 +245,16 @@ init() {
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
-        zsh)      echo "$cmd() { eval \"\$($0 $shell $opts --cmd \"$cmd\" \"\$@\")\"; }" ;;
-        csh|tcsh) if [ -e /dev/stdin ]; then
-                      echo "alias $cmd '$0 $shell $opts --cmd \"$cmd\" \!* | source /dev/stdin'"
-                  else
-                      echo "alias $cmd 'set mktemp = \"\`mktemp\`\"; $0 $shell $opts --cmd \"$cmd\" \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
-                  fi ;;
-        elvish)   echo "var ${cmd} = {|@a| eval ($0 $shell $opts --cmd \"$cmd\" \$@a | slurp) }" ;;
-        fish)     echo "function $cmd; $0 $shell $opts --cmd \"$cmd\" \$argv | source; end" ;;
-        murex)    echo "function $cmd { $0 $shell $opts --cmd \"$cmd\" @PARAMS -> source }" ;;
-        nu|nushell|\
+        zsh)             echo "$cmd() { eval \"\$($0 $shell $opts --cmd \"$cmd\" \"\$@\")\"; }" ;;
+        csh|tcsh)        if [ -e /dev/stdin ]; then
+                             echo "alias $cmd '$0 $shell $opts --cmd \"$cmd\" \!* | source /dev/stdin'"
+                         else
+                             echo "alias $cmd 'set mktemp = \"\`mktemp\`\"; $0 $shell $opts --cmd \"$cmd\" \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
+                         fi ;;
+        elvish)          echo "var ${cmd} = {|@a| eval ($0 $shell $opts --cmd \"$cmd\" \$@a | slurp) }" ;;
+        fish)            echo "function $cmd; $0 $shell $opts --cmd \"$cmd\" \$argv | source; end" ;;
+        murex)           echo "function $cmd { $0 $shell $opts --cmd \"$cmd\" @PARAMS -> source }" ;;
+        nu|nushell)      echo "def --env --wrapped $cmd [...args] { $0 json $opts --cmd \"$cmd\" ...(\$args) | from json | default {} | load-env }" ;;
         pwsh|powershell|\
         env|\
         json|\
