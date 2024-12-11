@@ -317,6 +317,13 @@ jq -n env -> set snapshot; ./srcenv %s -> source
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
+{ murex_init_script="$(cat) '$diff'"; } << 'EOF'
+./srcenv init %s -> source; src --version
+jq -n env -> set snapshot
+src %s
+jq %s --argjson snapshot "$snapshot" -n
+EOF
+
 { murex_restore_script="$(cat) '$diff'"; } << 'EOF'
 jq -n env -> set snapshot; ./srcenv %s --backup -> source; ./srcenv %s --restore -> source
 jq %s --argjson snapshot "$snapshot" -n
@@ -889,6 +896,8 @@ run "$fish" "fish -c $(script "$fish_restore_script" 'fish test.env.sh' 'fish')"
 murex=$(detect murex) || msg warn 'Murex not found; skipping tests...'
 run "$murex" "murex -c $(script "$murex_script"         'murex test.env'           )" "$json_output"
 run "$murex" "murex -c $(script "$murex_script"         'murex test.env.sh'        )" "$json_output"
+run "$murex" "murex -c $(script "$murex_init_script"    'murex' 'test.env'         )" "$json_backup_output"
+run "$murex" "murex -c $(script "$murex_init_script"    'murex' 'test.env.sh'      )" "$json_backup_output"
 run "$murex" "murex -c $(script "$murex_restore_script" 'murex test.env'    'murex')" '{}'
 run "$murex" "murex -c $(script "$murex_restore_script" 'murex test.env.sh' 'murex')" '{}'
 

@@ -253,7 +253,7 @@ init() {
                   fi ;;
         elvish)   echo "var ${cmd} = {|@a| eval ($0 $shell $opts --cmd \"$cmd\" \$@a | slurp) }" ;;
         fish)     echo "function $cmd; $0 $shell $opts --cmd \"$cmd\" \$argv | source; end" ;;
-        murex|\
+        murex)    echo "function $cmd { $0 $shell $opts --cmd \"$cmd\" @PARAMS -> source }" ;;
         nu|nushell|\
         pwsh|powershell|\
         env|\
