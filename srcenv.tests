@@ -380,7 +380,7 @@ $snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s) -join "`n")
 echo "$snapshot" | jq %s
 EOF
 
-{ powershell_init_script="$(cat) '$diff'"; } << 'EOF'
+{ powershell_init_script="$(cat) '. as \$snapshot | $diff'"; } << 'EOF'
 Invoke-Expression (sh srcenv init %s); src --version
 $snapshot=$(jq -n env)
 src %s
