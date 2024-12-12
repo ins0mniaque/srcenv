@@ -5,16 +5,17 @@ on:
     tags:
       - "v*"
 
-permissions:
-  contents: write
-
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Create Release Directory
         run: mkdir -p release
@@ -119,6 +120,7 @@ jobs:
           repository: ins0mniaque/homebrew-srcenv
           token: ${{ secrets.HOMEBREW_TOKEN }}
           path: homebrew-srcenv
+          persist-credentials: false
 
       - name: Update Homebrew Formula
         run: |
