@@ -9,7 +9,7 @@ GREEN=$$(tput setaf 2 2> /dev/null || printf '\033[32m')
 list:
 	@echo 'srcenv Makefile'
 	@echo
-	@echo "make ${BOLD}build     ${NORMAL}Run ShellCheck and generate man page"
+	@echo "make ${BOLD}build     ${NORMAL}Run ShellCheck, zizmor and generate man page"
 	@echo "make ${BOLD}bench     ${NORMAL}Run ShellCheck and benchmark suite"
 	@echo "make ${BOLD}test      ${NORMAL}Run ShellCheck and test suite"
 	@echo "make ${BOLD}bump      ${NORMAL}Bump srcenv version"
@@ -19,6 +19,9 @@ list:
 build:
 	@shellcheck --color=always srcenv srcenv.benchmarks srcenv.tests srcenv.version && \
 	echo "${GREEN}✔${NORMAL} ShellCheck"
+	@zizmor .github/workflows/ci.yml .github/workflows/release.yml &> /dev/null && \
+	echo "${GREEN}✔${NORMAL} zizmor" || \
+	zizmor .github/workflows/ci.yml .github/workflows/release.yml 2> /dev/null
 	@pandoc --standalone --to man srcenv.1.md -o srcenv.1 && \
 	echo "${GREEN}✔${NORMAL} Generate srcenv.1"
 
