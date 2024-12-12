@@ -120,7 +120,7 @@ jobs:
           repository: ins0mniaque/homebrew-srcenv
           token: ${{ secrets.HOMEBREW_TOKEN }}
           path: homebrew-srcenv
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Update Homebrew Formula
         run: |
