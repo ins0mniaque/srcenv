@@ -110,12 +110,12 @@ To add the `src` command, add the following to your shell's configuration file:
 | Fish       | `srcenv init fish \| source`                          |
 | PowerShell | `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`  |
 
-> [!TIP] Tip: Rename command
+> [!NOTE]
 > To use a different command name _(e.g. `magicenv`)_, add `--cmd magicenv`.
 >
 > _e.g. `source <(srcenv init bash --cmd magicenv)`._
 
-> [!TIP] Tip: More commands
+> [!TIP]
 > You can pass different arguments to srcenv with `--` at the end. Without `--`, the default options are `--backup --restore`.
 >
 > _e.g. `source <(srcenv init bash --cmd srcundo -- --restore)` creates a command named `srcundo` that restores the last backed up changes._
