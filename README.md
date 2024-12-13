@@ -87,9 +87,14 @@ src [options] [files]
     [-h|--help|-v|--version]
 ```
 
-`src project.env` sources the `project.env` file in the current directory.
-
-`src --restore` _(or `src -r`)_ reverts the changes made by the last `src` command.
+```bash
+❯ src project.env     # Sources `project.env`
+❯ src project2.env    # Reverts `project.env` and sources `project2.env`
+❯ src --restore       # Reverts `project2.env` (same as src -r)
+❯ src --version       # Shows the version of srcenv
+  srcenv x.y.z
+❯ _
+```
 
 ### Shell integration
 
