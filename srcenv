@@ -276,7 +276,7 @@ init() {
 fmt() { format='if .[$k] != null then "'$1'" else "'$2'" end'; }
 
 setformat() {
-    case $shell in
+    case $1 in
         ash|dash|\
         bash|\
         ksh|pdksh|mksh|\
@@ -304,6 +304,7 @@ setformat() {
                          suffix='] | join("\n")) + "\nset LFM=\nset LF="' ;;
         launchctl)       fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                              'launchctl unsetenv \($k)' ;;
+        *)               return 1 ;;
     esac
 }
 
@@ -333,7 +334,7 @@ parse() {
 run() {
     prefix=; suffix=; format=; export=; backup=; restore=; fixpath=
 
-    setformat
+    setformat "$shell"
 
     while [ $# -gt 0 ] && [ "$1" != -- ]; do
         cmd=
@@ -342,9 +343,9 @@ run() {
             -c=*|--cmd=*) src=$(parse "${1%%=*}" "${1#*=}") || exit $?;             cmd=1; shift ;;
 
             -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
-                             fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
+                             setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
             -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
-                             fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
+                             setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
 
             -b|--backup)   backup=1;          shift ;;
             -r|--restore)  restore=1;         shift ;;
