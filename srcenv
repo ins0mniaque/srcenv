@@ -314,6 +314,7 @@ build() {
     [ "$format" = . ] && keys=$sort
     [ -n "$backup"  ] && backup='| ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } end'
     [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
+    [ -n "$fixpath" ] && fixpath='| if .PATH then .PATH = (.PATH|gsub("\\\\"; "/")|gsub("(?<drive>.):/"; "/" + (.drive|ascii_downcase) + "/")|gsub(";"; ":")) end'
 }
 
 parse() {
@@ -324,7 +325,7 @@ parse() {
 }
 
 run() {
-    prefix=; suffix=; format=; export=; backup=; restore=
+    prefix=; suffix=; format=; export=; backup=; restore=; fixpath=
 
     setformat
 
@@ -387,6 +388,11 @@ run() {
 
     if [ -z "$format" ]; then
         noformat; usage; help; exit 2
+    elif [ -n "$COMSPEC" ]; then
+        case $shell in
+            pwsh|powershell|bat|cmd) ;;
+            *) fixpath=1 ;;
+        esac
     fi
 
     if ! command -v "$jq" > /dev/null; then
@@ -409,7 +415,7 @@ run() {
 
     # shellcheck disable=SC2086
     "$jq" $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" \
-       -rn "$prefix $restore $diff $backup | $keys | $format $suffix"
+       -rn "$prefix $restore $diff $backup $fixpath | $keys | $format $suffix"
 }
 
 src() {

@@ -433,8 +433,15 @@ EOF
 }
 EOF
 
-json_path_output_cmd="jq -n '{ PATH: (env.PWD + \"/bin:\" + env.PATH + \":\" + env.PWD + \"/bin\") }'"
-json_path_backup_output_cmd="jq -n '{ PATH: (env.PWD + \"/bin:\" + env.PATH + \":\" + env.PWD + \"/bin\"), SRCENV_RESTORE: ({ PATH: env.PATH, SRCENV_RESTORE: null } | tostring) }'"
+if [ -z "$COMSPEC" ]; then
+    json_path='(env.PWD + "/bin:" + env.PATH + ":" + env.PWD + "/bin")'
+    json_path_output_cmd="jq -n '{ PATH: $json_path }'"
+    json_path_backup_output_cmd="jq -n '{ PATH: $json_path, SRCENV_RESTORE: ({ PATH: env.PATH, SRCENV_RESTORE: null } | tojson) }'"
+else
+    json_path='((env.PWD + "/bin;"|gsub("/"; "\\")) + env.PATH + ";" + (env.PWD + "/bin"|gsub("/"; "\\")))'
+    json_path_output_cmd="jq -b -n '{ PATH: $json_path }'"
+    json_path_backup_output_cmd="jq -b -n '{ PATH: $json_path, SRCENV_RESTORE: ({ PATH: env.PATH, SRCENV_RESTORE: null } | tojson) }'"
+fi
 
 { env_output=$(cat); } << 'EOF'
 SRCENV_TEST_A='6'
@@ -616,11 +623,9 @@ EOF
 
 # region Tests
 
-case $(uname) in
-    CYGWIN*|MINGW*|MSYS_NT*) export SRCENV_JQ_OPTS=-b ;;
-esac
-
 [ -t 0 ] && no_stdin=1 || no_stdin=
+
+[ -n "$COMSPEC" ] && export SRCENV_JQ_OPTS=-b
 
 run_posix_tests() {
     case $1 in
@@ -1007,10 +1012,10 @@ powershell=$(detect powershell) || msg warn 'Windows PowerShell not found; skipp
 when "$powershell" powershell -v > /dev/null 2> /dev/null && powershell= && msg warn 'PowerShell is not Windows PowerShell; skipping tests...'
 run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.env'                  )" "$json_output"
 run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.env.sh'               )" "$json_output"
-run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.path.env'             )" "$(when "$powershell" powershell -c "$(echo "$json_path_output_cmd" | sed -e s/\"/\"\"/g)")"
+run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.path.env'             )" "$(when "$powershell" powershell -c "$(echo "$json_path_output_cmd" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\/g)")"
 run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' 'test.env'                )" "$json_backup_output"
 run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' 'test.env.sh'             )" "$json_backup_output"
-run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' 'test.path.env'           )" "$(when "$powershell" powershell -c "$(echo "$json_path_backup_output_cmd" | sed -e s/\"/\"\"/g)")"
+run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' 'test.path.env'           )" "$(when "$powershell" powershell -c "$(echo "$json_path_backup_output_cmd" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\/g)")"
 run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.env'      'powershell')" '{}'
 run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.env.sh'   'powershell')" '{}'
 run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.path.env' 'powershell')" '{}'
