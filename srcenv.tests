@@ -434,7 +434,7 @@ EOF
 EOF
 
 json_path_output_cmd="jq -n '{ PATH: (env.PWD + \"/bin:\" + env.PATH + \":\" + env.PWD + \"/bin\") }'"
-json_path_backup_output_cmd="jq -n '{ PATH: (env.PWD + \"/bin:\" + env.PATH + \":\" + env.PWD + \"/bin\"), SRCENV_RESTORE: ({ PATH: env.PATH, SRCENV_RESTORE: null } | tojson) }'"
+json_path_backup_output_cmd="jq -n '{ PATH: (env.PWD + \"/bin:\" + env.PATH + \":\" + env.PWD + \"/bin\"), SRCENV_RESTORE: ({ PATH: env.PATH, SRCENV_RESTORE: null } | tostring) }'"
 
 { env_output=$(cat); } << 'EOF'
 SRCENV_TEST_A='6'
