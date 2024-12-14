@@ -134,9 +134,11 @@ noformat() {
 }
 
 noshell() {
-    colors NORMAL BOLD RED
+    colors NORMAL BOLD RED YELLOW
 
-    echo >&2 "${BOLD}${RED}error:${NORMAL} no shell specified"
+    [ -z "$1" ] && \
+    echo >&2 "${BOLD}${RED}error:${NORMAL} no shell specified" || \
+    echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}$1${NORMAL} is not a supported shell"
 }
 
 noinit() {
@@ -491,7 +493,7 @@ esac
 
 if [ "$cmd" = init ]; then
     if [ -z "$shell" ]; then
-        noshell; usage; help; exit 2
+        noshell "$1"; usage; help; exit 2
     fi
 
     init "$@"; exit $?
