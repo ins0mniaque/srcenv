@@ -55,21 +55,21 @@ run() {
     id=$((tests_sequence + 1)); tests_sequence=$id
 
     case $tests_to_run in
-        *\ $id\ *) ;;
-        '')        ;;
-        *) return  ;;
+        *\ $id\ *)  ;;
+        '')         ;;
+        *) return 1 ;;
     esac
 
     case $tests_to_skip in
-        *\ $id\ *) return ;;
-        *)                ;;
+        *\ $id\ *) return 1 ;;
+        *)                  ;;
     esac
 
     case $1 in
         0|'') tests_skipped=$((tests_skipped + 1))
               msg test warn "$id" "${2%%"${LF}"*}: " "${YELLOW}Skipped${NORMAL}"
-              return ;;
-        1)    shift  ;;
+              return 1 ;;
+        1)    shift    ;;
     esac
 
     cmd=$1; capture eval "$cmd"
@@ -102,8 +102,8 @@ run() {
 
 when() {
     case $1 in
-        0|'') return ;;
-        1)    shift  ;;
+        0|'') return 1 ;;
+        1)    shift    ;;
     esac
 
     "$@"
@@ -1004,6 +1004,7 @@ run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" 'pwsh test.env.sh'   'pwsh'
 run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" 'pwsh test.path.env' 'pwsh')" '{}'
 
 powershell=$(detect powershell) || msg warn 'Windows PowerShell not found; skipping tests...'
+when "$powershell" powershell -v > /dev/null 2> /dev/null && powershell= && msg warn 'PowerShell is not Windows PowerShell; skipping tests...'
 run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.env'                  )" "$json_output"
 run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.env.sh'               )" "$json_output"
 run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.path.env'             )" "$(when "$powershell" powershell -c "$(echo "$json_path_output_cmd" | sed -e s/\"/\"\"/g)")"
