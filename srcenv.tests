@@ -234,7 +234,7 @@ trap cleanup EXIT INT HUP TERM
 
 # region Scripts
 
-diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] end)'
+diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
 
 { posix_script="$(cat) '$diff'"; } << 'EOF'
 snapshot=$(jq -n env); eval "$(./srcenv %s)"
