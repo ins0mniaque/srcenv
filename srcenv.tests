@@ -158,6 +158,8 @@ unset SRCENV_TEST_MULTILINE
 export SRCENV_TEST_EXISTING=1
 unset SRCENV_TEST_NOT_EXISTING
 
+cp srcenv "space srcenv"
+
 env_input=test.env
 posix_input=test.env.sh
 path_input=test.path.env
@@ -222,7 +224,7 @@ EOF
 cleanup() {
     unset SRCENV_TEST_EXISTING
 
-    rm -f "$env_input" "$posix_input" "$path_input" "$exit_0_input" "$exit_42_input"
+    rm -f "space srcenv" "$env_input" "$posix_input" "$path_input" "$exit_0_input" "$exit_42_input"
 
     trap - EXIT
     exit
@@ -242,7 +244,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { posix_init_script="$(cat) '$diff'"; } << 'EOF'
-eval "$(./srcenv init %s)"; src --version
+eval "$(./space\\ srcenv init %s)"; src --version
 snapshot=$(jq -n env)
 src %s
 jq %s --argjson snapshot "$snapshot" -n
@@ -260,7 +262,7 @@ jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 
     { csh_init_script="$(cat) '$diff'"; } << 'EOF'
-./srcenv init %s | source /dev/stdin
+./space\\ srcenv init %s | source /dev/stdin
 src --version
 set snapshot = "`jq -n env`"
 src %s
@@ -279,7 +281,7 @@ jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 
     { csh_init_script="$(cat) '$diff'"; } << 'EOF'
-./srcenv init %s > nostdin.csh; source nostdin.csh
+./space\\ srcenv init %s > nostdin.csh; source nostdin.csh
 rm -f nostdin.csh
 src --version
 set snapshot = "`jq -n env`"
@@ -300,7 +302,7 @@ jq %s --argjson snapshot $snapshot -n
 EOF
 
 { elvish_init_script="$(cat) '$diff'"; } << 'EOF'
-var src~ = { }; eval &on-end={|ns| set src~ = $ns[src] } (./srcenv init %s); src --version
+var src~ = { }; eval &on-end={|ns| set src~ = $ns[src] } ('./space srcenv' init %s); src --version
 var snapshot = (jq -n env | slurp)
 src %s
 jq %s --argjson snapshot $snapshot -n
@@ -317,7 +319,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { fish_init_script="$(cat) '$diff'"; } << 'EOF'
-./srcenv init %s | source; src --version
+'./space srcenv' init %s | source; src --version
 set snapshot (jq -n env)
 src %s
 jq %s --argjson snapshot "$snapshot" -n
@@ -334,7 +336,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { murex_init_script="$(cat) '$diff'"; } << 'EOF'
-./srcenv init %s -> source; src --version
+./space\\ srcenv init %s -> source; src --version
 jq -n env -> set snapshot
 src %s
 jq %s --argjson snapshot "$snapshot" -n
@@ -346,7 +348,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { nu_setup_script=$(cat); } << 'EOF'
-./srcenv %s | save -f test.setup.nu
+^'./space srcenv' %s | save -f test.setup.nu
 let SRCENV_JQ_OPTS = '%s'
 EOF
 
@@ -380,7 +382,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { pwsh_init_script="$(cat) '$diff'"; } << 'EOF'
-Invoke-Expression (sh srcenv init %s); src --version
+Invoke-Expression (sh 'space srcenv' init %s); src --version
 $snapshot=$(jq -n env)
 src %s
 jq %s --argjson snapshot "$snapshot" -n
@@ -397,7 +399,7 @@ echo "$snapshot" | jq %s
 EOF
 
 { powershell_init_script="$(cat) '. as \$snapshot | $diff'"; } << 'EOF'
-Invoke-Expression (sh srcenv init %s); src --version
+Invoke-Expression (sh 'space srcenv' init %s); src --version
 $snapshot=$(jq -n env)
 src %s
 echo "$snapshot" | jq %s

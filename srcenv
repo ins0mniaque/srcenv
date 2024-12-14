@@ -240,26 +240,32 @@ init() {
         esac
     done
 
+    case $0 in
+        /*)  srcenv="$0" ;;
+        ./*) srcenv="$PWD/${0#./}" ;;
+        *)   srcenv="$PWD/$0" ;;
+    esac
+
     case $shell in
         ash|dash|\
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
-        zsh)             echo "$cmd() { eval \"\$($0 $shell $opts --cmd \"$cmd\" \"\$@\")\"; }" ;;
+        zsh)             echo "$cmd() { eval \"\$('$srcenv' $shell $opts --cmd \"$cmd\" \"\$@\")\"; }" ;;
         csh|tcsh)        if [ -e /dev/stdin ]; then
-                             echo "alias $cmd '$0 $shell $opts --cmd \"$cmd\" \!* | source /dev/stdin'"
+                             echo "alias $cmd '\"$srcenv\" $shell $opts --cmd \"$cmd\" \!* | source /dev/stdin'"
                          else
-                             echo "alias $cmd 'set mktemp = \"\`mktemp\`\"; $0 $shell $opts --cmd \"$cmd\" \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
+                             echo "alias $cmd 'set mktemp = \"\`mktemp\`\"; \"$srcenv\" $shell $opts --cmd \"$cmd\" \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
                          fi ;;
-        elvish)          echo "var ${cmd} = {|@a| eval ($0 $shell $opts --cmd \"$cmd\" \$@a | slurp) }" ;;
-        fish)            echo "function $cmd; $0 $shell $opts --cmd \"$cmd\" \$argv | source; end" ;;
-        murex)           echo "function $cmd { $0 $shell $opts --cmd \"$cmd\" @PARAMS -> source }" ;;
-        nu|nushell)      echo "def --env --wrapped $cmd [...args] { $0 json $opts --cmd \"$cmd\" ...(\$args) | from json | default {} | load-env }" ;;
-        pwsh|powershell) echo "function $cmd { \$script=((sh $0 $shell $opts --cmd \"$cmd\" \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
+        elvish)          echo "var ${cmd} = {|@a| eval ('$srcenv' $shell $opts --cmd \"$cmd\" \$@a | slurp) }" ;;
+        fish)            echo "function $cmd; '$srcenv' $shell $opts --cmd \"$cmd\" \$argv | source; end" ;;
+        murex)           echo "function $cmd { '$srcenv' $shell $opts --cmd \"$cmd\" @PARAMS -> source }" ;;
+        nu|nushell)      echo "def --env --wrapped $cmd [...args] { ^'$srcenv' json $opts --cmd \"$cmd\" ...(\$args) | from json | default {} | load-env }" ;;
+        pwsh|powershell) echo "function $cmd { \$script=((sh '$srcenv' $shell $opts --cmd \"$cmd\" \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
         env|\
         json|\
         bat|cmd|\
-        launchctl) noinit; return 1 ;;
+        launchctl)       noinit; return 1 ;;
     esac
 }
 
