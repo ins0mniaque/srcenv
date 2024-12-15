@@ -141,10 +141,10 @@ noshell() {
     echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}$1${NORMAL} is not a supported shell"
 }
 
-noinit() {
+nosupport() {
     colors NORMAL BOLD RED YELLOW
 
-    echo >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}init${NORMAL} not supported for shell ${YELLOW}$shell${NORMAL}"
+    echo >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}$1${NORMAL} not supported for shell ${YELLOW}$shell${NORMAL}"
 }
 
 invalid() {
@@ -245,7 +245,9 @@ init() {
     case $0 in
         /*)  srcenv="$0" ;;
         ./*) srcenv="$PWD/${0#./}" ;;
-        *)   srcenv="$PWD/$0" ;;
+        */*) srcenv="$PWD/$0" ;;
+        *)   srcenv="$(command -v "$0")" || \
+             srcenv="$PWD/$0" ;;
     esac
 
     case $shell in
@@ -267,11 +269,60 @@ init() {
         env|\
         json|\
         bat|cmd|\
-        launchctl)       noinit; return 1 ;;
+        launchctl)       nosupport init; return 1 ;;
     esac
 }
 
 # endregion init()
+
+# region rc()
+
+rc() {
+    cmd=; opts=
+
+    while [ $# -gt 0 ]; do
+        case $1 in
+            -c|--cmd)     cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            -c=*|--cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             shift ;;
+            --)           shift; opts="$*";                                     break ;;
+            *)            invalid "$1" 'invalid option -- -'; usage; help;          exit 2 ;;
+        esac
+    done
+
+    case $0 in
+        /*)  srcenv="$0" ;;
+        ./*) srcenv="$PWD/${0#./}" ;;
+        */*) srcenv="$PWD/$0" ;;
+        *)   srcenv=$0 ;;
+    esac
+
+    case $shell in
+        ash|posix|sh)    echo "eval \"\$('$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})\"" ;;
+        bash|dash|\
+        ksh|pdksh|mksh|\
+        zsh)             echo "source <('$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
+        csh|tcsh)        if [ -e /dev/stdin ]; then
+                             echo "\"$srcenv\" init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} | source /dev/stdin"
+                         else
+                             echo "eval \"\`\"$srcenv\" init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})\`\""
+                         fi ;;
+        elvish)          echo "var ${cmd:-src}~ = { }; eval &on-end={|ns| set ${cmd:-src}~ = \$ns[${cmd:-src}] } ('$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
+        fish)            echo "'$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} | source" ;;
+        murex)           echo "'$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} -> source }" ;;
+        nu|nushell)      echo '# Add to env.nu'
+                         echo "^'$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} | save -f ${cmd:-srcenv}.init.nu"
+                         echo
+                         echo '# Add to config.nu'
+                         echo "source ${cmd:-srcenv}.init.nu" ;;
+        pwsh|powershell) echo "Invoke-Expression (sh '$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
+        env|\
+        json|\
+        bat|cmd|\
+        launchctl)       nosupport rc; return 1 ;;
+    esac
+}
+
+# endregion rc()
 
 # region setformat()
 
@@ -468,8 +519,8 @@ jq=${SRCENV_JQ:-jq}
 src=
 
 case $1 in
-    init) cmd=$1; shift ;;
-    *)    cmd= ;;
+    init|rc) cmd=$1; shift ;;
+    *)       cmd= ;;
 esac
 
 case $1 in
@@ -491,12 +542,12 @@ case $1 in
     *)         shell= ;;
 esac
 
-if [ "$cmd" = init ]; then
+if [ "$cmd" = init ] || [ "$cmd" = rc ]; then
     if [ -z "$shell" ]; then
         noshell "$1"; usage; help; exit 2
     fi
 
-    init "$@"; exit $?
+    "$cmd" "$@"; exit $?
 fi
 
 [ ! -t 0 ] && set -- "$@" -
