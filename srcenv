@@ -316,9 +316,13 @@ rc() {
                          echo '# Add to config.nu'
                          echo "source ${cmd:-srcenv}.init.nu" ;;
         pwsh|powershell) echo "Invoke-Expression (sh '$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
+        cmd|command)     echo 'rem Initialize:'
+                         echo "@echo off & sh '$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on"
+                         echo
+                         echo 'rem AutoRun:'
+                         echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh '$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
         env|\
         json|\
-        cmd|command|\
         launchctl)       nosupport rc; return 1 ;;
     esac
 }
