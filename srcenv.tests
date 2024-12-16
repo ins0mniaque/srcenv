@@ -1101,7 +1101,7 @@ if [ "$cmd" = 1 ]; then
     cmd_temp=$(cmd '/c echo %TEMP%')
     cmd_temp="${cmd_temp%\"}\srcenv.$cmd_name.cmd"
     cmd_srcenv="'$PWD/space srcenv'"
-    cmd_macro="$cmd_name=@echo off \$T sh $cmd_srcenv cmd --backup --restore --cmd $cmd_name \$* \$G $cmd_temp \$T\$T call $cmd_temp \$T del $cmd_temp \$T echo on$(printf '\r')"
+    cmd_macro="$cmd_name=@echo off \$T sh $cmd_srcenv cmd --backup --restore --verbose --cmd $cmd_name \$* \$G $cmd_temp \$T\$T call $cmd_temp \$T del $cmd_temp \$T echo on$(printf '\r')"
 
     printf "@echo off\n\n$json_path_output_cmd\n" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\\\\\\\\\/g | sed -e s/\'/\"/g > test.cmd; cmd '/c test.cmd' > test.cmd.json.path.output; rm -f test.cmd
 fi
