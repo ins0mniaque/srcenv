@@ -20,7 +20,7 @@ changed since the snapshot, with support for reverting those changes.
 > [!IMPORTANT]
 > [sh](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/sh.html) _(or any POSIX shell)_ is required to evaluate the `.env` scripts. On [Windows](#windows), srcenv can use `sh.exe` installed by [git](https://git-scm.com).
 >
-> [jq](https://jqlang.github.io/jq) is required and needs to be in your `PATH`; see [installation options](https://jqlang.github.io/jq/download).
+> [jq](https://jqlang.github.io/jq) _(version ≥ 1.5)_ is required and needs to be in your `PATH`; see [installation options](https://jqlang.github.io/jq/download).
 
 ### Homebrew
 

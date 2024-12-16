@@ -21,7 +21,7 @@ srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
 and prints a shell specific script exporting the environment variables that have
 changed since the snapshot, with support for reverting those changes.
 
-srcenv depends on jq(1) being available; see <https://jqlang.github.io/jq> for
+srcenv depends on jq(1) ≥ 1.5 being available; see <https://jqlang.github.io/jq> for
 installation options.
 
 COMMANDS
