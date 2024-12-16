@@ -59,6 +59,29 @@ Invoke-Expression (sh "$Env:LOCALAPPDATA\srcenv\srcenv" init pwsh)
 
 </details>
 
+<details>
+    <summary>Windows Command shell <i>(cmd)</i></summary><p></p>
+
+Install for current user:
+
+> Download [srcenv](https://raw.githubusercontent.com/ins0mniaque/srcenv/main/srcenv) to `%LOCALAPPDATA%\srcenv` directory or use PowerShell script above to install srcenv.
+
+Run or add to `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Command Processor\AutoRun` registry key:
+
+```bat
+@echo off
+
+rem Add POSIX shell (sh) to PATH
+set PATH=%PATH%;%PROGRAMFILES%\Git\usr\bin\
+
+rem Initialize srcenv
+sh "%LOCALAPPDATA%\srcenv\srcenv" init cmd > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd
+
+echo on
+```
+
+</details>
+
 ### Manual
 
 Download the [latest script](https://raw.githubusercontent.com/ins0mniaque/srcenv/main/srcenv) and/or [man page](https://raw.githubusercontent.com/ins0mniaque/srcenv/main/srcenv.1) and make it executable:
@@ -82,7 +105,7 @@ git clone https://github.com/ins0mniaque/srcenv
 
 srcenv can integrate with your shell and add the following command to source `.env` scripts:
 
-```text
+```bash
 src [options] [files]
     [-h|--help|-v|--version]
 ```
