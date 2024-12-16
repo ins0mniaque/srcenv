@@ -20,20 +20,23 @@
 .SH DESCRIPTION
 srcenv takes a snapshot of the POSIX shell environment, sources the .env
 scripts and prints a shell specific script exporting the environment
-variables that have changed since the snapshot.
+variables that have changed since the snapshot, with support for
+reverting those changes.
 .PP
 srcenv depends on jq(1) being available; see \c
 .UR https://jqlang.github.io/jq
 .UE \c
 \ for installation options.
-.SS Commands
+.SH COMMANDS
 .TP
 init
 Generate the initialization script.
+For details, see SHELL INTEGRATION section below.
 .TP
 rc
 Generate the command to install the initialization script.
-.SS Shells
+For details, see SHELL INTEGRATION section below.
+.SH SHELLS
 .TP
 ash, dash
 Format the output as an Ash/Dash script.
@@ -79,10 +82,10 @@ Format the output as a PowerShell script.
 .TP
 zsh
 Format the output as a Zsh script.
-.SS Options
+.SH OPTIONS
 .TP
 \-f FORMAT, \-f=FORMAT, \-\-format FORMAT, \-\-format=FORMAT
-Format the output as anything (jq interpolated string).
+Format the output as anything (shell or jq interpolated string).
 For details, see FORMAT section below.
 .TP
 \-
@@ -114,24 +117,99 @@ Display help and exit.
 .TP
 \-v, \-\-version
 Display the version number and exit.
+.SH SHELL INTEGRATION
+srcenv can integrate with your shell and add the following command to
+source \f[CR].env\f[R] scripts:
+.SS Usage
+.IP
+.EX
+src [options] [files]
+    [\-h\f[B]|\f[R]\-\-help\f[B]|\f[R]\-v\f[B]|\f[R]\-\-version]
+.EE
+.SS Example
+.IP
+.EX
+❯ src project.env     \f[I]# Sources \[ga]project.env\[ga]\f[R]
+❯ src project2.env    \f[I]# Reverts \[ga]project.env\[ga] and sources \[ga]project2.env\[ga]\f[R]
+❯ src \-\-restore       \f[I]# Reverts \[ga]project2.env\[ga] (same as src \-r)\f[R]
+❯ src \-\-version       \f[I]# Shows the version of srcenv\f[R]
+  srcenv x.y.z
+❯ _
+.EE
+.SS Integration
+To add the \f[CR]\[ga]\f[R]src\f[CR]\[ga]\f[R] command, add the
+following to your shell\[cq]s configuration file:
+.TP
+POSIX:
+\f[CR]source <(srcenv init sh)\f[R]
+.TP
+Csh/Tcsh:
+\f[CR]srcenv init csh | source /dev/stdin\f[R]
+.TP
+Elvish:
+\f[CR]var src\[ti] = { }; eval &on\-end={|ns| set src\[ti] = $ns[src] } (srcenv init elvish)\f[R]
+.TP
+Murex:
+\f[CR]srcenv init murex \-> source\f[R]
+.TP
+Nushell \f[I](env.nu)\f[R]:
+\f[CR]srcenv init nu | save \-f srcenv.init.nu\f[R]
+.TP
+Nushell \f[I](config.nu)\f[R]:
+\f[CR]source srcenv.init.nu\f[R]
+.TP
+Fish:
+\f[CR]srcenv init fish | source\f[R]
+.TP
+PowerShell:
+\f[CR]Invoke\-Expression (sh \[dq]/path/to/srcenv\[dq] init pwsh)\f[R]
+.TP
+Windows Command shell \f[I](HKCU\[rs]SOFTWARE\[rs]Microsoft\[rs]Command Processor\[rs]AutoRun)\f[R]:
+\f[CR]\[at]echo off & sh \[dq]/path/to/srcenv\[dq] init cmd > %TEMP%\[rs]srcenv.init.cmd && call %TEMP%\[rs]srcenv.init.cmd & del %TEMP%\[rs]srcenv.init.cmd & echo on\f[R]
+.SS Tips
+.TP
+To use a different command name (e.g.\ \f[CR]\[ga]\f[R]magicenv\f[CR]\[ga]\f[R]), add \f[CR]\[ga]\f[R]\-\-cmd magicenv\f[CR]\[ga]\f[R].
+e.g.\ \f[CR]source <(srcenv init bash \-\-cmd magicenv)\f[R].
+.TP
+You can pass different arguments to srcenv with \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R] at the end. Without \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R], the default options are \f[CR]\[ga]\f[R]\-\-backup \-\-restore\f[CR]\[ga]\f[R].
+e.g.\ \f[CR]source <(srcenv init bash \-\-cmd srcundo \-\- \-\-restore)\f[R]
+creates a command named \f[CR]\[ga]\f[R]srcundo\f[CR]\[ga]\f[R] that
+restores the last backed up changes.
+.PP
+For non\-standard integration, use \f[CR]\[ga]\f[R]srcenv rc <shell>
+options [\-\- cmd options]\f[CR]\[ga]\f[R] to output what needs to be
+added to your shell\[cq]s configuration file.
 .SH EXAMPLES
 The following examples show how to source \f[CR].env\f[R] in different
 shells:
 .TP
-Bash:
-\f[CR]source <(srcenv bash .env)\f[R]
+POSIX:
+\f[CR]source <(srcenv sh .env)\f[R]
+.TP
+Csh/Tcsh:
+\f[CR]srcenv csh .env | source /dev/stdin\f[R]
+.TP
+Elvish:
+\f[CR]eval (srcenv elvish .env | slurp)\f[R]
+.TP
+Murex:
+\f[CR]srcenv murex .env \-> source\f[R]
+.TP
+Nushell:
+\f[CR]srcenv json .env | from json | load\-env\f[R]
 .TP
 Fish:
 \f[CR]srcenv fish .env | source\f[R]
 .TP
 PowerShell:
-\f[CR]Invoke\-Expression (&srcenv pwsh .env)\f[R]
+\f[CR]Invoke\-Expression (sh \[dq]/path/to/srcenv\[dq] pwsh .env)\f[R]
 .TP
-Zsh:
-\f[CR]source <(srcenv zsh .env)\f[R]
+Windows Command shell:
+\f[CR]\[at]echo off & sh \[dq]/path/to/srcenv\[dq] cmd .env > %TEMP%\[rs]srcenv.temp.cmd && call %TEMP%\[rs]srcenv.temp.cmd & del %TEMP%\[rs]srcenv.temp.cmd & echo on\f[R]
 .SH FORMAT
-The format is a jq(1) interpolated string
-\f[CR]\[ga]\f[R]\[rs](\&...)\f[CR]\[ga]\f[R] where the key is
+The format is either a shell
+(e.g.\ \f[CR]\[ga]\f[R]json\f[CR]\[ga]\f[R]) or a jq(1) interpolated
+string \f[CR]\[ga]\f[R]\[rs](\&...)\f[CR]\[ga]\f[R] where the key is
 \f[CR]\[ga]\f[R]$k\f[CR]\[ga]\f[R], and the value
 \f[CR]\[ga]\f[R].[$k]\f[CR]\[ga]\f[R].
 A second interpolated string can be appended with the

@@ -19,24 +19,24 @@ DESCRIPTION
 
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
 and prints a shell specific script exporting the environment variables that have
-changed since the snapshot.
+changed since the snapshot, with support for reverting those changes.
 
 srcenv depends on jq(1) being available; see <https://jqlang.github.io/jq> for
 installation options.
 
-Commands
---------
+COMMANDS
+========
 
 init
 
-:   Generate the initialization script.
+:   Generate the initialization script. For details, see SHELL INTEGRATION section below.
 
 rc
 
-:   Generate the command to install the initialization script.
+:   Generate the command to install the initialization script. For details, see SHELL INTEGRATION section below.
 
-Shells
-------
+SHELLS
+======
 
 ash, dash
 
@@ -98,12 +98,12 @@ zsh
 
 :   Format the output as a Zsh script.
 
-Options
--------
+OPTIONS
+=======
 
 -f FORMAT, -f=FORMAT, \--format FORMAT, \--format=FORMAT
 
-:   Format the output as anything (jq interpolated string). For details, see FORMAT section below.
+:   Format the output as anything (shell or jq interpolated string). For details, see FORMAT section below.
 
 -
 
@@ -145,14 +145,109 @@ Options
 
 :   Display the version number and exit.
 
+SHELL INTEGRATION
+=================
+
+srcenv can integrate with your shell and add the following command to source `.env` scripts:
+
+Usage
+-----
+
+```bash
+src [options] [files]
+    [-h|--help|-v|--version]
+```
+
+Example
+-------
+
+```bash
+❯ src project.env     # Sources `project.env`
+❯ src project2.env    # Reverts `project.env` and sources `project2.env`
+❯ src --restore       # Reverts `project2.env` (same as src -r)
+❯ src --version       # Shows the version of srcenv
+  srcenv x.y.z
+❯ _
+```
+
+Integration
+-----------
+
+To add the `` ` ``src`` ` `` command, add the following to your shell's configuration file:
+
+POSIX:
+
+:   `source <(srcenv init sh)`
+
+Csh/Tcsh:
+
+:   `srcenv init csh | source /dev/stdin`
+
+Elvish:
+
+:   `var src~ = { }; eval &on-end={|ns| set src~ = $ns[src] } (srcenv init elvish)`
+
+Murex:
+
+:   `srcenv init murex -> source`
+
+Nushell _(env.nu)_:
+
+:   `srcenv init nu | save -f srcenv.init.nu`
+
+Nushell _(config.nu)_:
+
+:   `source srcenv.init.nu`
+
+Fish:
+
+:   `srcenv init fish | source`
+
+PowerShell:
+
+:   `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`
+
+Windows Command shell _(HKCU\\SOFTWARE\\Microsoft\\Command Processor\\AutoRun)_:
+
+:   `@echo off & sh "/path/to/srcenv" init cmd > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on`
+
+Tips
+----
+
+To use a different command name (e.g. `` ` ``magicenv`` ` ``), add `` ` ``\--cmd magicenv`` ` ``.
+
+:   e.g. `source <(srcenv init bash --cmd magicenv)`.
+
+You can pass different arguments to srcenv with `` ` ``\--`` ` `` at the end. Without `` ` ``\--`` ` ``, the default options are `` ` ``\--backup \--restore`` ` ``.
+
+:   e.g. `source <(srcenv init bash --cmd srcundo -- --restore)` creates a command named `` ` ``srcundo`` ` `` that restores the last backed up changes.
+
+For non-standard integration, use `` ` ``srcenv rc \<shell> [options] [\-- cmd options]`` ` `` to output what needs to be added to your shell's configuration file.
+
 EXAMPLES
 ========
 
 The following examples show how to source `.env` in different shells:
 
-Bash:
+POSIX:
 
-:   `source <(srcenv bash .env)`
+:   `source <(srcenv sh .env)`
+
+Csh/Tcsh:
+
+:   `srcenv csh .env | source /dev/stdin`
+
+Elvish:
+
+:   `eval (srcenv elvish .env | slurp)`
+
+Murex:
+
+:   `srcenv murex .env -> source`
+
+Nushell:
+
+:   `srcenv json .env | from json | load-env`
 
 Fish:
 
@@ -160,16 +255,16 @@ Fish:
 
 PowerShell:
 
-:   `Invoke-Expression (&srcenv pwsh .env)`
+:   `Invoke-Expression (sh "/path/to/srcenv" pwsh .env)`
 
-Zsh:
+Windows Command shell:
 
-:   `source <(srcenv zsh .env)`
+:   `@echo off & sh "/path/to/srcenv" cmd .env > %TEMP%\srcenv.temp.cmd && call %TEMP%\srcenv.temp.cmd & del %TEMP%\srcenv.temp.cmd & echo on`
 
 FORMAT
 ======
 
-The format is a jq(1) interpolated string `` ` ``\\(...)`` ` `` where the key is `` ` ``$k`` ` ``, and the value `` ` ``.[\$k]`` ` ``. A second interpolated string can be appended with the `` ` ``??`` ` `` delimiter to format null values _(unset environment variables)_.
+The format is either a shell (e.g. `` ` ``json`` ` ``) or a jq(1) interpolated string `` ` ``\\(...)`` ` `` where the key is `` ` ``$k`` ` ``, and the value `` ` ``.[\$k]`` ` ``. A second interpolated string can be appended with the `` ` ``??`` ` `` delimiter to format null values _(unset environment variables)_.
 
 Key:
 
