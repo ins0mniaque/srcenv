@@ -10,8 +10,8 @@
 .PD 0
 .P
 .PD
-\f[B]srcenv\f[R] init|rc <\f[I]shell\f[R]> [\f[I]options\f[R]] [\-\-
-\f[I]cmd options\f[R]]
+\f[B]srcenv\f[R] init|rc <\f[I]shell\f[R]> [\-\-cmd \f[I]name\f[R]]
+[\-\- \f[I]options\f[R]]
 .PD 0
 .P
 .PD
@@ -177,7 +177,7 @@ creates a command named \f[CR]\[ga]\f[R]srcundo\f[CR]\[ga]\f[R] that
 restores the last backed up changes.
 .PP
 For non\-standard integration, use \f[CR]\[ga]\f[R]srcenv rc <shell>
-options [\-\- cmd options]\f[CR]\[ga]\f[R] to output what needs to be
+[\-\-cmd name] [\-\- options]\f[CR]\[ga]\f[R] to output what needs to be
 added to your shell\[cq]s configuration file.
 .SH EXAMPLES
 The following examples show how to source \f[CR].env\f[R] in different

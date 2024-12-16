@@ -11,7 +11,7 @@ SYNOPSIS
 ========
 
 | **srcenv** \<_shell_\> \[_options_] \[_files_]
-| **srcenv** init|rc \<_shell_\> \[_options_] \[\-- _cmd options_]
+| **srcenv** init|rc \<_shell_\> \[\--cmd _name_] \[\-- _options_]
 | **srcenv** \[**-h**|**\--help**|**-v**|**\--version**]
 
 DESCRIPTION
@@ -222,7 +222,7 @@ You can pass different arguments to srcenv with `` ` ``\--`` ` `` at the end. Wi
 
 :   e.g. `source <(srcenv init bash --cmd srcundo -- --restore)` creates a command named `` ` ``srcundo`` ` `` that restores the last backed up changes.
 
-For non-standard integration, use `` ` ``srcenv rc \<shell> [options] [\-- cmd options]`` ` `` to output what needs to be added to your shell's configuration file.
+For non-standard integration, use `` ` ``srcenv rc \<shell> [\--cmd name] [\-- options]`` ` `` to output what needs to be added to your shell's configuration file.
 
 EXAMPLES
 ========
