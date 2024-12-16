@@ -267,17 +267,17 @@ init() {
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
-        zsh)             echo "$cmd() { eval \"\$('$srcenv' $shell $opts --cmd \"$cmd\" \"\$@\")\"; }" ;;
+        zsh)             echo "$cmd() { eval \"\$('$srcenv' $shell $opts --cmd $cmd \"\$@\")\"; }" ;;
         csh|tcsh)        if [ -e /dev/stdin ]; then
-                             echo "alias $cmd '\"$srcenv\" $shell $opts --cmd \"$cmd\" \!* | source /dev/stdin'"
+                             echo "alias $cmd '\"$srcenv\" $shell $opts --cmd $cmd \!* | source /dev/stdin'"
                          else
-                             echo "alias $cmd 'set mktemp = \"\`mktemp\`\"; \"$srcenv\" $shell $opts --cmd \"$cmd\" \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
+                             echo "alias $cmd 'set mktemp = \"\`mktemp\`\"; \"$srcenv\" $shell $opts --cmd $cmd \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
                          fi ;;
-        elvish)          echo "var ${cmd} = {|@a| eval ('$srcenv' $shell $opts --cmd \"$cmd\" \$@a | slurp) }" ;;
-        fish)            echo "function $cmd; '$srcenv' $shell $opts --cmd \"$cmd\" \$argv | source; end" ;;
-        murex)           echo "function $cmd { '$srcenv' $shell $opts --cmd \"$cmd\" @PARAMS -> source }" ;;
-        nu|nushell)      echo "def --env --wrapped $cmd [...args] { ^'$srcenv' json $opts --cmd \"$cmd\" ...(\$args) | from json | default {} | load-env }" ;;
-        pwsh|powershell) echo "function $cmd { \$script=((sh '$srcenv' $shell $opts --cmd \"$cmd\" \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
+        elvish)          echo "var ${cmd} = {|@a| eval ('$srcenv' $shell $opts --cmd $cmd \$@a | slurp) }" ;;
+        fish)            echo "function $cmd; '$srcenv' $shell $opts --cmd $cmd \$argv | source; end" ;;
+        murex)           echo "function $cmd { '$srcenv' $shell $opts --cmd $cmd @PARAMS -> source }" ;;
+        nu|nushell)      echo "def --env --wrapped $cmd [...args] { ^'$srcenv' json $opts --cmd $cmd ...(\$args) | from json | default {} | load-env }" ;;
+        pwsh|powershell) echo "function $cmd { \$script=((sh '$srcenv' $shell $opts --cmd $cmd \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
         cmd|command)     echo "DOSKEY $cmd=@echo off \$T sh '$srcenv' $shell $opts --cmd $cmd \$* \$G %TEMP%\srcenv.$cmd.cmd \$T\$T call %TEMP%\srcenv.$cmd.cmd \$T del %TEMP%\srcenv.$cmd.cmd \$T echo on" ;;
         env|\
         json|\
