@@ -267,9 +267,9 @@ init() {
         murex)           echo "function $cmd { '$srcenv' $shell $opts --cmd \"$cmd\" @PARAMS -> source }" ;;
         nu|nushell)      echo "def --env --wrapped $cmd [...args] { ^'$srcenv' json $opts --cmd \"$cmd\" ...(\$args) | from json | default {} | load-env }" ;;
         pwsh|powershell) echo "function $cmd { \$script=((sh '$srcenv' $shell $opts --cmd \"$cmd\" \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
+        cmd|command)     echo "DOSKEY $cmd=@echo off \$T sh '$srcenv' $shell $opts --cmd $cmd \$* \$G %TEMP%\srcenv.$cmd.cmd \$T\$T call %TEMP%\srcenv.$cmd.cmd \$T del %TEMP%\srcenv.$cmd.cmd \$T echo on" ;;
         env|\
         json|\
-        cmd|command|\
         launchctl)       nosupport init; return 1 ;;
     esac
 }

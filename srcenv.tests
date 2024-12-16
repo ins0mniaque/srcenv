@@ -432,6 +432,17 @@ del test.env.cmd
 jq %s
 EOF
 
+{ cmd_init_script=$(cat); } << 'EOF'
+@echo off
+sh 'space srcenv' init %s > test.env.cmd
+call test.env.cmd
+del test.env.cmd
+
+rem DOSKEY macros cannot be run non-interactively
+rem Testing DOSKEY macro output instead
+doskey /macros | findstr ^%s=
+EOF
+
 { cmd_restore_script="$(cat) \". as \$snapshot | $diff\" snapshot.env
 del snapshot.env"; } << 'EOF'
 @echo off
@@ -1080,16 +1091,22 @@ if [ "$cmd" = 1 ]; then
     printf "$cmd_script"         'cmd test.env'            "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >  test.cmd.output; rm -f test.cmd
     printf "$cmd_script"         'cmd test.env.sh'         "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
     printf "$cmd_script"         'cmd test.path.env'       "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_init_script"    'cmd' 'src'                                 > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
     printf "$cmd_restore_script" 'cmd test.env'      'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
     printf "$cmd_restore_script" 'cmd test.env.sh'   'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
     printf "$cmd_restore_script" 'cmd test.path.env' 'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
 
-    printf "@echo off\n\n$json_path_output_cmd\n"        | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\\\\\\\\\/g | sed -e s/\'/\"/g > test.cmd; cmd '/c test.cmd' > test.cmd.json.path.output;        rm -f test.cmd
-    printf "@echo off\n\n$json_path_backup_output_cmd\n" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\\\\\\\\\/g | sed -e s/\'/\"/g > test.cmd; cmd '/c test.cmd' > test.cmd.json.path.backup.output; rm -f test.cmd
+    cmd_name=src
+    cmd_temp=$(cmd '/c echo %TEMP%')
+    cmd_temp="${cmd_temp%\"}\srcenv.$cmd_name.cmd"
+    cmd_srcenv="'$PWD/space srcenv'"
+    cmd_macro="$cmd_name=@echo off \$T sh $cmd_srcenv cmd --backup --restore --cmd $cmd_name \$* \$G $cmd_temp \$T\$T call $cmd_temp \$T del $cmd_temp \$T echo on$(printf '\r')"
+
+    printf "@echo off\n\n$json_path_output_cmd\n" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\\\\\\\\\/g | sed -e s/\'/\"/g > test.cmd; cmd '/c test.cmd' > test.cmd.json.path.output; rm -f test.cmd
 fi
 
-run "$cmd" "$(printf 'cat test.cmd.output\nrm -f test.cmd.output test.cmd.json.path.output test.cmd.json.path.backup.output')" \
-           "$json_output${LF}$json_output${LF}$(when "$cmd" cat test.cmd.json.path.output)${LF}{}${LF}{}${LF}{}"
+run "$cmd" "$(printf 'cat test.cmd.output\nrm -f test.cmd.output test.cmd.json.path.output')" \
+           "$json_output${LF}$json_output${LF}$(when "$cmd" cat test.cmd.json.path.output)${LF}$cmd_macro${LF}{}${LF}{}${LF}{}"
 
 end
 
