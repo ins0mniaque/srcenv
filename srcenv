@@ -7,9 +7,9 @@
 
 version() {
     if [ -z "$src" ]; then
-        echo 'srcenv 1.5.6'
+        echo 'srcenv 1.5.7'
     else
-        echo >&2 'srcenv 1.5.6';
+        echo >&2 'srcenv 1.5.7';
     fi
 }
 
