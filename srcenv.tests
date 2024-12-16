@@ -422,6 +422,28 @@ $snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s --backup) -join "`n"); 
 echo "$snapshot" | jq %s
 EOF
 
+{ cmd_script="$(cat) \". as \$snapshot | $diff\" snapshot.env
+del snapshot.env"; } << 'EOF'
+@echo off
+jq -n env > snapshot.env
+sh srcenv %s > test.env.cmd
+call test.env.cmd
+del test.env.cmd
+jq %s
+EOF
+
+{ cmd_restore_script="$(cat) \". as \$snapshot | $diff\" snapshot.env
+del snapshot.env"; } << 'EOF'
+@echo off
+jq -n env > snapshot.env
+sh srcenv %s --backup > test.env.cmd
+call test.env.cmd
+sh srcenv %s --restore > test.env.cmd
+call test.env.cmd
+del test.env.cmd
+jq %s
+EOF
+
 # endregion Scripts
 
 # region Outputs
@@ -487,28 +509,19 @@ EOF
 export SRCENV_RESTORE='{"SRCENV_RESTORE":null,"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null}'
 EOF
 
-{ cmd_output_prefix=$(cat); } << 'EOF'
-set LFM=^
-
-
-set LF=^^^%LFM%%LFM%^%LFM%%LFM%
-EOF
-
-{ cmd_output_suffix=$(cat); } << 'EOF'
-set LFM=
-set LF=
-EOF
+cmd_output_prefix="$(printf '@echo off\n\n(set \\n=^^^\n\n^\n\n)\n')${LF}"
+cmd_output_suffix=$(printf '\nset \\n=\n')
 
 { cmd_output=$(cat); } << 'EOF'
-set "SRCENV_TEST_A=6"
-set "SRCENV_TEST_B=7"
-set "SRCENV_TEST_C=42"
-set "SRCENV_TEST_ESCAPE=$NOT_EXPANDED\t\r\n'^""
-set "SRCENV_TEST_MULTILINE=%LF%6%LF%7%LF%42"
+set SRCENV_TEST_A=6
+set SRCENV_TEST_B=7
+set SRCENV_TEST_C=42
+set SRCENV_TEST_ESCAPE=$NOT_EXPANDED\t\r\n'"
+set SRCENV_TEST_MULTILINE=%\n%6%\n%7%\n%42
 EOF
 
 { cmd_backup_output=$(cat); } << 'EOF'
-set "SRCENV_RESTORE={^"SRCENV_RESTORE^":null,^"SRCENV_TEST_A^":null,^"SRCENV_TEST_B^":null,^"SRCENV_TEST_C^":null,^"SRCENV_TEST_ESCAPE^":null,^"SRCENV_TEST_MULTILINE^":null}"
+set SRCENV_RESTORE={"SRCENV_RESTORE":null,"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null}
 EOF
 
 { csh_output=$(cat); } << 'EOF'
@@ -1056,6 +1069,27 @@ run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershe
 run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.env'      'powershell')" '{}'
 run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.env.sh'   'powershell')" '{}'
 run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.path.env' 'powershell')" '{}'
+
+# NOTE: Running cmd inside sh messes up the shell
+#       • 'run' can only be used once afterwards
+#       • 'run' must be the last command before 'end'
+cmd=$(detect cmd) || msg warn 'Windows Command shell not found; skipping tests...'
+
+# shellcheck disable=SC2059
+if [ "$cmd" = 1 ]; then
+    printf "$cmd_script"         'cmd test.env'            "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >  test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         'cmd test.env.sh'         "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         'cmd test.path.env'       "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" 'cmd test.env'      'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" 'cmd test.env.sh'   'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" 'cmd test.path.env' 'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+
+    printf "@echo off\n\n$json_path_output_cmd\n"        | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\\\\\\\\\/g | sed -e s/\'/\"/g > test.cmd; cmd '/c test.cmd' > test.cmd.json.path.output;        rm -f test.cmd
+    printf "@echo off\n\n$json_path_backup_output_cmd\n" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\\\\\\\\\/g | sed -e s/\'/\"/g > test.cmd; cmd '/c test.cmd' > test.cmd.json.path.backup.output; rm -f test.cmd
+fi
+
+run "$cmd" "$(printf 'cat test.cmd.output\nrm -f test.cmd.output test.cmd.json.path.output test.cmd.json.path.backup.output')" \
+           "$json_output${LF}$json_output${LF}$(when "$cmd" cat test.cmd.json.path.output)${LF}{}${LF}{}${LF}{}"
 
 end
 

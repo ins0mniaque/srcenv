@@ -351,10 +351,10 @@ setformat() {
         env)             fmt '\($k)=\(.[$k]|@sh)' \
                              '\($k)=' ;;
         json)            format=. ;;
-        bat|cmd)         fmt 'set \"\($k)=\(.[$k] | gsub("\n"; "%LF%") | gsub("\""; "^\""))\"' \
+        bat|cmd)         fmt 'set \($k)=\(.[$k] | gsub("\n"; "%\\n%"))' \
                              'set \($k)='
-                         prefix='"set LFM=^\n\n\nset LF=^^^%LFM%%LFM%^%LFM%%LFM%\n" + (['
-                         suffix='] | join("\n")) + "\nset LFM=\nset LF="' ;;
+                         prefix='"@echo off\n\n(set \\n=^^^\n\n^\n\n)\n\n" + (['
+                         suffix='] | join("\n")) + "\n\nset \\n="' ;;
         launchctl)       fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                              'launchctl unsetenv \($k)' ;;
         *)               return 1 ;;
