@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# srcenv.tests - A cross-shell tool for sourcing POSIX compliant .env scripts
+# srcenv - A cross-shell tool for sourcing POSIX compliant .env scripts
 #
 # shellcheck disable=SC2016
 # shellcheck disable=SC2317
