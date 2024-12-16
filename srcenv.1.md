@@ -31,6 +31,10 @@ init
 
 :   Generate the initialization script.
 
+rc
+
+:   Generate the command to install the initialization script.
+
 Shells
 ------
 
@@ -42,9 +46,9 @@ bash
 
 :   Format the output as a Bash script.
 
-bat, cmd
+cmd, command
 
-:   Format the output as a Windows batch script.
+:   Format the output as a Windows Command shell script.
 
 csh, tcsh
 

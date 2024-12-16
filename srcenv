@@ -73,11 +73,12 @@ options() {
         echo >&2 "\
 ${BOLD}${UNDERLINE}Commands${NORMAL}:
   ${BOLD}init              ${NORMAL}Generate the initialization script
+  ${BOLD}rc                ${NORMAL}Generate the command to install the initialization script
 
 ${BOLD}${UNDERLINE}Shells${NORMAL}:
   ${BOLD}ash, dash         ${NORMAL}Format the output as an Ash/Dash script
   ${BOLD}bash              ${NORMAL}Format the output as a Bash script
-  ${BOLD}bat, cmd          ${NORMAL}Format the output as a Windows batch script
+  ${BOLD}cmd, command      ${NORMAL}Format the output as a Windows Command shell script
   ${BOLD}csh, tcsh         ${NORMAL}Format the output as a Csh/Tcsh script
   ${BOLD}elvish            ${NORMAL}Format the output as an Elvish script
   ${BOLD}env               ${NORMAL}Format the output as a .env file
@@ -268,7 +269,7 @@ init() {
         pwsh|powershell) echo "function $cmd { \$script=((sh '$srcenv' $shell $opts --cmd \"$cmd\" \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
         env|\
         json|\
-        bat|cmd|\
+        cmd|command|\
         launchctl)       nosupport init; return 1 ;;
     esac
 }
@@ -317,7 +318,7 @@ rc() {
         pwsh|powershell) echo "Invoke-Expression (sh '$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
         env|\
         json|\
-        bat|cmd|\
+        cmd|command|\
         launchctl)       nosupport rc; return 1 ;;
     esac
 }
@@ -351,7 +352,7 @@ setformat() {
         env)             fmt '\($k)=\(.[$k]|@sh)' \
                              '\($k)=' ;;
         json)            format=. ;;
-        bat|cmd)         fmt 'set \($k)=\(.[$k] | gsub("\n"; "%\\n%"))' \
+        cmd|command)     fmt 'set \($k)=\(.[$k] | gsub("\n"; "%\\n%"))' \
                              'set \($k)='
                          prefix='"@echo off\n\n(set \\n=^^^\n\n^\n\n)\n\n" + (['
                          suffix='] | join("\n")) + "\n\nset \\n="' ;;
@@ -450,7 +451,7 @@ run() {
         noformat; usage; help; exit 2
     elif [ -n "$COMSPEC" ]; then
         case $shell in
-            pwsh|powershell|bat|cmd) ;;
+            pwsh|powershell|cmd|command) ;;
             *) fixpath=1 ;;
         esac
     fi
@@ -537,7 +538,7 @@ case $1 in
     pwsh|powershell|\
     env|\
     json|\
-    bat|cmd|\
+    cmd|command|\
     launchctl) shell=$1; shift ;;
     *)         shell= ;;
 esac

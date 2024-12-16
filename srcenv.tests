@@ -722,8 +722,8 @@ run_output_tests() {
     run "$1" "$2 posix $env_input"      "$posix_output"
     run "$1" "$2 sh $env_input"         "$posix_output"
     run "$1" "$2 zsh $env_input"        "$posix_output"
-    run "$1" "$2 bat $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 cmd $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+    run "$1" "$2 command $env_input"    "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 csh $env_input"        "$csh_output"
     run "$1" "$2 tcsh $env_input"       "$csh_output"
     run "$1" "$2 elvish $env_input"     "$elvish_output"
@@ -746,8 +746,8 @@ run_output_tests() {
     run "$1" "$2 --format posix $env_input"      "$posix_output"
     run "$1" "$2 --format sh $env_input"         "$posix_output"
     run "$1" "$2 --format zsh $env_input"        "$posix_output"
-    run "$1" "$2 --format bat $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 --format cmd $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+    run "$1" "$2 --format command $env_input"    "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 --format csh $env_input"        "$csh_output"
     run "$1" "$2 --format tcsh $env_input"       "$csh_output"
     run "$1" "$2 --format elvish $env_input"     "$elvish_output"
@@ -769,8 +769,8 @@ run_output_tests() {
     run "$1" "$2 posix --backup $env_input"      "$posix_backup_output${LF}$posix_output"
     run "$1" "$2 sh --backup $env_input"         "$posix_backup_output${LF}$posix_output"
     run "$1" "$2 zsh --backup $env_input"        "$posix_backup_output${LF}$posix_output"
-    run "$1" "$2 bat --backup $env_input"        "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 cmd --backup $env_input"        "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
+    run "$1" "$2 command --backup $env_input"    "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 csh --backup $env_input"        "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 tcsh --backup $env_input"       "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 elvish --backup $env_input"     "$elvish_backup_output${LF}$elvish_output"
@@ -793,8 +793,8 @@ run_output_tests() {
     run "$1" "$2 posix --local $env_input"      ''
     run "$1" "$2 sh --local $env_input"         ''
     run "$1" "$2 zsh --local $env_input"        ''
-    run "$1" "$2 bat --local $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 cmd --local $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+    run "$1" "$2 command --local $env_input"    "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 csh --local $env_input"        ''
     run "$1" "$2 tcsh --local $env_input"       ''
     run "$1" "$2 elvish --local $env_input"     ''
@@ -817,8 +817,8 @@ run_output_tests() {
     run "$1" "$2 posix --local --backup $env_input"      ''
     run "$1" "$2 sh --local --backup $env_input"         ''
     run "$1" "$2 zsh --local --backup $env_input"        ''
-    run "$1" "$2 bat --local --backup $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 cmd --local --backup $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
+    run "$1" "$2 command --local --backup $env_input"    "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 csh --local --backup $env_input"        ''
     run "$1" "$2 tcsh --local --backup $env_input"       ''
     run "$1" "$2 elvish --local --backup $env_input"     ''
@@ -841,8 +841,8 @@ run_output_tests() {
     run "$1" "$2 posix $posix_input"      "$posix_output"
     run "$1" "$2 sh $posix_input"         "$posix_output"
     run "$1" "$2 zsh $posix_input"        "$posix_output"
-    run "$1" "$2 bat $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 cmd $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
+    run "$1" "$2 command $posix_input"    "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 csh $posix_input"        "$csh_output"
     run "$1" "$2 tcsh $posix_input"       "$csh_output"
     run "$1" "$2 elvish $posix_input"     "$elvish_output"
@@ -865,8 +865,8 @@ run_output_tests() {
     run "$1" "$2 posix --backup $posix_input"      "$posix_backup_output${LF}$posix_output"
     run "$1" "$2 sh --backup $posix_input"         "$posix_backup_output${LF}$posix_output"
     run "$1" "$2 zsh --backup $posix_input"        "$posix_backup_output${LF}$posix_output"
-    run "$1" "$2 bat --backup $posix_input"        "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 cmd --backup $posix_input"        "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
+    run "$1" "$2 command --backup $posix_input"    "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 csh --backup $posix_input"        "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 tcsh --backup $posix_input"       "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 elvish --backup $posix_input"     "$elvish_backup_output${LF}$elvish_output"
