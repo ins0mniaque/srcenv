@@ -297,37 +297,44 @@ rc() {
         esac
     done
 
+    case $shell in
+        csh|tcsh) quote='"' ;;
+        *)        quote="'" ;;
+    esac
+
     case $0 in
-        /*)  srcenv="$0" ;;
-        ./*) srcenv="$PWD/${0#./}" ;;
-        */*) srcenv="$PWD/$0" ;;
-        *)   srcenv=$0 ;;
+        /*)   srcenv="${quote}$0${quote}" ;;
+        ./*)  srcenv="${quote}$PWD/${0#./}${quote}" ;;
+        */*)  srcenv="${quote}$PWD/$0${quote}" ;;
+        *\ *) srcenv="${quote}$0${quote}" ;;
+        *)    command -v "$0" > /dev/null && srcenv=$0 || \
+              srcenv="${quote}$0${quote}" ;;
     esac
 
     case $shell in
-        ash|posix|sh)    echo "eval \"\$('$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})\"" ;;
+        ash|posix|sh)    echo "eval \"\$($srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})\"" ;;
         bash|dash|\
         ksh|pdksh|mksh|\
-        zsh)             echo "source <('$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
+        zsh)             echo "source <($srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
         csh|tcsh)        if [ -e /dev/stdin ]; then
-                             echo "\"$srcenv\" init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} | source /dev/stdin"
+                             echo "$srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} | source /dev/stdin"
                          else
-                             echo "eval \"\`\"$srcenv\" init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})\`\""
+                             echo "eval \"\`$srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})\`\""
                          fi ;;
-        elvish)          echo "var ${cmd:-src}~ = { }; eval &on-end={|ns| set ${cmd:-src}~ = \$ns[${cmd:-src}] } ('$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
-        fish)            echo "'$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} | source" ;;
-        murex)           echo "'$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} -> source }" ;;
+        elvish)          echo "var ${cmd:-src}~ = { }; eval &on-end={|ns| set ${cmd:-src}~ = \$ns[${cmd:-src}] } ($srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
+        fish)            echo "$srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} | source" ;;
+        murex)           echo "$srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} -> source }" ;;
         nu|nushell)      echo '# Add to env.nu'
-                         echo "^'$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} | save -f ${cmd:-srcenv}.init.nu"
+                         echo "^$srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} | save -f ${cmd:-srcenv}.init.nu"
                          echo
                          echo '# Add to config.nu'
                          echo "source ${cmd:-srcenv}.init.nu" ;;
-        pwsh|powershell) echo "Invoke-Expression (sh '$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
+        pwsh|powershell) echo "Invoke-Expression (sh $srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"})" ;;
         cmd|command)     echo 'rem Initialize:'
-                         echo "@echo off & sh '$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on"
+                         echo "@echo off & sh $srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on"
                          echo
                          echo 'rem AutoRun:'
-                         echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh '$srcenv' init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
+                         echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh $srcenv init $shell${cmd:+" --cmd $cmd"}${opts:+" -- $opts"} > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
         env|\
         json|\
         launchctl)       nosupport rc; return 1 ;;
