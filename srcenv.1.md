@@ -11,7 +11,7 @@ SYNOPSIS
 ========
 
 | **srcenv** \<_shell_\> \[_options_] \[_files_]
-| **srcenv** init \<_shell_\>
+| **srcenv** init|rc \<_shell_\> \[_options_] \[\-- _cmd options_]
 | **srcenv** \[**-h**|**\--help**|**-v**|**\--version**]
 
 DESCRIPTION

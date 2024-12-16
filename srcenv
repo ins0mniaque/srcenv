@@ -49,7 +49,7 @@ usage() {
 
         echo >&2 "
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMAL}> [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
-              init <${ITALIC}shell${NORMAL}>
+              init|rc <${ITALIC}shell${NORMAL}> [${ITALIC}options${NORMAL}] [-- ${ITALIC}cmd options${NORMAL}]
               [-h|--help|-v|--version]
 "
     else
