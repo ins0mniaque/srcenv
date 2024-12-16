@@ -107,7 +107,7 @@ srcenv can integrate with your shell and add the following command to source `.e
 
 ```bash
 src [options] [files]
-    [-h|--help|-v|--version]
+    [-h|--help|--version]
 ```
 
 ```bash
@@ -145,7 +145,7 @@ To add the `src` command, add the following to your shell's configuration file:
 > _e.g. `source <(srcenv init bash --cmd magicenv)`._
 
 > [!TIP]
-> You can pass different arguments to srcenv with `--` at the end. Without `--`, the default options are `--backup --restore`.
+> You can pass different arguments to srcenv with `--` at the end. Without `--`, the default options are `--backup --restore --verbose`.
 >
 > _e.g. `source <(srcenv init bash --cmd srcundo -- --restore)` creates a command named `srcundo` that restores the last backed up changes._
 

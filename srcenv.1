@@ -16,7 +16,7 @@
 .P
 .PD
 \f[B]srcenv\f[R]
-[\f[B]\-h\f[R]|\f[B]\-\-help\f[R]|\f[B]\-v\f[R]|\f[B]\-\-version\f[R]]
+[\f[B]\-h\f[R]|\f[B]\-\-help\f[R]|\f[B]\-\-version\f[R]]
 .SH DESCRIPTION
 srcenv takes a snapshot of the POSIX shell environment, sources the .env
 scripts and prints a shell specific script exporting the environment
@@ -121,10 +121,16 @@ Sort the environment variables alphabetically (Default).
 \-u, \-\-unsorted
 Keep the environment variables unsorted.
 .TP
+\-q, \-\-quiet
+Do not display changed environment variables.
+.TP
+\-v, \-\-verbose
+Display changed environment variables.
+.TP
 \-h, \-\-help
 Display help and exit.
 .TP
-\-v, \-\-version
+\-\-version
 Display the version number and exit.
 .SH SHELL INTEGRATION
 srcenv can integrate with your shell and add the following command to
@@ -133,7 +139,7 @@ source \f[CR].env\f[R] scripts:
 .IP
 .EX
 src [options] [files]
-    [\-h\f[B]|\f[R]\-\-help\f[B]|\f[R]\-v\f[B]|\f[R]\-\-version]
+    [\-h\f[B]|\f[R]\-\-help\f[B]|\f[R]\-\-version]
 .EE
 .SS Example
 .IP
@@ -180,7 +186,7 @@ Windows Command shell \f[I](HKCU\[rs]SOFTWARE\[rs]Microsoft\[rs]Command Processo
 To use a different command name (e.g.\ \f[CR]\[ga]\f[R]magicenv\f[CR]\[ga]\f[R]), add \f[CR]\[ga]\f[R]\-\-cmd magicenv\f[CR]\[ga]\f[R].
 e.g.\ \f[CR]source <(srcenv init bash \-\-cmd magicenv)\f[R].
 .TP
-You can pass different arguments to srcenv with \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R] at the end. Without \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R], the default options are \f[CR]\[ga]\f[R]\-\-backup \-\-restore\f[CR]\[ga]\f[R].
+You can pass different arguments to srcenv with \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R] at the end. Without \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R], the default options are \f[CR]\[ga]\f[R]\-\-backup \-\-restore \-\-verbose\f[CR]\[ga]\f[R].
 e.g.\ \f[CR]source <(srcenv init bash \-\-cmd srcundo \-\- \-\-restore)\f[R]
 creates a command named \f[CR]\[ga]\f[R]srcundo\f[CR]\[ga]\f[R] that
 restores the last backed up changes.

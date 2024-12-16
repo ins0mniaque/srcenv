@@ -12,7 +12,7 @@ SYNOPSIS
 
 | **srcenv** \<_shell_\> \[_options_] \[_files_]
 | **srcenv** init|rc \<_shell_\> \[\--cmd _name_] \[\-- _options_]
-| **srcenv** \[**-h**|**\--help**|**-v**|**\--version**]
+| **srcenv** \[**-h**|**\--help**|**\--version**]
 
 DESCRIPTION
 ===========
@@ -149,11 +149,19 @@ OPTIONS
 
 :   Keep the environment variables unsorted.
 
+-q, \--quiet
+
+:   Do not display changed environment variables.
+
+-v, \--verbose
+
+:   Display changed environment variables.
+
 -h, \--help
 
 :   Display help and exit.
 
--v, \--version
+\--version
 
 :   Display the version number and exit.
 
@@ -167,7 +175,7 @@ Usage
 
 ```bash
 src [options] [files]
-    [-h|--help|-v|--version]
+    [-h|--help|--version]
 ```
 
 Example
@@ -230,7 +238,7 @@ To use a different command name (e.g. `` ` ``magicenv`` ` ``), add `` ` ``\--cmd
 
 :   e.g. `source <(srcenv init bash --cmd magicenv)`.
 
-You can pass different arguments to srcenv with `` ` ``\--`` ` `` at the end. Without `` ` ``\--`` ` ``, the default options are `` ` ``\--backup \--restore`` ` ``.
+You can pass different arguments to srcenv with `` ` ``\--`` ` `` at the end. Without `` ` ``\--`` ` ``, the default options are `` ` ``\--backup \--restore \--verbose`` ` ``.
 
 :   e.g. `source <(srcenv init bash --cmd srcundo -- --restore)` creates a command named `` ` ``srcundo`` ` `` that restores the last backed up changes.
 

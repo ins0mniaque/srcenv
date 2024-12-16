@@ -9,7 +9,7 @@ version() {
     if [ -z "$src" ]; then
         echo 'srcenv 1.5.8'
     else
-        echo >&2 'srcenv 1.5.8';
+        echo >&2 'srcenv 1.5.8'
     fi
 }
 
@@ -50,14 +50,14 @@ usage() {
         echo >&2 "
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMAL}> [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
               init|rc <${ITALIC}shell${NORMAL}> [--cmd ${ITALIC}name${NORMAL}] [-- ${ITALIC}options${NORMAL}]
-              [-h|--help|-v|--version]
+              [-h|--help|--version]
 "
     else
         warn=; command -v "$jq" > /dev/null || \
         warn=$(printf "%$((46 - ${#src} + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
                       "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
         help=$(printf "%$((32 + ${#src}))s" \
-                      "[-h|--help|-v|--version]")
+                      "[-h|--help|--version]")
 
         echo >&2 "
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}$src${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
@@ -112,8 +112,10 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-l, --local                 ${NORMAL}Do not export all variables
   ${BOLD}-s, --sort                  ${NORMAL}Sort the environment variables alphabetically ${ITALIC}(Default)${NORMAL}
   ${BOLD}-u, --unsorted              ${NORMAL}Keep the environment variables unsorted
+  ${BOLD}-q, --quiet                 ${NORMAL}Do not display changed environment variables
+  ${BOLD}-v, --verbose               ${NORMAL}Display changed environment variables
   ${BOLD}-h, --help                  ${NORMAL}Display help and exit
-  ${BOLD}-v, --version               ${NORMAL}Display the version number and exit
+  ${BOLD}--version                   ${NORMAL}Display the version number and exit
 "
 }
 
@@ -176,11 +178,13 @@ invalid() {
 }
 
 err() {
+    colors NORMAL
+
     if [ "$2" = 0 ]; then
-        printf >&2 '%s\n' "$1"; return
+        printf >&2 '%s\n' "${NORMAL}$1"; return
     fi
 
-    colors NORMAL BOLD RED YELLOW
+    colors BOLD RED YELLOW
 
     escape=$(printf '\033')
     case $1 in
@@ -243,7 +247,7 @@ iscmd() {
 
 init() {
     cmd=src
-    opts='--backup --restore'
+    opts='--backup --restore --verbose'
 
     while [ $# -gt 0 ]; do
         case $1 in
@@ -394,6 +398,23 @@ build() {
     [ -n "$backup"  ] && backup='| ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
     [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
     [ -n "$fixpath" ] && fixpath='| if .PATH then .PATH = (.PATH|gsub("\\\\"; "/")|gsub("(?<drive>.):/"; "/" + (.drive|ascii_downcase) + "/")|gsub(";"; ":")) end'
+
+    if [ -n "$verbose" ]; then
+        [ "$format" = . ] && format='keys[] as $k | "  \($k|tojson): \(.[$k]|tojson)"' && \
+                             prefix='"{\n" + ([' && \
+                             suffix='] | join(",\n")) + "\n}" | if . == "{\n\n}" then "{}" else . end'
+
+        [ -z "$prefix" ] && prefix='(['
+        [ -z "$suffix" ] && suffix='] | join("\n"))'
+
+        colors NORMAL BOLD DIM RED GREEN YELLOW
+
+        changed="$restore $diff ${backup:+"| . += { SRCENV_RESTORE: \"\" }"}"
+        added="\"${GREEN}+${NORMAL}"'\($k)"'
+        removed="\"${RED}-${NORMAL}"'\($k)"'
+        nothing="\"${YELLOW}No changes${NORMAL}\""
+        verbose='+ "\n'${BOLD}${DIM}srcenv:${NORMAL}' " + (['$changed' | keys[] as $k | if .[$k] then '$added' else '$removed' end] | join(", ") | if . == "" then '$nothing' else . end)'
+    fi
 }
 
 parse() {
@@ -404,7 +425,7 @@ parse() {
 }
 
 run() {
-    prefix=; suffix=; format=; export=; backup=; restore=; fixpath=
+    prefix=; suffix=; format=; export=; backup=; restore=; fixpath=; verbose=
 
     setformat "$shell"
 
@@ -429,9 +450,11 @@ run() {
             -s|--sort)     keys='keys[] as $k';
                            sort='to_entries | sort_by(.key) | from_entries'; shift ;;
             -u|--unsorted) keys='keys_unsorted[] as $k'; sort=.;             shift ;;
+            -q|--quiet)    verbose=;                                         shift ;;
+            -v|--verbose)  verbose=1;                                        shift ;;
             --usage)       header; usage; desc; help; man;          exit 0 ;;
             -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
-            -v|--version)  version;                                 exit 0 ;;
+            --version)     version;                                 exit 0 ;;
 
             -i|--input)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                             set -- "$@" -- --input "$value"; shift ;;
@@ -439,7 +462,7 @@ run() {
                             set -- "$@" -- --input "$value"; shift ;;
             -)              set -- "$@" -- -;                shift ;;
 
-            -*) if opts=$(getopt 'bc:ef:hi:lnrsuv' "$1" 2>&1) && shift; then
+            -*) if opts=$(getopt 'bc:ef:hi:lnqrsuv' "$1" 2>&1) && shift; then
                     # shellcheck disable=SC2086
                     if [ -n "$ZSH_VERSION" ]; then
                         setopt shwordsplit > /dev/null 2>&1
@@ -492,9 +515,21 @@ run() {
 
     build
 
-    # shellcheck disable=SC2086
-    "$jq" $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" \
-       -rn "$prefix $restore $diff $backup $fixpath | $keys | $format $suffix"
+    if [ -n "$verbose" ]; then
+        # shellcheck disable=SC2086
+        stdout=$("$jq" $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" \
+            -rn "$prefix $restore $diff $backup $fixpath | $keys | $format $suffix $verbose")
+        exitcode=$?
+
+        printf 1>&2 "%s\n" "${stdout##*"${LF}"}"
+        printf      "%s\n" "${stdout%"${LF}"*}"
+
+        exit "$exitcode"
+    else
+        # shellcheck disable=SC2086
+        "$jq" $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" \
+            -rn "$prefix $restore $diff $backup $fixpath | $keys | $format $suffix"
+    fi
 }
 
 src() {
