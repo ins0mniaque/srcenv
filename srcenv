@@ -231,7 +231,15 @@ colors() {
 
 # endregion Help / Usage
 
-# region init()
+# region init() / rc()
+
+iscmd() {
+    case $2 in
+        *\ *)         invalid "$1" 'command name must not contain a space character -- -'; usage; help; exit 2 ;;
+        [[:alpha:]]*) return ;;
+        *)            invalid "$1" 'command name must start with a letter -- -'; usage; help; exit 2 ;;
+    esac
+}
 
 init() {
     cmd=src
@@ -239,10 +247,10 @@ init() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            -c|--cmd)     cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            -c=*|--cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             shift ;;
-            --)           shift; opts="$*";                                         break ;;
-            *)            invalid "$1" 'invalid option -- -'; usage; help;          exit 2 ;;
+            -c|--cmd)     cmd=$(parse "$1" "$2")            && iscmd "$1 '$2'" "$cmd" || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            -c=*|--cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") && iscmd "$1"      "$cmd" || exit $?;                        shift ;;
+            --)           shift; opts="$*";                                break ;;
+            *)            invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
     done
 
@@ -277,19 +285,15 @@ init() {
     esac
 }
 
-# endregion init()
-
-# region rc()
-
 rc() {
     cmd=; opts=
 
     while [ $# -gt 0 ]; do
         case $1 in
-            -c|--cmd)     cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            -c=*|--cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             shift ;;
-            --)           shift; opts="$*";                                     break ;;
-            *)            invalid "$1" 'invalid option -- -'; usage; help;          exit 2 ;;
+            -c|--cmd)     cmd=$(parse "$1" "$2")            && iscmd "$1 '$2'" "$cmd" || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            -c=*|--cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") && iscmd "$1"      "$cmd" || exit $?;                        shift ;;
+            --)           shift; opts="$*";                                break ;;
+            *)            invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
     done
 
@@ -330,7 +334,7 @@ rc() {
     esac
 }
 
-# endregion rc()
+# endregion init() / rc()
 
 # region setformat()
 
