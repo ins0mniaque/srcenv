@@ -105,6 +105,9 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-i=INPUT, --input=INPUT     ${NORMAL}Source from string value of INPUT
   ${BOLD}-b, --backup                ${NORMAL}Backup changes to SRCENV_RESTORE for restore
   ${BOLD}-r, --restore               ${NORMAL}Restore backed up changes from SRCENV_RESTORE
+  ${BOLD}-n                          ${NORMAL}Do not backup changes and do not restore backed up changes
+  ${BOLD}--no-backup                 ${NORMAL}Do not backup changes to SRCENV_RESTORE for restore
+  ${BOLD}--no-restore                ${NORMAL}Do not restore backed up changes from SRCENV_RESTORE
   ${BOLD}-e, --export                ${NORMAL}Export all variables ${ITALIC}(Default for .env/.envrc files)${NORMAL}
   ${BOLD}-l, --local                 ${NORMAL}Do not export all variables
   ${BOLD}-s, --sort                  ${NORMAL}Sort the environment variables alphabetically ${ITALIC}(Default)${NORMAL}

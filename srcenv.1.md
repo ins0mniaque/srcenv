@@ -121,6 +121,18 @@ OPTIONS
 
 :   Restore backed up changes from SRCENV_RESTORE.
 
+-n
+
+:   Do not backup changes and do not restore backed up changes.
+
+\--no-backup
+
+:   Do not backup changes to SRCENV_RESTORE for restore.
+
+\--no-restore
+
+:   Do not restore backed up changes from SRCENV_RESTORE.
+
 -e, \--export
 
 :   Export all variables (Default for .env/.envrc files).
