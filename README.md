@@ -100,20 +100,21 @@ src [options] [files]
 
 To add the `src` command, add the following to your shell's configuration file:
 
-| Shell      | Command                                               |
-|------------|-------------------------------------------------------|
-| POSIX      | `source <(srcenv init bash)`                          |
-|            | `source <(srcenv init dash)`                          |
-|            | `source <(srcenv init ksh)`                           |
-|            | `source <(srcenv init zsh)`                           |
-| Csh/Tcsh   | `srcenv init csh \| source /dev/stdin`                |
-|            | `srcenv init tcsh \| source /dev/stdin`               |
-| Elvish     | `var src~ = { }; eval &on-end={\|ns\| set src~ = $ns[src] } (srcenv init elvish)` |
-| Murex      | `srcenv init murex -> source`                         |
-| Nushell    | `srcenv init nu \| save -f srcenv.init.nu` _(env.nu)_ |
-|            | `source srcenv.init.nu` _(config.nu)_                 |
-| Fish       | `srcenv init fish \| source`                          |
-| PowerShell | `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`  |
+| Shell           | Command                                               |
+|-----------------|-------------------------------------------------------|
+| POSIX           | `source <(srcenv init bash)`                          |
+|                 | `source <(srcenv init dash)`                          |
+|                 | `source <(srcenv init ksh)`                           |
+|                 | `source <(srcenv init zsh)`                           |
+| Csh/Tcsh        | `srcenv init csh \| source /dev/stdin`                |
+|                 | `srcenv init tcsh \| source /dev/stdin`               |
+| Elvish          | `var src~ = { }; eval &on-end={\|ns\| set src~ = $ns[src] } (srcenv init elvish)` |
+| Murex           | `srcenv init murex -> source`                         |
+| Nushell         | `srcenv init nu \| save -f srcenv.init.nu` _(env.nu)_ |
+|                 | `source srcenv.init.nu` _(config.nu)_                 |
+| Fish            | `srcenv init fish \| source`                          |
+| PowerShell      | `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`  |
+| Windows Command | `@echo off & sh "/path/to/srcenv" init cmd > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on` _(HKCU\SOFTWARE\Microsoft\Command Processor\AutoRun)_ |
 
 > [!NOTE]
 > To use a different command name _(e.g. `magicenv`)_, add `--cmd magicenv`.
@@ -125,21 +126,24 @@ To add the `src` command, add the following to your shell's configuration file:
 >
 > _e.g. `source <(srcenv init bash --cmd srcundo -- --restore)` creates a command named `srcundo` that restores the last backed up changes._
 
+For non-standard integration, use `srcenv rc <shell> [options] [-- cmd options]` to output what needs to be added to your shell's configuration file.
+
 For a list of supported options, see `src --help`.
 
 ### Direct usage _(without shell integration)_
 
 The following table shows how to source `.env` in different shells:
 
-| Shell      | Command                                               |
-|------------|-------------------------------------------------------|
-| POSIX      | `source <(srcenv sh .env)`                            |
-| Csh/Tcsh   | `srcenv csh .env \| source /dev/stdin`                |
-| Elvish     | `eval (srcenv elvish .env \| slurp)`                  |
-| Murex      | `srcenv murex .env -> source`                         |
-| Nushell    | `srcenv json .env \| from json \| load-env`           |
-| Fish       | `srcenv fish .env \| source`                          |
-| PowerShell | `Invoke-Expression (sh "/path/to/srcenv" pwsh .env)`  |
+| Shell           | Command                                              |
+|-----------------|------------------------------------------------------|
+| POSIX           | `source <(srcenv sh .env)`                           |
+| Csh/Tcsh        | `srcenv csh .env \| source /dev/stdin`               |
+| Elvish          | `eval (srcenv elvish .env \| slurp)`                 |
+| Murex           | `srcenv murex .env -> source`                        |
+| Nushell         | `srcenv json .env \| from json \| load-env`          |
+| Fish            | `srcenv fish .env \| source`                         |
+| PowerShell      | `Invoke-Expression (sh "/path/to/srcenv" pwsh .env)` |
+| Windows Command | `@echo off & sh "/path/to/srcenv" cmd .env > %TEMP%\srcenv.temp.cmd && call %TEMP%\srcenv.temp.cmd & del %TEMP%\srcenv.temp.cmd & echo on` |
 
 For a list of supported shells and options, see `srcenv --help`.
 
