@@ -672,30 +672,30 @@ run_posix_tests() {
         *)      set -- 1 "$@" ;;
     esac
 
-    [ "$no_stdin" = 1 ] && [ "$1" = 1 ] && and_no_stdin=1 || and_no_stdin=
+    [ "$no_stdin" = 1 ] && [ "$1" = 1 ] && when_no_stdin=1 || when_no_stdin=
 
     run "$1" "$2 --version" 'srcenv 1.5.9'
 
-    run "$and_no_stdin" "$2"                ''
+    run "$when_no_stdin" "$2"               ''
     run "$1" "$2 --invalid"                 '' 2
     run "$1" "$2 init"                      '' 2
     run "$1" "$2 init sh --cmd 42"          '' 2
     run "$1" "$2 init sh --cmd 'space src'" '' 2
     run "$1" "$2 sh not_a_file"             '' 1
     run "$1" "$2 sh --input not_a_command"  '' 127
-    run "$and_no_stdin" "$2 --export"       '' 2
+    run "$when_no_stdin" "$2 --export"      '' 2
 
-    run "$1" "$2 sh --backup"                      '' 2
-    run "$1" "$2 sh --restore"                     ''
-    run "$1" "$2 sh --clear"                       'unset SRCENV_RESTORE'
-    run "$1" "SRCENV_RESTORE='' $2 sh --restore"   '' 5
-    run "$1" "$2 --restore"                        '' 2
-    run "$and_no_stdin" "$2 sh --backup --restore" '' 2
+    run "$when_no_stdin" "$2 sh --backup"           '' 2
+    run "$1" "$2 sh --restore"                      ''
+    run "$1" "$2 sh --clear"                        'unset SRCENV_RESTORE'
+    run "$1" "SRCENV_RESTORE='' $2 sh --restore"    '' 5
+    run "$1" "$2 --restore"                         '' 2
+    run "$when_no_stdin" "$2 sh --backup --restore" '' 2
 
-    run "$1" "$2 sh --backup --restore --cmd src"           ''
-    run "$1" "$2 sh --backup --restore --cmd src --backup"  '' 2
-    run "$1" "$2 sh --backup --restore --cmd src --restore" ''
-    run "$1" "$2 sh --backup --restore --cmd src --clear"   'unset SRCENV_RESTORE'
+    run "$1" "$2 sh --backup --restore --cmd src"                      ''
+    run "$when_no_stdin" "$2 sh --backup --restore --cmd src --backup" '' 2
+    run "$1" "$2 sh --backup --restore --cmd src --restore"            ''
+    run "$1" "$2 sh --backup --restore --cmd src --clear"              'unset SRCENV_RESTORE'
 
     run "$1" "$2 sh --input 'echo something'"                ''
     run "$1" "$2 sh --input 'echo something; not_a_command'" '' 127
