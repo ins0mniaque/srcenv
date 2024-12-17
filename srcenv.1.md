@@ -183,10 +183,17 @@ Example
 
 ```bash
 ❯ src project.env     # Sources `project.env`
+srcenv: +COMPILER_OPTIONS +PROJECT_PATH
+
 ❯ src project2.env    # Reverts `project.env` and sources `project2.env`
+srcenv: ~COMPILER_OPTIONS -PROJECT_PATH +PROJECT2_PATH
+
 ❯ src --restore       # Reverts `project2.env` (same as src -r)
+srcenv: -COMPILER_OPTIONS -PROJECT2_PATH
+
 ❯ src --version       # Shows the version of srcenv
-  srcenv x.y.z
+srcenv x.y.z
+
 ❯ _
 ```
 

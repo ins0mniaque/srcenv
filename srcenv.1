@@ -145,10 +145,17 @@ src [options] [files]
 .IP
 .EX
 ❯ src project.env     \f[I]# Sources \[ga]project.env\[ga]\f[R]
+srcenv: +COMPILER_OPTIONS +PROJECT_PATH
+
 ❯ src project2.env    \f[I]# Reverts \[ga]project.env\[ga] and sources \[ga]project2.env\[ga]\f[R]
+srcenv: \[ti]COMPILER_OPTIONS \-PROJECT_PATH +PROJECT2_PATH
+
 ❯ src \-\-restore       \f[I]# Reverts \[ga]project2.env\[ga] (same as src \-r)\f[R]
+srcenv: \-COMPILER_OPTIONS \-PROJECT2_PATH
+
 ❯ src \-\-version       \f[I]# Shows the version of srcenv\f[R]
-  srcenv x.y.z
+srcenv x.y.z
+
 ❯ _
 .EE
 .SS Integration
