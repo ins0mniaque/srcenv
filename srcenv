@@ -429,29 +429,29 @@ parse() {
 }
 
 run() {
-    arg=; prefix=; suffix=; format=; export=; backup=; restore=; clear=; fixpath=; verbose=
+    arg=; input=; action=; prefix=; suffix=; format=; export=; backup=; restore=; clear=; fixpath=; verbose=
 
     setformat "$shell"
 
     while [ $# -gt 0 ] && [ "$1" != -- ]; do
-        [ "$arg" = 0 ] && arg=
+        arg=1
         case $1 in
-            --cmd)   src=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; arg=0; shift ;;
-            --cmd=*) src=$(parse "${1%%=*}" "${1#*=}") || exit $?;             arg=0; shift ;;
+            --cmd)   src=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; arg=; input=; action=; shift ;;
+            --cmd=*) src=$(parse "${1%%=*}" "${1#*=}") || exit $?;             arg=; input=; action=; shift ;;
 
             -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                              setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
             -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
                              setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
 
-            -b|--backup)   backup=1; clear=;  arg=1; shift ;;
-            -r|--restore)  restore=1;                shift ;;
-            -c|--clear)    backup=; clear=1;         shift ;;
-            -n)            backup=; restore=; arg=1; shift ;;
-            --no-backup)   backup=;           arg=1; shift ;;
-            --no-restore)  restore=;          arg=1; shift ;;
-            -e|--export)   export=--export;   arg=1; shift ;;
-            -l|--local)    export=0;          arg=1; shift ;;
+            -b|--backup)   backup=1; clear=;  input=1;  shift ;;
+            -r|--restore)  restore=1;         action=1; shift ;;
+            -c|--clear)    backup=; clear=1;  action=1; shift ;;
+            -n)            backup=; restore=;           shift ;;
+            --no-backup)   backup=;                     shift ;;
+            --no-restore)  restore=;                    shift ;;
+            -e|--export)   export=--export;   input=1;  shift ;;
+            -l|--local)    export=0;          input=1;  shift ;;
             -s|--sort)     keys='keys[] as $k';
                            sort='to_entries | sort_by(.key) | from_entries'; shift ;;
             -u|--unsorted) keys='keys_unsorted[] as $k'; sort=.;             shift ;;
@@ -486,10 +486,11 @@ run() {
     done
 
     if [ $# = 0 ]; then
-        case $arg in
-            0) header; usage; desc; help; man; exit 0 ;;
-            1) noinput; usage; help;           exit 2 ;;
-        esac
+        if [ -z "$arg" ]; then
+            header; usage; desc; help; man; exit 0
+        elif [ -n "$input" ] || [ -z "$action" ]; then
+            noinput; usage; help; exit 2
+        fi
     fi
 
     if [ -z "$format" ]; then
