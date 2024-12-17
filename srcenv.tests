@@ -21,6 +21,7 @@ tests_to_skip=
 
 for filter in "$@"; do
     case $filter in
+        '') ;;
         -*) tests_to_skip="$tests_to_skip ${filter#-} " ;;
         *)  tests_to_run="$tests_to_run $filter "       ;;
     esac
