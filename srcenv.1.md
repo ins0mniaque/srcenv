@@ -121,6 +121,10 @@ OPTIONS
 
 :   Restore backed up changes from SRCENV_RESTORE.
 
+-c, \--clear
+
+:   Clear backed up changes from SRCENV_RESTORE.
+
 -n
 
 :   Do not backup changes and do not restore backed up changes.

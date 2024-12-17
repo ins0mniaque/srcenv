@@ -105,6 +105,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-i=INPUT, --input=INPUT     ${NORMAL}Source from string value of INPUT
   ${BOLD}-b, --backup                ${NORMAL}Backup changes to SRCENV_RESTORE for restore
   ${BOLD}-r, --restore               ${NORMAL}Restore backed up changes from SRCENV_RESTORE
+  ${BOLD}-c, --clear                 ${NORMAL}Clear backed up changes from SRCENV_RESTORE
   ${BOLD}-n                          ${NORMAL}Do not backup changes and do not restore backed up changes
   ${BOLD}--no-backup                 ${NORMAL}Do not backup changes to SRCENV_RESTORE for restore
   ${BOLD}--no-restore                ${NORMAL}Do not restore backed up changes from SRCENV_RESTORE
@@ -397,6 +398,7 @@ build() {
     [ "$format" = . ] && keys=$sort
     [ -n "$backup"  ] && backup='| ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
     [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
+    [ -n "$clear"   ] && restore="$restore{ SRCENV_RESTORE: null } | . += "
     [ -n "$fixpath" ] && fixpath='| if .PATH then .PATH = (.PATH|gsub("\\\\"; "/")|gsub("(?<drive>.):/"; "/" + (.drive|ascii_downcase) + "/")|gsub(";"; ":")) end'
 
     if [ -n "$verbose" ]; then
@@ -427,7 +429,7 @@ parse() {
 }
 
 run() {
-    prefix=; suffix=; format=; export=; backup=; restore=; fixpath=; verbose=
+    prefix=; suffix=; format=; export=; backup=; restore=; clear=; fixpath=; verbose=
 
     setformat "$shell"
 
@@ -442,8 +444,9 @@ run() {
             -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
                              setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
 
-            -b|--backup)   backup=1;          shift ;;
+            -b|--backup)   backup=1; clear=;  shift ;;
             -r|--restore)  restore=1;         shift ;;
+            -c|--clear)    backup=; clear=1;  shift ;;
             -n)            backup=; restore=; shift ;;
             --no-backup)   backup=;           shift ;;
             --no-restore)  restore=;          shift ;;
@@ -464,7 +467,7 @@ run() {
                             set -- "$@" -- --input "$value"; shift ;;
             -)              set -- "$@" -- -;                shift ;;
 
-            -*) if opts=$(getopt 'bc:ef:hi:lnqrsuv' "$1" 2>&1) && shift; then
+            -*) if opts=$(getopt 'bcef:hi:lnqrsuv' "$1" 2>&1) && shift; then
                     # shellcheck disable=SC2086
                     if [ -n "$ZSH_VERSION" ]; then
                         setopt shwordsplit > /dev/null 2>&1
