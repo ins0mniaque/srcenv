@@ -251,10 +251,10 @@ init() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            -c|--cmd)     cmd=$(parse "$1" "$2")            && iscmd "$1 '$2'" "$cmd" || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            -c=*|--cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") && iscmd "$1"      "$cmd" || exit $?;                        shift ;;
-            --)           shift; opts="$*";                                break ;;
-            *)            invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
+            --cmd)   cmd=$(parse "$1" "$2")            && iscmd "$1 '$2'" "$cmd" || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") && iscmd "$1"      "$cmd" || exit $?;                        shift ;;
+            --)      shift; opts="$*";                                break ;;
+            *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
     done
 
@@ -294,10 +294,10 @@ rc() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            -c|--cmd)     cmd=$(parse "$1" "$2")            && iscmd "$1 '$2'" "$cmd" || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            -c=*|--cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") && iscmd "$1"      "$cmd" || exit $?;                        shift ;;
-            --)           shift; opts="$*";                                break ;;
-            *)            invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
+            --cmd)   cmd=$(parse "$1" "$2")            && iscmd "$1 '$2'" "$cmd" || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") && iscmd "$1"      "$cmd" || exit $?;                        shift ;;
+            --)      shift; opts="$*";                                break ;;
+            *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
     done
 
@@ -434,8 +434,8 @@ run() {
     while [ $# -gt 0 ] && [ "$1" != -- ]; do
         cmd=
         case $1 in
-            -c|--cmd)     src=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; cmd=1; shift ;;
-            -c=*|--cmd=*) src=$(parse "${1%%=*}" "${1#*=}") || exit $?;             cmd=1; shift ;;
+            --cmd)   src=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; cmd=1; shift ;;
+            --cmd=*) src=$(parse "${1%%=*}" "${1#*=}") || exit $?;             cmd=1; shift ;;
 
             -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                              setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
