@@ -407,13 +407,15 @@ build() {
         [ -z "$prefix" ] && prefix='(['
         [ -z "$suffix" ] && suffix='] | join("\n"))'
 
-        colors NORMAL BOLD DIM RED GREEN YELLOW
+        colors NORMAL BOLD ITALIC DIM RED GREEN YELLOW
 
+        header="${BOLD}${DIM}srcenv:${NORMAL} "
         changed="$restore $diff ${backup:+"| . += { SRCENV_RESTORE: \"\" }"}"
-        added="\"${GREEN}+${NORMAL}"'\($k)"'
-        removed="\"${RED}-${NORMAL}"'\($k)"'
-        nothing="\"${YELLOW}No changes${NORMAL}\""
-        verbose='+ "\n'${BOLD}${DIM}srcenv:${NORMAL}' " + (['$changed' | keys[] as $k | if .[$k] then '$added' else '$removed' end] | join(", ") | if . == "" then '$nothing' else . end)'
+        added="\"${GREEN}+\\(\$k)${NORMAL}\""
+        modified="\"${YELLOW}~\\(\$k)${NORMAL}\""
+        removed="\"${RED}-\\(\$k)${NORMAL}\""
+        nochanges="\"${ITALIC}No changes${NORMAL}\""
+        verbose='+ "\n'$header'" + (['$changed' | keys[] as $k | if .[$k] then if $snapshot[$k] then '$modified' else '$added' end else '$removed' end] | join(", ") | if . == "" then '$nochanges' else . end)'
     fi
 }
 
