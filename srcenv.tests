@@ -264,7 +264,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { posix_restore_script="$(cat) '$diff'"; } << 'EOF'
-snapshot=$(jq -n env); eval "$(./srcenv %s --backup)"; eval "$(./srcenv %s --restore)"
+snapshot=$(jq -n env); eval "$(./srcenv %s --backup --verbose)"; eval "$(./srcenv %s --restore --verbose)"
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
@@ -283,7 +283,7 @@ jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 
     { csh_restore_script="$(cat) '$diff'"; } << 'EOF'
-set snapshot = "`jq -n env`"; ./srcenv %s --backup | source /dev/stdin; ./srcenv %s --restore | source /dev/stdin
+set snapshot = "`jq -n env`"; ./srcenv %s --backup --verbose | source /dev/stdin; ./srcenv %s --restore --verbose | source /dev/stdin
 jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 else
@@ -303,7 +303,7 @@ jq %s --argjson snapshot "$snapshot:q" -n
 EOF
 
     { csh_restore_script="$(cat) '$diff'"; } << 'EOF'
-set snapshot = "`jq -n env`"; ./srcenv %s --backup > nostdin.csh; source nostdin.csh; ./srcenv %s --restore > nostdin.csh; source nostdin.csh
+set snapshot = "`jq -n env`"; ./srcenv %s --backup --verbose > nostdin.csh; source nostdin.csh; ./srcenv %s --restore --verbose > nostdin.csh; source nostdin.csh
 rm -f nostdin.csh
 jq %s --argjson snapshot "$snapshot:q" -n
 EOF
@@ -322,7 +322,7 @@ jq %s --argjson snapshot $snapshot -n
 EOF
 
 { elvish_restore_script="$(cat) '$diff'"; } << 'EOF'
-var snapshot = (jq -n env | slurp); eval (./srcenv %s --backup | slurp); eval (./srcenv %s --restore | slurp)
+var snapshot = (jq -n env | slurp); eval (./srcenv %s --backup --verbose | slurp); eval (./srcenv %s --restore --verbose | slurp)
 jq %s --argjson snapshot $snapshot -n
 EOF
 
@@ -339,7 +339,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { fish_restore_script="$(cat) '$diff'"; } << 'EOF'
-set snapshot (jq -n env); ./srcenv %s --backup | source; ./srcenv %s --restore | source
+set snapshot (jq -n env); ./srcenv %s --backup --verbose | source; ./srcenv %s --restore --verbose | source
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
@@ -356,7 +356,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { murex_restore_script="$(cat) '$diff'"; } << 'EOF'
-jq -n env -> set snapshot; ./srcenv %s --backup -> source; ./srcenv %s --restore -> source
+jq -n env -> set snapshot; ./srcenv %s --backup --verbose -> source; ./srcenv %s --restore --verbose -> source
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
@@ -385,7 +385,7 @@ jq %s --argjson snapshot $snapshot -n
 EOF
 
 { nu_restore_script="$(cat) '$diff'"; } << 'EOF'
-let snapshot = (jq -n env); ./srcenv %s --backup | from json | load-env; ./srcenv %s --restore | from json | load-env
+let snapshot = (jq -n env); ./srcenv %s --backup --verbose | from json | load-env; ./srcenv %s --restore --verbose | from json | load-env
 jq %s --argjson snapshot $snapshot -n
 EOF
 
@@ -402,7 +402,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { pwsh_restore_script="$(cat) '$diff'"; } << 'EOF'
-$snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s --backup) -join "`n"); Invoke-Expression ((sh srcenv %s --restore) -join "`n")
+$snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s --backup --verbose) -join "`n"); Invoke-Expression ((sh srcenv %s --restore --verbose) -join "`n")
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
@@ -419,7 +419,7 @@ echo "$snapshot" | jq %s
 EOF
 
 { powershell_restore_script="$(cat) '. as \$snapshot | $diff'"; } << 'EOF'
-$snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s --backup) -join "`n"); Invoke-Expression ((sh srcenv %s --restore) -join "`n")
+$snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s --backup --verbose) -join "`n"); Invoke-Expression ((sh srcenv %s --restore --verbose) -join "`n")
 echo "$snapshot" | jq %s
 EOF
 
@@ -448,9 +448,9 @@ EOF
 del snapshot.env"; } << 'EOF'
 @echo off
 jq -n env > snapshot.env
-sh srcenv %s --backup > test.env.cmd
+sh srcenv %s --backup --verbose > test.env.cmd
 call test.env.cmd
-sh srcenv %s --restore > test.env.cmd
+sh srcenv %s --restore --verbose > test.env.cmd
 call test.env.cmd
 del test.env.cmd
 jq %s
