@@ -56,7 +56,7 @@ ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMA
         warn=; command -v "$jq" > /dev/null || \
         warn=$(printf "%$((46 - ${#src} + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
                       "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
-        help=$(printf "%$((32 + ${#src}))s" \
+        help=$(printf "%$((29 + ${#src}))s" \
                       "[-h|--help|--version]")
 
         echo >&2 "
