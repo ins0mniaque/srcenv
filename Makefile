@@ -29,12 +29,12 @@ bench:
 	@shellcheck --color=always srcenv srcenv.benchmarks srcenv.tests srcenv.version && \
 	echo "${GREEN}✔${NORMAL} ShellCheck"
 	@WARMUP=${w}; \
-	./srcenv.benchmarks ${c} $${WARMUP:+--warmup} $${WARMUP:+"$$WARMUP"}
+	./srcenv.benchmarks "${c}" $${WARMUP:+--warmup} $${WARMUP:+"$$WARMUP"}
 
 test:
 	@shellcheck --color=always srcenv srcenv.benchmarks srcenv.tests srcenv.version && \
 	echo "${GREEN}✔${NORMAL} ShellCheck"
-	@./srcenv.tests ${t}
+	@./srcenv.tests "${t}"
 
 bump:
 	@./srcenv.version bump "${v}" "${from}"
