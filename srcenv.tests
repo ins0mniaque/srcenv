@@ -686,6 +686,7 @@ run_posix_tests() {
     run "$when_no_stdin" "$2 --export"      '' 2
 
     run "$when_no_stdin" "$2 sh --backup"           '' 2
+    run "$when_no_stdin" "$2 sh --export"           '' 2
     run "$1" "$2 sh --restore"                      ''
     run "$1" "$2 sh --clear"                        'unset SRCENV_RESTORE'
     run "$1" "SRCENV_RESTORE='' $2 sh --restore"    '' 5
@@ -694,6 +695,7 @@ run_posix_tests() {
 
     run "$1" "$2 sh --backup --restore --cmd src"                      ''
     run "$when_no_stdin" "$2 sh --backup --restore --cmd src --backup" '' 2
+    run "$when_no_stdin" "$2 sh --backup --restore --cmd src --export" '' 2
     run "$1" "$2 sh --backup --restore --cmd src --restore"            ''
     run "$1" "$2 sh --backup --restore --cmd src --clear"              'unset SRCENV_RESTORE'
 
