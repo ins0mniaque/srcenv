@@ -523,7 +523,7 @@ run() {
         esac
     fi
 
-    if ! command -v "$jq" > /dev/null; then
+    if ! jq=$(command -v "$jq"); then
         nojq; exit 1
     fi
 
