@@ -101,17 +101,21 @@ zsh
 OPTIONS
 =======
 
+-x VAR, \--exclude VAR, -x=VAR, \--exclude=VAR
+
+:   Exclude VAR from exported variables (can be used multiple times).
+
 -f FORMAT, -f=FORMAT, \--format FORMAT, \--format=FORMAT
 
 :   Format the output as anything (shell or jq interpolated string). For details, see FORMAT section below.
 
--
-
-:   Source from STDIN.
-
 -i INPUT, -i=INPUT, \--input INPUT, \--input=INPUT
 
 :   Source from string value of INPUT.
+
+-
+
+:   Source from STDIN.
 
 -b, \--backup
 

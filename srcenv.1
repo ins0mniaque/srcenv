@@ -84,15 +84,18 @@ zsh
 Format the output as a Zsh script.
 .SH OPTIONS
 .TP
+\-x VAR, \-\-exclude VAR, \-x=VAR, \-\-exclude=VAR
+Exclude VAR from exported variables (can be used multiple times).
+.TP
 \-f FORMAT, \-f=FORMAT, \-\-format FORMAT, \-\-format=FORMAT
 Format the output as anything (shell or jq interpolated string).
 For details, see FORMAT section below.
 .TP
-\-
-Source from STDIN.
-.TP
 \-i INPUT, \-i=INPUT, \-\-input INPUT, \-\-input=INPUT
 Source from string value of INPUT.
+.TP
+\-
+Source from STDIN.
 .TP
 \-b, \-\-backup
 Backup changes to SRCENV_RESTORE for restore.

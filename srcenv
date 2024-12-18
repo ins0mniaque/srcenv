@@ -96,13 +96,14 @@ ${BOLD}${UNDERLINE}Shells${NORMAL}:
 
     echo >&2 "\
 ${BOLD}${UNDERLINE}Options${NORMAL}:
+  ${BOLD}-x VAR, --exclude VAR,
+  ${BOLD}-x=VAR, --exclude=VAR       ${NORMAL}Exclude VAR from exported variables ${ITALIC}(can be used multiple times)${NORMAL}
   ${BOLD}-f FORMAT, --format FORMAT,
   ${BOLD}-f=FORMAT, --format=FORMAT  ${NORMAL}Format the output as anything ${ITALIC}(shell or jq interpolated string)${NORMAL}
                               ${ITALIC}${DIM}e.g. 'json' or '\(\$k)=\(.[\$k]|@sh)??\(\$k)='${NORMAL}
-
-  ${BOLD}-                           ${NORMAL}Source from STDIN
   ${BOLD}-i INPUT, --input INPUT,
   ${BOLD}-i=INPUT, --input=INPUT     ${NORMAL}Source from string value of INPUT
+  ${BOLD}-                           ${NORMAL}Source from STDIN
   ${BOLD}-b, --backup                ${NORMAL}Backup changes to SRCENV_RESTORE for restore
   ${BOLD}-r, --restore               ${NORMAL}Restore backed up changes from SRCENV_RESTORE
   ${BOLD}-c, --clear                 ${NORMAL}Clear backed up changes from SRCENV_RESTORE
@@ -242,9 +243,8 @@ colors() {
 
 namecheck() {
     case $2 in
-        *\ *)         invalid "$1" 'name must not contain a space character -- -'; usage; help; exit 2 ;;
-        [[:alpha:]]*) return ;;
-        *)            invalid "$1" 'name must start with a letter -- -'; usage; help; exit 2 ;;
+        *[!A-Za-z0-9_]*) invalid "$1" 'name must contain only alphanumeric and underscore characters -- -'; usage; help; exit 2 ;;
+        [!A-Za-z]*)      invalid "$1" 'name must start with a letter -- -'; usage; help; exit 2 ;;
     esac
 }
 
@@ -254,8 +254,8 @@ init() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            --cmd)   name=$(parse "$1" "$2")            && namecheck "$1 '$2'" "$name" || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}") && namecheck "$1"      "$name" || exit $?;                        shift ;;
+            --cmd)   name=$(parse "$1" "$2" namecheck)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" namecheck)  || exit $?;                        shift ;;
             --)      shift; opts="$*";                                break ;;
             *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
@@ -297,8 +297,8 @@ rc() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            --cmd)   name=$(parse "$1" "$2")            && namecheck "$1 '$2'" "$name" || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}") && namecheck "$1"      "$name" || exit $?;                        shift ;;
+            --cmd)   name=$(parse "$1" "$2" namecheck)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" namecheck)  || exit $?;                        shift ;;
             --)      shift; opts="$*";                                break ;;
             *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
@@ -392,8 +392,10 @@ setformat() {
 # region run()
 
 build() {
-    diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
-    ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
+    [ -n "$exclude" ] && exclude="|del(${exclude%, })"
+
+    diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+    ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
 
     if [ -z "$sort" ]; then
         keys='keys_unsorted[] as $k'
@@ -432,12 +434,12 @@ build() {
 parse() {
     case $2 in
         -*|'') invalid "$1" 'option requires an argument -- -'; usage; help; return 2 ;;
-        *)     printf  '%s' "$2" ;;
+        *)     [ -n "$3" ] && ! "$3" "$1 '$2'" "$2" && return $?; printf '%s' "$2" ;;
     esac
 }
 
 run() {
-    src=src; arg=; input=; action=; prefix=; suffix=; format=; backup=; restore=; clear=; export=; sort=1; fixpath=; verbose=
+    src=src; arg=; input=; action=; prefix=; suffix=; exclude=; format=; backup=; restore=; clear=; export=; sort=1; fixpath=; verbose=
 
     setformat "$shell"
 
@@ -446,6 +448,11 @@ run() {
         case $1 in
             --cmd)   cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; arg=; input=; action=; shift ;;
             --cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             arg=; input=; action=; shift ;;
+
+            -x|--exclude)     value=$(parse "$1" "$2" namecheck) || exit $?; [ $# -gt 1 ] && shift
+                              exclude="$exclude.$value, "; shift ;;
+            -x=*|--exclude=*) value=$(parse "${1%%=*}" "${1#*=}" namecheck) || exit $?
+                              exclude="$exclude.$value, "; shift ;;
 
             -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                              setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
@@ -476,7 +483,7 @@ run() {
                             set -- "$@" -- --input "$value"; shift ;;
             -)              set -- "$@" -- -;                shift ;;
 
-            -*) if opts=$(getopt 'bcef:hi:jlnpqrsuv' "$1" 2>&1) && shift; then
+            -*) if opts=$(getopt 'bcef:hi:jlnpqrsuvx:' "$1" 2>&1) && shift; then
                     # shellcheck disable=SC2086
                     if [ -n "$ZSH_VERSION" ]; then
                         setopt shwordsplit > /dev/null 2>&1
