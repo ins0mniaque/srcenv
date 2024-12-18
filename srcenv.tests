@@ -729,6 +729,7 @@ run_posix_tests() {
     run "$1" "$2 sh --input 'echo something; not_a_command'" '' 127
     run "$1" "$2 sh -eiSRCENV_TEST_A=1"                      "export SRCENV_TEST_A='1'"
     run "$1" "$2 sh -eiSRCENV_TEST_A=1 -xSRCENV_TEST_A"      ''
+    run "$1" "SRCENV_TEST_A='6' $2 sh -weiSRCENV_TEST_A=1"   ''
     run "$1" "$2 -eiSRCENV_TEST_A=1"                         '' 2
 
     run "$1" "$2 sh $exit_0_input"             ''

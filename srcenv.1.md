@@ -141,6 +141,14 @@ OPTIONS
 
 :   Do not restore backed up changes from SRCENV_RESTORE.
 
+-m, \--modify
+
+:   Allow modifying existing environment variables (Default).
+
+-w, \--write-protect
+
+:   Do not allow modifying existing environment variables.
+
 -j, \--json
 
 :   Treat input as JSON.

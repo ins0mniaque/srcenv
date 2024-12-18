@@ -110,6 +110,8 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-n                          ${NORMAL}Do not backup changes and do not restore backed up changes
   ${BOLD}--no-backup                 ${NORMAL}Do not backup changes to SRCENV_RESTORE for restore
   ${BOLD}--no-restore                ${NORMAL}Do not restore backed up changes from SRCENV_RESTORE
+  ${BOLD}-m, --modify                ${NORMAL}Allow modifying existing environment variables ${ITALIC}(Default)${NORMAL}
+  ${BOLD}-w, --write-protect         ${NORMAL}Do not allow modifying existing environment variables
   ${BOLD}-j, --json                  ${NORMAL}Treat input as JSON${NORMAL}
   ${BOLD}-p, --posix                 ${NORMAL}Treat input as POSIX ${ITALIC}(Default)${NORMAL}
   ${BOLD}-e, --export                ${NORMAL}Export all variables ${ITALIC}(Default for .env/.envrc files)${NORMAL}
@@ -393,9 +395,10 @@ setformat() {
 
 build() {
     [ -n "$exclude" ] && exclude="|del(${exclude%, })"
+    [ -n "$modify"  ] && modify= || modify='$snapshot[$k] == null and '
 
-    diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
-    ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
+    diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+    ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
 
     if [ -z "$sort" ]; then
         keys='keys_unsorted[] as $k'
@@ -439,7 +442,7 @@ parse() {
 }
 
 run() {
-    src=src; arg=; input=; action=; prefix=; suffix=; exclude=; format=; backup=; restore=; clear=; export=; sort=1; fixpath=; verbose=
+    src=src; arg=; input=; action=; prefix=; suffix=; exclude=; format=; backup=; restore=; clear=; modify=1; export=; sort=1; fixpath=; verbose=
 
     setformat "$shell"
 
@@ -465,6 +468,8 @@ run() {
             -n)            backup=; restore=;           shift ;;
             --no-backup)   backup=;                     shift ;;
             --no-restore)  restore=;                    shift ;;
+            -m|--modify)        modify=1;               shift ;;
+            -w|--write-protect) modify=;                shift ;;
             -j|--json)     src=json;          input=1;  shift ;;
             -p|--posix)    src=src;           input=1;  shift ;;
             -e|--export)   export=--export;   input=1;  shift ;;
@@ -483,7 +488,7 @@ run() {
                             set -- "$@" -- --input "$value"; shift ;;
             -)              set -- "$@" -- -;                shift ;;
 
-            -*) if opts=$(getopt 'bcef:hi:jlnpqrsuvx:' "$1" 2>&1) && shift; then
+            -*) if opts=$(getopt 'bcef:hi:jlmnpqrsuvwx:' "$1" 2>&1) && shift; then
                     # shellcheck disable=SC2086
                     if [ -n "$ZSH_VERSION" ]; then
                         setopt shwordsplit > /dev/null 2>&1
