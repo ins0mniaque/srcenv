@@ -389,12 +389,18 @@ setformat() {
 
 # region run()
 
-diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
-ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
-keys='keys[] as $k'
-sort='to_entries | sort_by(.key) | from_entries'
-
 build() {
+    diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+    ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys_unsorted[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
+
+    if [ -z "$sort" ]; then
+        keys='keys_unsorted[] as $k'
+        sort=.
+    else
+        keys='keys[] as $k'
+        sort='to_entries | sort_by(.key) | from_entries'
+    fi
+
     [ "$format" = . ] && keys=$sort
     [ -n "$backup"  ] && backup='| ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
     [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
@@ -429,7 +435,7 @@ parse() {
 }
 
 run() {
-    arg=; input=; action=; prefix=; suffix=; format=; export=; backup=; restore=; clear=; fixpath=; verbose=
+    arg=; input=; action=; prefix=; suffix=; format=; backup=; restore=; clear=; export=; sort=1; fixpath=; verbose=
 
     setformat "$shell"
 
@@ -452,11 +458,10 @@ run() {
             --no-restore)  restore=;                    shift ;;
             -e|--export)   export=--export;   input=1;  shift ;;
             -l|--local)    export=0;          input=1;  shift ;;
-            -s|--sort)     keys='keys[] as $k';
-                           sort='to_entries | sort_by(.key) | from_entries'; shift ;;
-            -u|--unsorted) keys='keys_unsorted[] as $k'; sort=.;             shift ;;
-            -q|--quiet)    verbose=;                                         shift ;;
-            -v|--verbose)  verbose=1;                                        shift ;;
+            -s|--sort)     sort=1;                      shift ;;
+            -u|--unsorted) sort=;                       shift ;;
+            -q|--quiet)    verbose=;                    shift ;;
+            -v|--verbose)  verbose=1;                   shift ;;
             --usage)       header; usage; desc; help; man;          exit 0 ;;
             -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
             --version)     version;                                 exit 0 ;;
