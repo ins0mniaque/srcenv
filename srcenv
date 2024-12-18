@@ -7,9 +7,9 @@
 
 version() {
     if [ -z "$cmd" ]; then
-        echo 'srcenv 1.5.13'
+        echo 'srcenv 1.5.14'
     else
-        echo >&2 'srcenv 1.5.13'
+        echo >&2 'srcenv 1.5.14'
     fi
 }
 
