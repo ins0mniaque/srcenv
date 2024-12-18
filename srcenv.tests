@@ -175,6 +175,7 @@ cp srcenv "space srcenv"
 
 env_input=test.env
 posix_input=test.env.sh
+json_input=test.env.json
 path_input=test.path.env
 exit_0_input=test.exit.0.env
 exit_42_input=test.exit.42.env
@@ -214,6 +215,16 @@ $SRCENV_TEST_B
 $SRCENV_TEST_C"
 EOF
 
+tee "$json_input" > /dev/null << 'EOF'
+{
+  "SRCENV_TEST_A": "6",
+  "SRCENV_TEST_B": "7",
+  "SRCENV_TEST_C": "42",
+  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"",
+  "SRCENV_TEST_MULTILINE": "\n6\n7\n42"
+}
+EOF
+
 tee "$path_input" > /dev/null << 'EOF'
 # PATH environment variable tests
 export PATH="$PWD/bin:$PATH:$PWD/bin"
@@ -237,7 +248,7 @@ EOF
 cleanup() {
     unset SRCENV_TEST_EXISTING
 
-    rm -f "space srcenv" "$env_input" "$posix_input" "$path_input" "$exit_0_input" "$exit_42_input"
+    rm -f "space srcenv" "$env_input" "$posix_input" "$json_input" "$path_input" "$exit_0_input" "$exit_42_input"
 
     trap - EXIT
     exit
@@ -676,18 +687,22 @@ run_posix_tests() {
 
     run "$1" "$2 --version" 'srcenv 1.5.11'
 
-    run "$when_no_stdin" "$2"               ''
-    run "$1" "$2 --invalid"                 '' 2
-    run "$1" "$2 init"                      '' 2
-    run "$1" "$2 init sh --cmd 42"          '' 2
-    run "$1" "$2 init sh --cmd 'space src'" '' 2
-    run "$1" "$2 sh not_a_file"             '' 1
-    run "$1" "$2 sh --input not_a_command"  '' 127
-    run "$when_no_stdin" "$2 --export"      '' 2
+    run "$when_no_stdin" "$2"                ''
+    run "$1" "$2 --invalid"                  '' 2
+    run "$1" "$2 init"                       '' 2
+    run "$1" "$2 init sh --cmd 42"           '' 2
+    run "$1" "$2 init sh --cmd 'space src'"  '' 2
+    run "$1" "$2 sh not_a_file"              '' 2
+    run "$1" "$2 sh --input not_a_command"   '' 127
+    run "$1" "$2 sh --json not_a_file"       '' 2
+    run "$1" "$2 sh --json --input not_json" '' 5
+    run "$when_no_stdin" "$2 --export"       '' 2
 
     run "$when_no_stdin" "$2 sh --backup"           '' 2
     run "$when_no_stdin" "$2 sh --export"           '' 2
+    run "$when_no_stdin" "$2 sh --json"             '' 2
     run "$when_no_stdin" "$2 sh --restore --export" '' 2
+    run "$when_no_stdin" "$2 sh --restore --json"   '' 2
     run "$when_no_stdin" "$2 sh --sort"             '' 2
     run "$1" "$2 sh --restore --sort"               ''
     run "$1" "$2 sh --restore"                      ''
@@ -699,7 +714,9 @@ run_posix_tests() {
     run "$1" "$2 sh --backup --restore --cmd src"                                ''
     run "$when_no_stdin" "$2 sh --backup --restore --cmd src --backup"           '' 2
     run "$when_no_stdin" "$2 sh --backup --restore --cmd src --export"           '' 2
+    run "$when_no_stdin" "$2 sh --backup --restore --cmd src --json"             '' 2
     run "$when_no_stdin" "$2 sh --backup --restore --cmd src --restore --export" '' 2
+    run "$when_no_stdin" "$2 sh --backup --restore --cmd src --restore --json"   '' 2
     run "$when_no_stdin" "$2 sh --backup --restore --cmd src --sort"             '' 2
     run "$1" "$2 sh --backup --restore --cmd src --restore --sort"               ''
     run "$1" "$2 sh --backup --restore --cmd src --restore"                      ''
@@ -733,6 +750,12 @@ run_posix_tests() {
     run "$1" "$2 sh --input \"\$(cat $posix_input)\"" "$posix_output"
     run "$1" "$2 sh - < $posix_input"                 "$posix_output"
     run "$1" "$2 sh < $posix_input"                   "$posix_output"
+
+    run "$1" "$2 sh --json $env_input"                      '' 5
+    run "$1" "$2 sh --json $json_input"                     "$posix_output"
+    run "$1" "$2 sh --json --input \"\$(cat $json_input)\"" "$posix_output"
+    run "$1" "$2 sh --json - < $json_input"                 "$posix_output"
+    run "$1" "$2 sh --json < $json_input"                   "$posix_output"
 }
 
 run_output_tests() {

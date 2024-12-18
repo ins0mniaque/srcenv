@@ -137,6 +137,14 @@ OPTIONS
 
 :   Do not restore backed up changes from SRCENV_RESTORE.
 
+-j, \--json
+
+:   Treat input as JSON.
+
+-p, \--posix
+
+:   Treat input as POSIX (Default).
+
 -e, \--export
 
 :   Export all variables (Default for .env/.envrc files).

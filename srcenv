@@ -109,6 +109,8 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-n                          ${NORMAL}Do not backup changes and do not restore backed up changes
   ${BOLD}--no-backup                 ${NORMAL}Do not backup changes to SRCENV_RESTORE for restore
   ${BOLD}--no-restore                ${NORMAL}Do not restore backed up changes from SRCENV_RESTORE
+  ${BOLD}-j, --json                  ${NORMAL}Treat input as JSON${NORMAL}
+  ${BOLD}-p, --posix                 ${NORMAL}Treat input as POSIX ${ITALIC}(Default)${NORMAL}
   ${BOLD}-e, --export                ${NORMAL}Export all variables ${ITALIC}(Default for .env/.envrc files)${NORMAL}
   ${BOLD}-l, --local                 ${NORMAL}Do not export all variables
   ${BOLD}-s, --sort                  ${NORMAL}Sort the environment variables alphabetically ${ITALIC}(Default)${NORMAL}
@@ -435,7 +437,7 @@ parse() {
 }
 
 run() {
-    arg=; input=; action=; prefix=; suffix=; format=; backup=; restore=; clear=; export=; sort=1; fixpath=; verbose=
+    src=src; arg=; input=; action=; prefix=; suffix=; format=; backup=; restore=; clear=; export=; sort=1; fixpath=; verbose=
 
     setformat "$shell"
 
@@ -456,6 +458,8 @@ run() {
             -n)            backup=; restore=;           shift ;;
             --no-backup)   backup=;                     shift ;;
             --no-restore)  restore=;                    shift ;;
+            -j|--json)     src=json;          input=1;  shift ;;
+            -p|--posix)    src=src;           input=1;  shift ;;
             -e|--export)   export=--export;   input=1;  shift ;;
             -l|--local)    export=0;          input=1;  shift ;;
             -s|--sort)     sort=1;                      shift ;;
@@ -472,7 +476,7 @@ run() {
                             set -- "$@" -- --input "$value"; shift ;;
             -)              set -- "$@" -- -;                shift ;;
 
-            -*) if opts=$(getopt 'bcef:hi:lnqrsuv' "$1" 2>&1) && shift; then
+            -*) if opts=$(getopt 'bcef:hi:jlnpqrsuv' "$1" 2>&1) && shift; then
                     # shellcheck disable=SC2086
                     if [ -n "$ZSH_VERSION" ]; then
                         setopt shwordsplit > /dev/null 2>&1
@@ -516,10 +520,10 @@ run() {
     while [ $# -gt 0 ]; do
         case $1 in
             --)            shift ;;
-            --input)       src var "$2"     "$export"             || exit $?; shift; shift ;;
-            -)             src var "$(cat)" "$export"             || exit $?; shift ;;
-            *.env|*.envrc) src file "$1"    "${export:---export}" || exit $?; shift ;;
-            *)             src file "$1"    "$export"             || exit $?; shift ;;
+            --input)       "$src" var "$2"     "$export"             || exit $?; shift; shift ;;
+            -)             "$src" var "$(cat)" "$export"             || exit $?; shift ;;
+            *.env|*.envrc) "$src" file "$1"    "${export:---export}" || exit $?; shift ;;
+            *)             "$src" file "$1"    "$export"             || exit $?; shift ;;
         esac
     done
 
@@ -565,7 +569,7 @@ src() {
         esac
     else
         echo >&2 "$2: No such file or directory"
-        exitcode=1
+        exitcode=2
     fi
 
     # shellcheck disable=SC3044
@@ -575,6 +579,19 @@ src() {
     [ "$3" = --export ] && set +a
 
     return "$exitcode"
+}
+
+json() {
+    if [ "$1" = var ]; then
+        env=$(printf "%s\n" "$2" | "$jq" -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"') || return $?
+    elif [ -f "$2" ]; then
+        env=$("$jq" -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"' "$2") || return $?
+    else
+        echo >&2 "$2: No such file or directory"
+        return 2
+    fi
+
+    eval "$env" 1>&2 || return $?
 }
 
 # endregion run()
