@@ -114,7 +114,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-w, --write-protect         ${NORMAL}Do not allow modifying existing environment variables
   ${BOLD}-j, --json                  ${NORMAL}Treat input as JSON${NORMAL}
   ${BOLD}-p, --posix                 ${NORMAL}Treat input as POSIX ${ITALIC}(Default)${NORMAL}
-  ${BOLD}-e, --export                ${NORMAL}Export all variables ${ITALIC}(Default for .env/.envrc files)${NORMAL}
+  ${BOLD}-e, --export                ${NORMAL}Export all variables ${ITALIC}(Default for .env files)${NORMAL}
   ${BOLD}-l, --local                 ${NORMAL}Do not export all variables
   ${BOLD}-s, --sort                  ${NORMAL}Sort the environment variables alphabetically ${ITALIC}(Default)${NORMAL}
   ${BOLD}-u, --unsorted              ${NORMAL}Keep the environment variables unsorted
@@ -531,11 +531,11 @@ run() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            --)            shift ;;
-            --input)       "$src" var "$2"     "$export"             || exit $?; shift; shift ;;
-            -)             "$src" var "$(cat)" "$export"             || exit $?; shift ;;
-            *.env|*.envrc) "$src" file "$1"    "${export:---export}" || exit $?; shift ;;
-            *)             "$src" file "$1"    "$export"             || exit $?; shift ;;
+            --)      shift ;;
+            --input) "$src" var "$2"     "$export"             || exit $?; shift; shift ;;
+            -)       "$src" var "$(cat)" "$export"             || exit $?; shift ;;
+            *.env)   "$src" file "$1"    "${export:---export}" || exit $?; shift ;;
+            *)       "$src" file "$1"    "$export"             || exit $?; shift ;;
         esac
     done
 

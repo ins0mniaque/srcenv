@@ -159,7 +159,7 @@ OPTIONS
 
 -e, \--export
 
-:   Export all variables (Default for .env/.envrc files).
+:   Export all variables (Default for .env files).
 
 -l, \--local
 
