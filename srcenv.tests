@@ -177,6 +177,7 @@ env_input=test.env
 posix_input=test.env.sh
 json_input=test.env.json
 path_input=test.path.env
+dir_path_input='space env/test.path.env'
 exit_0_input=test.exit.0.env
 exit_42_input=test.exit.42.env
 
@@ -230,6 +231,9 @@ tee "$path_input" > /dev/null << 'EOF'
 export PATH="$PWD/bin:$PATH:$PWD/bin"
 EOF
 
+mkdir -p "${dir_path_input%/*}"
+cp "$path_input" "$dir_path_input"
+
 tee "$exit_0_input" > /dev/null << 'EOF'
 exit 0
 
@@ -248,7 +252,8 @@ EOF
 cleanup() {
     unset SRCENV_TEST_EXISTING
 
-    rm -f "space srcenv" "$env_input" "$posix_input" "$json_input" "$path_input" "$exit_0_input" "$exit_42_input"
+    rm -f "space srcenv" "$env_input" "$posix_input" "$json_input" "$path_input" "$dir_path_input" "$exit_0_input" "$exit_42_input"
+    rmdir "${dir_path_input%/*}"
 
     trap - EXIT
     exit
@@ -951,179 +956,225 @@ script() {
 
 sh=$(detect sh) || msg warn 'sh not found; skipping tests...'
 run_posix_tests "$sh" "sh srcenv"
-run "$sh" "sh -c $(script "$posix_script"         'sh test.env'          )" "$json_output"
-run "$sh" "sh -c $(script "$posix_script"         'sh test.env.sh'       )" "$json_output"
-run "$sh" "sh -c $(script "$posix_script"         'sh test.path.env'     )" "$(when "$sh" sh -c "$json_path_output_cmd")"
-run "$sh" "sh -c $(script "$posix_init_script"    'sh' 'test.env'        )" "$json_backup_output"
-run "$sh" "sh -c $(script "$posix_init_script"    'sh' 'test.env.sh'     )" "$json_backup_output"
-run "$sh" "sh -c $(script "$posix_init_script"    'sh' 'test.path.env'   )" "$(when "$sh" sh -c "$json_path_backup_output_cmd")"
-run "$sh" "sh -c $(script "$posix_restore_script" 'sh test.env'      'sh')" '{}'
-run "$sh" "sh -c $(script "$posix_restore_script" 'sh test.env.sh'   'sh')" '{}'
-run "$sh" "sh -c $(script "$posix_restore_script" 'sh test.path.env' 'sh')" '{}'
+run "$sh" "sh -c $(script "$posix_script"         "sh $env_input"            )" "$json_output"
+run "$sh" "sh -c $(script "$posix_script"         "sh $posix_input"          )" "$json_output"
+run "$sh" "sh -c $(script "$posix_script"         "sh $path_input"           )" "$(when "$sh" sh -c "$json_path_output_cmd")"
+run "$sh" "sh -c $(script "$posix_script"         "sh '$dir_path_input'"     )" "$(when "$sh" cd "${dir_path_input%/*}" && sh -c "$json_path_output_cmd")"
+run "$sh" "sh -c $(script "$posix_init_script"    'sh' "$env_input"          )" "$json_backup_output"
+run "$sh" "sh -c $(script "$posix_init_script"    'sh' "$posix_input"        )" "$json_backup_output"
+run "$sh" "sh -c $(script "$posix_init_script"    'sh' "$path_input"         )" "$(when "$sh" sh -c "$json_path_backup_output_cmd")"
+run "$sh" "sh -c $(script "$posix_init_script"    'sh' "'$dir_path_input'"   )" "$(when "$sh" cd "${dir_path_input%/*}" && sh -c "$json_path_backup_output_cmd")"
+run "$sh" "sh -c $(script "$posix_restore_script" "sh $env_input"        'sh')" '{}'
+run "$sh" "sh -c $(script "$posix_restore_script" "sh $posix_input"      'sh')" '{}'
+run "$sh" "sh -c $(script "$posix_restore_script" "sh $path_input"       'sh')" '{}'
+run "$sh" "sh -c $(script "$posix_restore_script" "sh '$dir_path_input'" 'sh')" '{}'
 
 ash=$(detect ash) || msg warn 'Ash not found; skipping tests...'
 run_posix_tests "$ash" "ash srcenv"
-run "$ash" "ash -c $(script "$posix_script"         'ash test.env'           )" "$json_output"
-run "$ash" "ash -c $(script "$posix_script"         'ash test.env.sh'        )" "$json_output"
-run "$ash" "ash -c $(script "$posix_script"         'ash test.path.env'      )" "$(when "$ash" ash -c "$json_path_output_cmd")"
-run "$ash" "ash -c $(script "$posix_init_script"    'ash' 'test.env'         )" "$json_backup_output"
-run "$ash" "ash -c $(script "$posix_init_script"    'ash' 'test.env.sh'      )" "$json_backup_output"
-run "$ash" "ash -c $(script "$posix_init_script"    'ash' 'test.path.env'    )" "$(when "$ash" ash -c "$json_path_backup_output_cmd")"
-run "$ash" "ash -c $(script "$posix_restore_script" 'ash test.env'      'ash')" '{}'
-run "$ash" "ash -c $(script "$posix_restore_script" 'ash test.env.sh'   'ash')" '{}'
-run "$ash" "ash -c $(script "$posix_restore_script" 'ash test.path.env' 'ash')" '{}'
+run "$ash" "ash -c $(script "$posix_script"         "ash $env_input"             )" "$json_output"
+run "$ash" "ash -c $(script "$posix_script"         "ash $posix_input"           )" "$json_output"
+run "$ash" "ash -c $(script "$posix_script"         "ash $path_input"            )" "$(when "$ash" ash -c "$json_path_output_cmd")"
+run "$ash" "ash -c $(script "$posix_script"         "ash '$dir_path_input'"      )" "$(when "$ash" cd "${dir_path_input%/*}" && ash -c "$json_path_output_cmd")"
+run "$ash" "ash -c $(script "$posix_init_script"    'ash' "$env_input"           )" "$json_backup_output"
+run "$ash" "ash -c $(script "$posix_init_script"    'ash' "$posix_input"         )" "$json_backup_output"
+run "$ash" "ash -c $(script "$posix_init_script"    'ash' "$path_input"          )" "$(when "$ash" ash -c "$json_path_backup_output_cmd")"
+run "$ash" "ash -c $(script "$posix_init_script"    'ash' "'$dir_path_input'"    )" "$(when "$ash" cd "${dir_path_input%/*}" && ash -c "$json_path_backup_output_cmd")"
+run "$ash" "ash -c $(script "$posix_restore_script" "ash $env_input"        'ash')" '{}'
+run "$ash" "ash -c $(script "$posix_restore_script" "ash $posix_input"      'ash')" '{}'
+run "$ash" "ash -c $(script "$posix_restore_script" "ash $path_input"       'ash')" '{}'
+run "$ash" "ash -c $(script "$posix_restore_script" "ash '$dir_path_input'" 'ash')" '{}'
 
 bash=$(detect bash) || msg warn 'Bash not found; skipping tests...'
 run_posix_tests "$bash" "bash srcenv"
-run "$bash" "bash -c $(script "$posix_script"         'bash test.env'            )" "$json_output"
-run "$bash" "bash -c $(script "$posix_script"         'bash test.env.sh'         )" "$json_output"
-run "$bash" "bash -c $(script "$posix_script"         'bash test.path.env'       )" "$(when "$bash" bash -c "$json_path_output_cmd")"
-run "$bash" "bash -c $(script "$posix_init_script"    'bash' 'test.env'          )" "$json_backup_output"
-run "$bash" "bash -c $(script "$posix_init_script"    'bash' 'test.env.sh'       )" "$json_backup_output"
-run "$bash" "bash -c $(script "$posix_init_script"    'bash' 'test.path.env'     )" "$(when "$bash" bash -c "$json_path_backup_output_cmd")"
-run "$bash" "bash -c $(script "$posix_restore_script" 'bash test.env'      'bash')" '{}'
-run "$bash" "bash -c $(script "$posix_restore_script" 'bash test.env.sh'   'bash')" '{}'
-run "$bash" "bash -c $(script "$posix_restore_script" 'bash test.path.env' 'bash')" '{}'
+run "$bash" "bash -c $(script "$posix_script"         "bash $env_input"              )" "$json_output"
+run "$bash" "bash -c $(script "$posix_script"         "bash $posix_input"            )" "$json_output"
+run "$bash" "bash -c $(script "$posix_script"         "bash $path_input"             )" "$(when "$bash" bash -c "$json_path_output_cmd")"
+run "$bash" "bash -c $(script "$posix_script"         "bash '$dir_path_input'"       )" "$(when "$bash" cd "${dir_path_input%/*}" && bash -c "$json_path_output_cmd")"
+run "$bash" "bash -c $(script "$posix_init_script"    'bash' "$env_input"            )" "$json_backup_output"
+run "$bash" "bash -c $(script "$posix_init_script"    'bash' "$posix_input"          )" "$json_backup_output"
+run "$bash" "bash -c $(script "$posix_init_script"    'bash' "$path_input"           )" "$(when "$bash" bash -c "$json_path_backup_output_cmd")"
+run "$bash" "bash -c $(script "$posix_init_script"    'bash' "'$dir_path_input'"     )" "$(when "$bash" cd "${dir_path_input%/*}" && bash -c "$json_path_backup_output_cmd")"
+run "$bash" "bash -c $(script "$posix_restore_script" "bash $env_input"        'bash')" '{}'
+run "$bash" "bash -c $(script "$posix_restore_script" "bash $posix_input"      'bash')" '{}'
+run "$bash" "bash -c $(script "$posix_restore_script" "bash $path_input"       'bash')" '{}'
+run "$bash" "bash -c $(script "$posix_restore_script" "bash '$dir_path_input'" 'bash')" '{}'
 
 dash=$(detect dash) || msg warn 'Dash not found; skipping tests...'
 run_posix_tests "$dash" "dash srcenv"
-run "$dash" "dash -c $(script "$posix_script"         'dash test.env'            )" "$json_output"
-run "$dash" "dash -c $(script "$posix_script"         'dash test.env.sh'         )" "$json_output"
-run "$dash" "dash -c $(script "$posix_script"         'dash test.path.env'       )" "$(when "$dash" dash -c "$json_path_output_cmd")"
-run "$dash" "dash -c $(script "$posix_init_script"    'dash' 'test.env'          )" "$json_backup_output"
-run "$dash" "dash -c $(script "$posix_init_script"    'dash' 'test.env.sh'       )" "$json_backup_output"
-run "$dash" "dash -c $(script "$posix_init_script"    'dash' 'test.path.env'     )" "$(when "$dash" dash -c "$json_path_backup_output_cmd")"
-run "$dash" "dash -c $(script "$posix_restore_script" 'dash test.env'      'dash')" '{}'
-run "$dash" "dash -c $(script "$posix_restore_script" 'dash test.env.sh'   'dash')" '{}'
-run "$dash" "dash -c $(script "$posix_restore_script" 'dash test.path.env' 'dash')" '{}'
+run "$dash" "dash -c $(script "$posix_script"         "dash $env_input"              )" "$json_output"
+run "$dash" "dash -c $(script "$posix_script"         "dash $posix_input"            )" "$json_output"
+run "$dash" "dash -c $(script "$posix_script"         "dash $path_input"             )" "$(when "$dash" dash -c "$json_path_output_cmd")"
+run "$dash" "dash -c $(script "$posix_script"         "dash '$dir_path_input'"       )" "$(when "$dash" cd "${dir_path_input%/*}" && dash -c "$json_path_output_cmd")"
+run "$dash" "dash -c $(script "$posix_init_script"    'dash' "$env_input"            )" "$json_backup_output"
+run "$dash" "dash -c $(script "$posix_init_script"    'dash' "$posix_input"          )" "$json_backup_output"
+run "$dash" "dash -c $(script "$posix_init_script"    'dash' "$path_input"           )" "$(when "$dash" dash -c "$json_path_backup_output_cmd")"
+run "$dash" "dash -c $(script "$posix_init_script"    'dash' "'$dir_path_input'"     )" "$(when "$dash" cd "${dir_path_input%/*}" && dash -c "$json_path_backup_output_cmd")"
+run "$dash" "dash -c $(script "$posix_restore_script" "dash $env_input"        'dash')" '{}'
+run "$dash" "dash -c $(script "$posix_restore_script" "dash $posix_input"      'dash')" '{}'
+run "$dash" "dash -c $(script "$posix_restore_script" "dash $path_input"       'dash')" '{}'
+run "$dash" "dash -c $(script "$posix_restore_script" "dash '$dir_path_input'" 'dash')" '{}'
 
 ksh=$(detect ksh) || msg warn 'Ksh not found; skipping tests...'
 run_posix_tests "$ksh" "ksh srcenv"
-run "$ksh" "ksh -c $(script "$posix_script"         'ksh test.env'           )" "$json_output"
-run "$ksh" "ksh -c $(script "$posix_script"         'ksh test.env.sh'        )" "$json_output"
-run "$ksh" "ksh -c $(script "$posix_script"         'ksh test.path.env'      )" "$(when "$ksh" ksh -c "$json_path_output_cmd")"
-run "$ksh" "ksh -c $(script "$posix_init_script"    'ksh' 'test.env'         )" "$json_backup_output"
-run "$ksh" "ksh -c $(script "$posix_init_script"    'ksh' 'test.env.sh'      )" "$json_backup_output"
-run "$ksh" "ksh -c $(script "$posix_init_script"    'ksh' 'test.path.env'    )" "$(when "$ksh" ksh -c "$json_path_backup_output_cmd")"
-run "$ksh" "ksh -c $(script "$posix_restore_script" 'ksh test.env'      'ksh')" '{}'
-run "$ksh" "ksh -c $(script "$posix_restore_script" 'ksh test.env.sh'   'ksh')" '{}'
-run "$ksh" "ksh -c $(script "$posix_restore_script" 'ksh test.path.env' 'ksh')" '{}'
+run "$ksh" "ksh -c $(script "$posix_script"         "ksh $env_input"             )" "$json_output"
+run "$ksh" "ksh -c $(script "$posix_script"         "ksh $posix_input"           )" "$json_output"
+run "$ksh" "ksh -c $(script "$posix_script"         "ksh $path_input"            )" "$(when "$ksh" ksh -c "$json_path_output_cmd")"
+run "$ksh" "ksh -c $(script "$posix_script"         "ksh '$dir_path_input'"      )" "$(when "$ksh" cd "${dir_path_input%/*}" && ksh -c "$json_path_output_cmd")"
+run "$ksh" "ksh -c $(script "$posix_init_script"    'ksh' "$env_input"           )" "$json_backup_output"
+run "$ksh" "ksh -c $(script "$posix_init_script"    'ksh' "$posix_input"         )" "$json_backup_output"
+run "$ksh" "ksh -c $(script "$posix_init_script"    'ksh' "$path_input"          )" "$(when "$ksh" ksh -c "$json_path_backup_output_cmd")"
+run "$ksh" "ksh -c $(script "$posix_init_script"    'ksh' "'$dir_path_input'"    )" "$(when "$ksh" cd "${dir_path_input%/*}" && ksh -c "$json_path_backup_output_cmd")"
+run "$ksh" "ksh -c $(script "$posix_restore_script" "ksh $env_input"        'ksh')" '{}'
+run "$ksh" "ksh -c $(script "$posix_restore_script" "ksh $posix_input"      'ksh')" '{}'
+run "$ksh" "ksh -c $(script "$posix_restore_script" "ksh $path_input"       'ksh')" '{}'
+run "$ksh" "ksh -c $(script "$posix_restore_script" "ksh '$dir_path_input'" 'ksh')" '{}'
 
 mksh=$(detect mksh) || msg warn 'Mksh not found; skipping tests...'
 run_posix_tests "$mksh" "mksh srcenv"
-run "$mksh" "mksh -c $(script "$posix_script"         'mksh test.env'            )" "$json_output"
-run "$mksh" "mksh -c $(script "$posix_script"         'mksh test.env.sh'         )" "$json_output"
-run "$mksh" "mksh -c $(script "$posix_script"         'mksh test.path.env'       )" "$(when "$mksh" mksh -c "$json_path_output_cmd")"
-run "$mksh" "mksh -c $(script "$posix_init_script"    'mksh' 'test.env'          )" "$json_backup_output"
-run "$mksh" "mksh -c $(script "$posix_init_script"    'mksh' 'test.env.sh'       )" "$json_backup_output"
-run "$mksh" "mksh -c $(script "$posix_init_script"    'mksh' 'test.path.env'     )" "$(when "$mksh" mksh -c "$json_path_backup_output_cmd")"
-run "$mksh" "mksh -c $(script "$posix_restore_script" 'mksh test.env'      'mksh')" '{}'
-run "$mksh" "mksh -c $(script "$posix_restore_script" 'mksh test.env.sh'   'mksh')" '{}'
-run "$mksh" "mksh -c $(script "$posix_restore_script" 'mksh test.path.env' 'mksh')" '{}'
+run "$mksh" "mksh -c $(script "$posix_script"         "mksh $env_input"              )" "$json_output"
+run "$mksh" "mksh -c $(script "$posix_script"         "mksh $posix_input"            )" "$json_output"
+run "$mksh" "mksh -c $(script "$posix_script"         "mksh $path_input"             )" "$(when "$mksh" mksh -c "$json_path_output_cmd")"
+run "$mksh" "mksh -c $(script "$posix_script"         "mksh '$dir_path_input'"       )" "$(when "$mksh" cd "${dir_path_input%/*}" && mksh -c "$json_path_output_cmd")"
+run "$mksh" "mksh -c $(script "$posix_init_script"    'mksh' "$env_input"            )" "$json_backup_output"
+run "$mksh" "mksh -c $(script "$posix_init_script"    'mksh' "$posix_input"          )" "$json_backup_output"
+run "$mksh" "mksh -c $(script "$posix_init_script"    'mksh' "$path_input"           )" "$(when "$mksh" mksh -c "$json_path_backup_output_cmd")"
+run "$mksh" "mksh -c $(script "$posix_init_script"    'mksh' "'$dir_path_input'"     )" "$(when "$mksh" cd "${dir_path_input%/*}" && mksh -c "$json_path_backup_output_cmd")"
+run "$mksh" "mksh -c $(script "$posix_restore_script" "mksh $env_input"        'mksh')" '{}'
+run "$mksh" "mksh -c $(script "$posix_restore_script" "mksh $posix_input"      'mksh')" '{}'
+run "$mksh" "mksh -c $(script "$posix_restore_script" "mksh $path_input"       'mksh')" '{}'
+run "$mksh" "mksh -c $(script "$posix_restore_script" "mksh '$dir_path_input'" 'mksh')" '{}'
 
 zsh=$(detect zsh) || msg warn 'Zsh not found; skipping tests...'
 run_posix_tests "$zsh" "zsh srcenv"
-run "$zsh" "zsh -c $(script "$posix_script"         'zsh test.env'           )" "$json_output"
-run "$zsh" "zsh -c $(script "$posix_script"         'zsh test.env.sh'        )" "$json_output"
-run "$zsh" "zsh -c $(script "$posix_script"         'zsh test.path.env'      )" "$(when "$zsh" zsh -c "$json_path_output_cmd")"
-run "$zsh" "zsh -c $(script "$posix_init_script"    'zsh' 'test.env'         )" "$json_backup_output"
-run "$zsh" "zsh -c $(script "$posix_init_script"    'zsh' 'test.env.sh'      )" "$json_backup_output"
-run "$zsh" "zsh -c $(script "$posix_init_script"    'zsh' 'test.path.env'    )" "$(when "$zsh" zsh -c "$json_path_backup_output_cmd")"
-run "$zsh" "zsh -c $(script "$posix_restore_script" 'zsh test.env'      'zsh')" '{}'
-run "$zsh" "zsh -c $(script "$posix_restore_script" 'zsh test.env.sh'   'zsh')" '{}'
-run "$zsh" "zsh -c $(script "$posix_restore_script" 'zsh test.path.env' 'zsh')" '{}'
+run "$zsh" "zsh -c $(script "$posix_script"         "zsh $env_input"             )" "$json_output"
+run "$zsh" "zsh -c $(script "$posix_script"         "zsh $posix_input"           )" "$json_output"
+run "$zsh" "zsh -c $(script "$posix_script"         "zsh $path_input"            )" "$(when "$zsh" zsh -c "$json_path_output_cmd")"
+run "$zsh" "zsh -c $(script "$posix_script"         "zsh '$dir_path_input'"      )" "$(when "$zsh" cd "${dir_path_input%/*}" && zsh -c "$json_path_output_cmd")"
+run "$zsh" "zsh -c $(script "$posix_init_script"    'zsh' "$env_input"           )" "$json_backup_output"
+run "$zsh" "zsh -c $(script "$posix_init_script"    'zsh' "$posix_input"         )" "$json_backup_output"
+run "$zsh" "zsh -c $(script "$posix_init_script"    'zsh' "$path_input"          )" "$(when "$zsh" zsh -c "$json_path_backup_output_cmd")"
+run "$zsh" "zsh -c $(script "$posix_init_script"    'zsh' "'$dir_path_input'"    )" "$(when "$zsh" cd "${dir_path_input%/*}" && zsh -c "$json_path_backup_output_cmd")"
+run "$zsh" "zsh -c $(script "$posix_restore_script" "zsh $env_input"        'zsh')" '{}'
+run "$zsh" "zsh -c $(script "$posix_restore_script" "zsh $posix_input"      'zsh')" '{}'
+run "$zsh" "zsh -c $(script "$posix_restore_script" "zsh $path_input"       'zsh')" '{}'
+run "$zsh" "zsh -c $(script "$posix_restore_script" "zsh '$dir_path_input'" 'zsh')" '{}'
 
 csh=$(detect csh) || msg warn 'Csh not found; skipping tests...'
-run "$csh" "csh -c $(script "$csh_script"         'csh test.env'           )" "$json_output"
-run "$csh" "csh -c $(script "$csh_script"         'csh test.env.sh'        )" "$json_output"
-run "$csh" "csh -c $(script "$csh_script"         'csh test.path.env'      )" "$(when "$csh" csh -c "$json_path_output_cmd")"
-run "$csh" "csh -c $(script "$csh_init_script"    'csh' 'test.env'         )" "$json_backup_output"
-run "$csh" "csh -c $(script "$csh_init_script"    'csh' 'test.env.sh'      )" "$json_backup_output"
-run "$csh" "csh -c $(script "$csh_init_script"    'csh' 'test.path.env'    )" "$(when "$csh" csh -c "$json_path_backup_output_cmd")"
-run "$csh" "csh -c $(script "$csh_restore_script" 'csh test.env'      'csh')" '{}'
-run "$csh" "csh -c $(script "$csh_restore_script" 'csh test.env.sh'   'csh')" '{}'
-run "$csh" "csh -c $(script "$csh_restore_script" 'csh test.path.env' 'csh')" '{}'
+run "$csh" "csh -c $(script "$csh_script"         "csh $env_input"             )" "$json_output"
+run "$csh" "csh -c $(script "$csh_script"         "csh $posix_input"           )" "$json_output"
+run "$csh" "csh -c $(script "$csh_script"         "csh $path_input"            )" "$(when "$csh" csh -c "$json_path_output_cmd")"
+run "$csh" "csh -c $(script "$csh_script"         "csh '$dir_path_input'"      )" "$(when "$csh" cd "${dir_path_input%/*}" && csh -c "$json_path_output_cmd")"
+run "$csh" "csh -c $(script "$csh_init_script"    'csh' "$env_input"           )" "$json_backup_output"
+run "$csh" "csh -c $(script "$csh_init_script"    'csh' "$posix_input"         )" "$json_backup_output"
+run "$csh" "csh -c $(script "$csh_init_script"    'csh' "$path_input"          )" "$(when "$csh" csh -c "$json_path_backup_output_cmd")"
+run "$csh" "csh -c $(script "$csh_init_script"    'csh' "'$dir_path_input'"    )" "$(when "$csh" cd "${dir_path_input%/*}" && csh -c "$json_path_backup_output_cmd")"
+run "$csh" "csh -c $(script "$csh_restore_script" "csh $env_input"        'csh')" '{}'
+run "$csh" "csh -c $(script "$csh_restore_script" "csh $posix_input"      'csh')" '{}'
+run "$csh" "csh -c $(script "$csh_restore_script" "csh $path_input"       'csh')" '{}'
+run "$csh" "csh -c $(script "$csh_restore_script" "csh '$dir_path_input'" 'csh')" '{}'
 
 tcsh=$(detect tcsh) || msg warn 'Tcsh not found; skipping tests...'
-run "$tcsh" "tcsh -c $(script "$csh_script"         'tcsh test.env'            )" "$json_output"
-run "$tcsh" "tcsh -c $(script "$csh_script"         'tcsh test.env.sh'         )" "$json_output"
-run "$tcsh" "tcsh -c $(script "$csh_script"         'tcsh test.path.env'       )" "$(when "$tcsh" tcsh -c "$json_path_output_cmd")"
-run "$tcsh" "tcsh -c $(script "$csh_init_script"    'tcsh' 'test.env'          )" "$json_backup_output"
-run "$tcsh" "tcsh -c $(script "$csh_init_script"    'tcsh' 'test.env.sh'       )" "$json_backup_output"
-run "$tcsh" "tcsh -c $(script "$csh_init_script"    'tcsh' 'test.path.env'     )" "$(when "$tcsh" tcsh -c "$json_path_backup_output_cmd")"
-run "$tcsh" "tcsh -c $(script "$csh_restore_script" 'tcsh test.env'      'tcsh')" '{}'
-run "$tcsh" "tcsh -c $(script "$csh_restore_script" 'tcsh test.env.sh'   'tcsh')" '{}'
-run "$tcsh" "tcsh -c $(script "$csh_restore_script" 'tcsh test.path.env' 'tcsh')" '{}'
+run "$tcsh" "tcsh -c $(script "$csh_script"         "tcsh $env_input"              )" "$json_output"
+run "$tcsh" "tcsh -c $(script "$csh_script"         "tcsh $posix_input"            )" "$json_output"
+run "$tcsh" "tcsh -c $(script "$csh_script"         "tcsh $path_input"             )" "$(when "$tcsh" tcsh -c "$json_path_output_cmd")"
+run "$tcsh" "tcsh -c $(script "$csh_script"         "tcsh '$dir_path_input'"       )" "$(when "$tcsh" cd "${dir_path_input%/*}" && tcsh -c "$json_path_output_cmd")"
+run "$tcsh" "tcsh -c $(script "$csh_init_script"    'tcsh' "$env_input"            )" "$json_backup_output"
+run "$tcsh" "tcsh -c $(script "$csh_init_script"    'tcsh' "$posix_input"          )" "$json_backup_output"
+run "$tcsh" "tcsh -c $(script "$csh_init_script"    'tcsh' "$path_input"           )" "$(when "$tcsh" tcsh -c "$json_path_backup_output_cmd")"
+run "$tcsh" "tcsh -c $(script "$csh_init_script"    'tcsh' "'$dir_path_input'"     )" "$(when "$tcsh" cd "${dir_path_input%/*}" && tcsh -c "$json_path_backup_output_cmd")"
+run "$tcsh" "tcsh -c $(script "$csh_restore_script" "tcsh $env_input"        'tcsh')" '{}'
+run "$tcsh" "tcsh -c $(script "$csh_restore_script" "tcsh $posix_input"      'tcsh')" '{}'
+run "$tcsh" "tcsh -c $(script "$csh_restore_script" "tcsh $path_input"       'tcsh')" '{}'
+run "$tcsh" "tcsh -c $(script "$csh_restore_script" "tcsh '$dir_path_input'" 'tcsh')" '{}'
 
 elvish=$(detect elvish) || msg warn 'Elvish not found; skipping tests...'
-run "$elvish" "elvish -c $(script "$elvish_script"         'elvish test.env'              )" "$json_output"
-run "$elvish" "elvish -c $(script "$elvish_script"         'elvish test.env.sh'           )" "$json_output"
-run "$elvish" "elvish -c $(script "$elvish_script"         'elvish test.path.env'         )" "$(when "$elvish" elvish -c "$json_path_output_cmd")"
-run "$elvish" "elvish -c $(script "$elvish_init_script"    'elvish' 'test.env'            )" "$json_backup_output"
-run "$elvish" "elvish -c $(script "$elvish_init_script"    'elvish' 'test.env.sh'         )" "$json_backup_output"
-run "$elvish" "elvish -c $(script "$elvish_init_script"    'elvish' 'test.path.env'       )" "$(when "$elvish" elvish -c "$json_path_backup_output_cmd")"
-run "$elvish" "elvish -c $(script "$elvish_restore_script" 'elvish test.env'      'elvish')" '{}'
-run "$elvish" "elvish -c $(script "$elvish_restore_script" 'elvish test.env.sh'   'elvish')" '{}'
-run "$elvish" "elvish -c $(script "$elvish_restore_script" 'elvish test.path.env' 'elvish')" '{}'
+run "$elvish" "elvish -c $(script "$elvish_script"         "elvish $env_input"                )" "$json_output"
+run "$elvish" "elvish -c $(script "$elvish_script"         "elvish $posix_input"              )" "$json_output"
+run "$elvish" "elvish -c $(script "$elvish_script"         "elvish $path_input"               )" "$(when "$elvish" elvish -c "$json_path_output_cmd")"
+run "$elvish" "elvish -c $(script "$elvish_script"         "elvish '$dir_path_input'"         )" "$(when "$elvish" cd "${dir_path_input%/*}" && elvish -c "$json_path_output_cmd")"
+run "$elvish" "elvish -c $(script "$elvish_init_script"    'elvish' "$env_input"              )" "$json_backup_output"
+run "$elvish" "elvish -c $(script "$elvish_init_script"    'elvish' "$posix_input"            )" "$json_backup_output"
+run "$elvish" "elvish -c $(script "$elvish_init_script"    'elvish' "$path_input"             )" "$(when "$elvish" elvish -c "$json_path_backup_output_cmd")"
+run "$elvish" "elvish -c $(script "$elvish_init_script"    'elvish' "'$dir_path_input'"       )" "$(when "$elvish" cd "${dir_path_input%/*}" && elvish -c "$json_path_backup_output_cmd")"
+run "$elvish" "elvish -c $(script "$elvish_restore_script" "elvish $env_input"        'elvish')" '{}'
+run "$elvish" "elvish -c $(script "$elvish_restore_script" "elvish $posix_input"      'elvish')" '{}'
+run "$elvish" "elvish -c $(script "$elvish_restore_script" "elvish $path_input"       'elvish')" '{}'
+run "$elvish" "elvish -c $(script "$elvish_restore_script" "elvish '$dir_path_input'" 'elvish')" '{}'
 
 fish=$(detect fish) || msg warn 'Fish not found; skipping tests...'
-run "$fish" "fish -c $(script "$fish_script"         'fish test.env'            )" "$json_output"
-run "$fish" "fish -c $(script "$fish_script"         'fish test.env.sh'         )" "$json_output"
-run "$fish" "fish -c $(script "$fish_script"         'fish test.path.env'       )" "$(when "$fish" fish -c "$json_path_output_cmd")"
-run "$fish" "fish -c $(script "$fish_init_script"    'fish' 'test.env'          )" "$json_backup_output"
-run "$fish" "fish -c $(script "$fish_init_script"    'fish' 'test.env.sh'       )" "$json_backup_output"
-run "$fish" "fish -c $(script "$fish_init_script"    'fish' 'test.path.env'     )" "$(when "$fish" fish -c "$json_path_backup_output_cmd")"
-run "$fish" "fish -c $(script "$fish_restore_script" 'fish test.env'      'fish')" '{}'
-run "$fish" "fish -c $(script "$fish_restore_script" 'fish test.env.sh'   'fish')" '{}'
-run "$fish" "fish -c $(script "$fish_restore_script" 'fish test.path.env' 'fish')" '{}'
+run "$fish" "fish -c $(script "$fish_script"         "fish $env_input"              )" "$json_output"
+run "$fish" "fish -c $(script "$fish_script"         "fish $posix_input"            )" "$json_output"
+run "$fish" "fish -c $(script "$fish_script"         "fish $path_input"             )" "$(when "$fish" fish -c "$json_path_output_cmd")"
+run "$fish" "fish -c $(script "$fish_script"         "fish '$dir_path_input'"       )" "$(when "$fish" cd "${dir_path_input%/*}" && fish -c "$json_path_output_cmd")"
+run "$fish" "fish -c $(script "$fish_init_script"    'fish' "$env_input"            )" "$json_backup_output"
+run "$fish" "fish -c $(script "$fish_init_script"    'fish' "$posix_input"          )" "$json_backup_output"
+run "$fish" "fish -c $(script "$fish_init_script"    'fish' "$path_input"           )" "$(when "$fish" fish -c "$json_path_backup_output_cmd")"
+run "$fish" "fish -c $(script "$fish_init_script"    'fish' "'$dir_path_input'"     )" "$(when "$fish" cd "${dir_path_input%/*}" && fish -c "$json_path_backup_output_cmd")"
+run "$fish" "fish -c $(script "$fish_restore_script" "fish $env_input"        'fish')" '{}'
+run "$fish" "fish -c $(script "$fish_restore_script" "fish $posix_input"      'fish')" '{}'
+run "$fish" "fish -c $(script "$fish_restore_script" "fish $path_input"       'fish')" '{}'
+run "$fish" "fish -c $(script "$fish_restore_script" "fish '$dir_path_input'" 'fish')" '{}'
 
 murex=$(detect murex) || msg warn 'Murex not found; skipping tests...'
-run "$murex" "murex -c $(script "$murex_script"         'murex test.env'             )" "$json_output"
-run "$murex" "murex -c $(script "$murex_script"         'murex test.env.sh'          )" "$json_output"
-run "$murex" "murex -c $(script "$murex_script"         'murex test.path.env'        )" "$(when "$murex" murex -c "$json_path_output_cmd")"
-run "$murex" "murex -c $(script "$murex_init_script"    'murex' 'test.env'           )" "$json_backup_output"
-run "$murex" "murex -c $(script "$murex_init_script"    'murex' 'test.env.sh'        )" "$json_backup_output"
-run "$murex" "murex -c $(script "$murex_init_script"    'murex' 'test.path.env'      )" "$(when "$murex" murex -c "$json_path_backup_output_cmd")"
-run "$murex" "murex -c $(script "$murex_restore_script" 'murex test.env'      'murex')" '{}'
-run "$murex" "murex -c $(script "$murex_restore_script" 'murex test.env.sh'   'murex')" '{}'
-run "$murex" "murex -c $(script "$murex_restore_script" 'murex test.path.env' 'murex')" '{}'
+run "$murex" "murex -c $(script "$murex_script"         "murex $env_input"               )" "$json_output"
+run "$murex" "murex -c $(script "$murex_script"         "murex $posix_input"             )" "$json_output"
+run "$murex" "murex -c $(script "$murex_script"         "murex $path_input"              )" "$(when "$murex" murex -c "$json_path_output_cmd")"
+run "$murex" "murex -c $(script "$murex_script"         "murex '$dir_path_input'"        )" "$(when "$murex" cd "${dir_path_input%/*}" && murex -c "$json_path_output_cmd")"
+run "$murex" "murex -c $(script "$murex_init_script"    'murex' "$env_input"             )" "$json_backup_output"
+run "$murex" "murex -c $(script "$murex_init_script"    'murex' "$posix_input"           )" "$json_backup_output"
+run "$murex" "murex -c $(script "$murex_init_script"    'murex' "$path_input"            )" "$(when "$murex" murex -c "$json_path_backup_output_cmd")"
+run "$murex" "murex -c $(script "$murex_init_script"    'murex' "'$dir_path_input'"      )" "$(when "$murex" cd "${dir_path_input%/*}" && murex -c "$json_path_backup_output_cmd")"
+run "$murex" "murex -c $(script "$murex_restore_script" "murex $env_input"        'murex')" '{}'
+run "$murex" "murex -c $(script "$murex_restore_script" "murex $posix_input"      'murex')" '{}'
+run "$murex" "murex -c $(script "$murex_restore_script" "murex $path_input"       'murex')" '{}'
+run "$murex" "murex -c $(script "$murex_restore_script" "murex '$dir_path_input'" 'murex')" '{}'
 
 nu=$(detect nu) || msg warn 'Nushell not found; skipping tests...'
-run "$nu" "nu -c $(script "$nu_setup_script"   'nu test.env'     ); nu -c $(script "$nu_script"                     )" "$json_output"
-run "$nu" "nu -c $(script "$nu_setup_script"   'nu test.env.sh'  ); nu -c $(script "$nu_script"                     )" "$json_output"
-run "$nu" "nu -c $(script "$nu_setup_script"   'nu test.path.env'); nu -c $(script "$nu_script"                     )" "$(when "$nu" nu -c "$json_path_output_cmd")"
-run "$nu" "nu -c $(script "$nu_setup_script"   'init nu'         ); nu -c $(script "$nu_init_script" 'test.env'     )" "$json_backup_output"
-run "$nu" "nu -c $(script "$nu_setup_script"   'init nu'         ); nu -c $(script "$nu_init_script" 'test.env.sh'  )" "$json_backup_output"
-run "$nu" "nu -c $(script "$nu_setup_script"   'init nu'         ); nu -c $(script "$nu_init_script" 'test.path.env')" "$(when "$nu" nu -c "$json_path_backup_output_cmd")"
-run "$nu" "nu -c $(script "$nu_json_script"    'json test.env'            )" "$json_output"
-run "$nu" "nu -c $(script "$nu_json_script"    'json test.env.sh'         )" "$json_output"
-run "$nu" "nu -c $(script "$nu_json_script"    'json test.path.env'       )" "$(when "$nu" nu -c "$json_path_output_cmd")"
-run "$nu" "nu -c $(script "$nu_restore_script" 'json test.env'      'json')" '{}'
-run "$nu" "nu -c $(script "$nu_restore_script" 'json test.env.sh'   'json')" '{}'
-run "$nu" "nu -c $(script "$nu_restore_script" 'json test.path.env' 'json')" '{}'
+run "$nu" "nu -c $(script "$nu_setup_script"   "nu $env_input"       ); nu -c $(script "$nu_script"                         )" "$json_output"
+run "$nu" "nu -c $(script "$nu_setup_script"   "nu $posix_input"     ); nu -c $(script "$nu_script"                         )" "$json_output"
+run "$nu" "nu -c $(script "$nu_setup_script"   "nu $path_input"      ); nu -c $(script "$nu_script"                         )" "$(when "$nu" nu -c "$json_path_output_cmd")"
+run "$nu" "nu -c $(script "$nu_setup_script"   "nu '$dir_path_input'"); nu -c $(script "$nu_script"                         )" "$(when "$nu" cd "${dir_path_input%/*}" && nu -c "$json_path_output_cmd")"
+run "$nu" "nu -c $(script "$nu_setup_script"   'init nu'             ); nu -c $(script "$nu_init_script" "$env_input"       )" "$json_backup_output"
+run "$nu" "nu -c $(script "$nu_setup_script"   'init nu'             ); nu -c $(script "$nu_init_script" "$posix_input"     )" "$json_backup_output"
+run "$nu" "nu -c $(script "$nu_setup_script"   'init nu'             ); nu -c $(script "$nu_init_script" "$path_input"      )" "$(when "$nu" nu -c "$json_path_backup_output_cmd")"
+run "$nu" "nu -c $(script "$nu_setup_script"   'init nu'             ); nu -c $(script "$nu_init_script" "'$dir_path_input'")" "$(when "$nu" cd "${dir_path_input%/*}" && nu -c "$json_path_backup_output_cmd")"
+run "$nu" "nu -c $(script "$nu_json_script"    "json $env_input"              )" "$json_output"
+run "$nu" "nu -c $(script "$nu_json_script"    "json $posix_input"            )" "$json_output"
+run "$nu" "nu -c $(script "$nu_json_script"    "json $path_input"             )" "$(when "$nu" nu -c "$json_path_output_cmd")"
+run "$nu" "nu -c $(script "$nu_json_script"    "json '$dir_path_input'"       )" "$(when "$nu" cd "${dir_path_input%/*}" && nu -c "$json_path_output_cmd")"
+run "$nu" "nu -c $(script "$nu_restore_script" "json $env_input"        'json')" '{}'
+run "$nu" "nu -c $(script "$nu_restore_script" "json $posix_input"      'json')" '{}'
+run "$nu" "nu -c $(script "$nu_restore_script" "json $path_input"       'json')" '{}'
+run "$nu" "nu -c $(script "$nu_restore_script" "json '$dir_path_input'" 'json')" '{}'
 
 pwsh=$(detect pwsh) || msg warn 'PowerShell not found; skipping tests...'
-run "$pwsh" "pwsh -c $(script "$pwsh_script"         'pwsh test.env'            )" "$json_output"
-run "$pwsh" "pwsh -c $(script "$pwsh_script"         'pwsh test.env.sh'         )" "$json_output"
-run "$pwsh" "pwsh -c $(script "$pwsh_script"         'pwsh test.path.env'       )" "$(when "$pwsh" pwsh -c "$json_path_output_cmd")"
-run "$pwsh" "pwsh -c $(script "$pwsh_init_script"    'pwsh' 'test.env'          )" "$json_backup_output"
-run "$pwsh" "pwsh -c $(script "$pwsh_init_script"    'pwsh' 'test.env.sh'       )" "$json_backup_output"
-run "$pwsh" "pwsh -c $(script "$pwsh_init_script"    'pwsh' 'test.path.env'     )" "$(when "$pwsh" pwsh -c "$json_path_backup_output_cmd")"
-run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" 'pwsh test.env'      'pwsh')" '{}'
-run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" 'pwsh test.env.sh'   'pwsh')" '{}'
-run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" 'pwsh test.path.env' 'pwsh')" '{}'
+run "$pwsh" "pwsh -c $(script "$pwsh_script"         "pwsh $env_input"                )" "$json_output"
+run "$pwsh" "pwsh -c $(script "$pwsh_script"         "pwsh $posix_input"              )" "$json_output"
+run "$pwsh" "pwsh -c $(script "$pwsh_script"         "pwsh $path_input"               )" "$(when "$pwsh" pwsh -c "$json_path_output_cmd")"
+run "$pwsh" "pwsh -c $(script "$pwsh_script"         "pwsh \"$dir_path_input\""       )" "$(when "$pwsh" cd "${dir_path_input%/*}" && pwsh -c "$json_path_output_cmd")"
+run "$pwsh" "pwsh -c $(script "$pwsh_init_script"    'pwsh' "$env_input"              )" "$json_backup_output"
+run "$pwsh" "pwsh -c $(script "$pwsh_init_script"    'pwsh' "$posix_input"            )" "$json_backup_output"
+run "$pwsh" "pwsh -c $(script "$pwsh_init_script"    'pwsh' "$path_input"             )" "$(when "$pwsh" pwsh -c "$json_path_backup_output_cmd")"
+run "$pwsh" "pwsh -c $(script "$pwsh_init_script"    'pwsh' "\"$dir_path_input\""     )" "$(when "$pwsh" cd "${dir_path_input%/*}" && pwsh -c "$json_path_backup_output_cmd")"
+run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" "pwsh $env_input"          'pwsh')" '{}'
+run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" "pwsh $posix_input"        'pwsh')" '{}'
+run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" "pwsh $path_input"         'pwsh')" '{}'
+run "$pwsh" "pwsh -c $(script "$pwsh_restore_script" "pwsh \"$dir_path_input\"" 'pwsh')" '{}'
 
 powershell=$(detect powershell) || msg warn 'Windows PowerShell not found; skipping tests...'
 when "$powershell" powershell -v > /dev/null 2> /dev/null && powershell= && msg warn 'PowerShell is not Windows PowerShell; skipping tests...'
-run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.env'                  )" "$json_output"
-run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.env.sh'               )" "$json_output"
-run "$powershell" "powershell -c $(script "$powershell_script"         'powershell test.path.env'             )" "$(when "$powershell" powershell -c "$(echo "$json_path_output_cmd" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\/g)")"
-run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' 'test.env'                )" "$json_backup_output"
-run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' 'test.env.sh'             )" "$json_backup_output"
-run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' 'test.path.env'           )" "$(when "$powershell" powershell -c "$(echo "$json_path_backup_output_cmd" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\/g)")"
-run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.env'      'powershell')" '{}'
-run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.env.sh'   'powershell')" '{}'
-run "$powershell" "powershell -c $(script "$powershell_restore_script" 'powershell test.path.env' 'powershell')" '{}'
+run "$powershell" "powershell -c $(script "$powershell_script"         "powershell $env_input"                      )" "$json_output"
+run "$powershell" "powershell -c $(script "$powershell_script"         "powershell $posix_input"                    )" "$json_output"
+run "$powershell" "powershell -c $(script "$powershell_script"         "powershell $path_input"                     )" "$(when "$powershell" powershell -c "$(echo "$json_path_output_cmd" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\/g)")"
+run "$powershell" "powershell -c $(script "$powershell_script"         "powershell \"$dir_path_input\""             )" "$(when "$powershell" cd "${dir_path_input%/*}" && powershell -c "$(echo "$json_path_output_cmd" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\/g)")"
+run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' "$env_input"                    )" "$json_backup_output"
+run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' "$posix_input"                  )" "$json_backup_output"
+run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' "$path_input"                   )" "$(when "$powershell" powershell -c "$(echo "$json_path_backup_output_cmd" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\/g)")"
+run "$powershell" "powershell -c $(script "$powershell_init_script"    'powershell' "\"$dir_path_input\""           )" "$(when "$powershell" cd "${dir_path_input%/*}" && powershell -c "$(echo "$json_path_backup_output_cmd" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\/g)")"
+run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershell $env_input"          'powershell')" '{}'
+run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershell $posix_input"        'powershell')" '{}'
+run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershell $path_input"         'powershell')" '{}'
+run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershell \"$dir_path_input\"" 'powershell')" '{}'
 
 # NOTE: Running cmd inside sh messes up the shell
 #       • 'run' can only be used once afterwards
@@ -1132,13 +1183,15 @@ cmd=$(detect cmd) || msg warn 'Windows Command shell not found; skipping tests..
 
 # shellcheck disable=SC2059
 if [ "$cmd" = 1 ]; then
-    printf "$cmd_script"         'cmd test.env'            "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >  test.cmd.output; rm -f test.cmd
-    printf "$cmd_script"         'cmd test.env.sh'         "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_script"         'cmd test.path.env'       "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_init_script"    'cmd' 'src'                                 > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_restore_script" 'cmd test.env'      'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_restore_script" 'cmd test.env.sh'   'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_restore_script" 'cmd test.path.env' 'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         "cmd $env_input"                "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >  test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         "cmd $posix_input"              "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         "cmd $path_input"               "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         "cmd \"$dir_path_input\""       "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_init_script"    'cmd' 'src'                                       > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" "cmd $env_input"          'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" "cmd $posix_input"        'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" "cmd $path_input"         'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" "cmd \"$dir_path_input\"" 'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
 
     cmd_name=src
     cmd_temp=$(cmd '/c echo %TEMP%')
@@ -1146,11 +1199,15 @@ if [ "$cmd" = 1 ]; then
     cmd_srcenv="'$PWD/space srcenv'"
     cmd_macro="$cmd_name=@echo off \$T sh $cmd_srcenv cmd --backup --restore --verbose --cmd $cmd_name \$* \$G $cmd_temp \$T\$T call $cmd_temp \$T del $cmd_temp \$T echo on$(printf '\r')"
 
-    printf "@echo off\n\n$json_path_output_cmd\n" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\\\\\\\\\/g | sed -e s/\'/\"/g > test.cmd; cmd '/c test.cmd' > test.cmd.json.path.output; rm -f test.cmd
+    printf "@echo off\n\n$json_path_output_cmd\n" | sed -e s/\"/\"\"/g | sed -e s/\\\\/\\\\\\\\\\\\\\\\/g | sed -e s/\'/\"/g > test.cmd
+    cp test.cmd "${dir_path_input%/*}/test.cmd"
+    cmd '/c test.cmd' > test.cmd.json.path.output
+    (cd "${dir_path_input%/*}" && cmd '/c test.cmd') > test.cmd.json.dir.path.output
+    rm -f test.cmd "${dir_path_input%/*}/test.cmd"
 fi
 
-run "$cmd" "$(printf 'cat test.cmd.output\nrm -f test.cmd.output test.cmd.json.path.output')" \
-           "$json_output${LF}$json_output${LF}$(when "$cmd" cat test.cmd.json.path.output)${LF}$cmd_macro${LF}{}${LF}{}${LF}{}"
+run "$cmd" "$(printf 'cat test.cmd.output\nrm -f test.cmd.output test.cmd.json.path.output test.cmd.json.dir.path.output')" \
+           "$json_output${LF}$json_output${LF}$(when "$cmd" cat test.cmd.json.path.output)${LF}$(when "$cmd" cat test.cmd.json.dir.path.output)${LF}$cmd_macro${LF}{}${LF}{}${LF}{}${LF}{}"
 
 end
 
