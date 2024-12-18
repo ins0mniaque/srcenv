@@ -96,6 +96,8 @@ ${BOLD}${UNDERLINE}Shells${NORMAL}:
 
     echo >&2 "\
 ${BOLD}${UNDERLINE}Options${NORMAL}:
+  ${BOLD}--color WHEN, --color=WHEN  ${NORMAL}Specify when to use colored output: ${BOLD:-*}auto${BOLD:-*}${NORMAL}, never or always
+                              ${ITALIC}i.e. 'auto' disables colors if the output goes to a pipe${NORMAL}
   ${BOLD}-x VAR, --exclude VAR,
   ${BOLD}-x=VAR, --exclude=VAR       ${NORMAL}Exclude VAR from exported variables ${ITALIC}(can be used multiple times)${NORMAL}
   ${BOLD}-f FORMAT, --format FORMAT,
@@ -219,9 +221,39 @@ err() {
     esac
 }
 
+[ -t 1 ] && colorless= || colorless=1
+color=${SRCENV_COLOR:-auto}
+colors=$SRCENV_COLORS
+
 colors() {
-    for color in "$@"; do
-        case $color in
+    case $color in
+        never)  return ;;
+        always) ;;
+        *)      [ -n "$colorless" ] && [ -z "$cmd" ] && return ;;
+    esac
+
+    if [ -n "$SRCENV_COLORS" ]; then
+        [ -z "$colors" ] && return
+
+        NORMAL=${colors%%"${DLM}"*};    colors=${colors#*"${DLM}"}
+        BOLD=${colors%%"${DLM}"*};      colors=${colors#*"${DLM}"}
+        DIM=${colors%%"${DLM}"*};       colors=${colors#*"${DLM}"}
+        ITALIC=${colors%%"${DLM}"*};    colors=${colors#*"${DLM}"}
+        UNDERLINE=${colors%%"${DLM}"*}; colors=${colors#*"${DLM}"}
+        BLACK=${colors%%"${DLM}"*};     colors=${colors#*"${DLM}"}
+        RED=${colors%%"${DLM}"*};       colors=${colors#*"${DLM}"}
+        GREEN=${colors%%"${DLM}"*};     colors=${colors#*"${DLM}"}
+        YELLOW=${colors%%"${DLM}"*};    colors=${colors#*"${DLM}"}
+        BLUE=${colors%%"${DLM}"*};      colors=${colors#*"${DLM}"}
+        MAGENTA=${colors%%"${DLM}"*};   colors=${colors#*"${DLM}"}
+        CYAN=${colors%%"${DLM}"*};      colors=${colors#*"${DLM}"}
+        WHITE=${colors%%"${DLM}"*};     colors=
+
+        return
+    fi
+
+    for var in "$@"; do
+        case $var in
             NORMAL)    NORMAL=${NORMAL:-$(      tput sgr0    2> /dev/null || printf '\033[0m')}  ;;
             BOLD)      BOLD=${BOLD:-$(          tput bold    2> /dev/null || printf '\033[1m')}  ;;
             DIM)       DIM=${DIM:-$(            tput dim     2> /dev/null || printf '\033[2m')}  ;;
@@ -239,16 +271,23 @@ colors() {
     done
 }
 
+exportcolors() {
+    color=always
+    colors NORMAL BOLD DIM ITALIC UNDERLINE BLACK RED GREEN YELLOW BLUE MAGENTA CYAN WHITE
+    export SRCENV_COLORS="$NORMAL${DLM}$BOLD${DLM}$DIM${DLM}$ITALIC${DLM}$UNDERLINE${DLM}$BLACK${DLM}$RED${DLM}$GREEN${DLM}$YELLOW${DLM}$BLUE${DLM}$MAGENTA${DLM}$CYAN${DLM}$WHITE"
+}
+
+validcolor() {
+    case $2 in
+        auto|always|never) ;;
+        *) colors NORMAL GREEN
+           invalid "$1" "color must be either ${GREEN}auto${NORMAL}, ${GREEN}never${NORMAL} or ${GREEN}always${NORMAL} -- -"; usage; help; exit 2 ;;
+    esac
+}
+
 # endregion Help / Usage
 
 # region init() / rc()
-
-namecheck() {
-    case $2 in
-        *[!A-Za-z0-9_]*) invalid "$1" 'name must contain only alphanumeric and underscore characters -- -'; usage; help; exit 2 ;;
-        [!A-Za-z]*)      invalid "$1" 'name must start with a letter -- -'; usage; help; exit 2 ;;
-    esac
-}
 
 init() {
     name=src
@@ -256,8 +295,8 @@ init() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            --cmd)   name=$(parse "$1" "$2" namecheck)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" namecheck)  || exit $?;                        shift ;;
+            --cmd)   name=$(parse "$1" "$2" validname)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" validname)  || exit $?;                        shift ;;
             --)      shift; opts="$*";                                break ;;
             *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
@@ -299,8 +338,8 @@ rc() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            --cmd)   name=$(parse "$1" "$2" namecheck)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" namecheck)  || exit $?;                        shift ;;
+            --cmd)   name=$(parse "$1" "$2" validname)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" validname)  || exit $?;                        shift ;;
             --)      shift; opts="$*";                                break ;;
             *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
@@ -347,6 +386,13 @@ rc() {
         env|\
         json|\
         launchctl)       nosupport rc; return 1 ;;
+    esac
+}
+
+validname() {
+    case $2 in
+        *[!A-Za-z0-9_]*) invalid "$1" 'name must contain only alphanumeric and underscore characters -- -'; usage; help; exit 2 ;;
+        [!A-Za-z]*)      invalid "$1" 'name must start with a letter -- -'; usage; help; exit 2 ;;
     esac
 }
 
@@ -434,6 +480,35 @@ build() {
     fi
 }
 
+DLM=$(printf '\032')
+LF='
+'
+
+capture() {
+    # shellcheck disable=SC2153
+    if [ "$KSH_VERSION" = "Version AJM 93u+ 2012-08-01" ]; then
+        stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@" 3>&1 1>&2 2>&3)" ) 2>&1 )
+        exitcode=${stdout%"${DLM}"*"${DLM}"}
+        exitcode=${exitcode#*"${DLM}"}
+        stderr=${stdout%"${DLM}"}
+        stderr=${stderr##*"${DLM}"}
+        stderr=${stderr%"${LF}"}
+        stdout=${stdout%%"${DLM}"*}
+        stdout=${stdout%"${LF}"}
+    else
+        stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )
+        exitcode=${stdout%"${DLM}"}
+        exitcode=${exitcode##*"${DLM}"}
+        stderr=${stdout%%"${DLM}"*}
+        stderr=${stderr%"${LF}"}
+        stdout=${stdout#*"${DLM}"}
+        stdout=${stdout%"${DLM}"*"${DLM}"}
+        stdout=${stdout%"${LF}"}
+    fi
+
+    return "$exitcode"
+}
+
 parse() {
     case $2 in
         -*|'') invalid "$1" 'option requires an argument -- -'; usage; help; return 2 ;;
@@ -442,93 +517,14 @@ parse() {
 }
 
 run() {
-    src=src; arg=; input=; action=; prefix=; suffix=; exclude=; format=; backup=; restore=; clear=; modify=1; export=; sort=1; fixpath=; verbose=
-
-    setformat "$shell"
-
-    while [ $# -gt 0 ] && [ "$1" != -- ]; do
-        arg=1
-        case $1 in
-            --cmd)   cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; arg=; input=; action=; shift ;;
-            --cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             arg=; input=; action=; shift ;;
-
-            -x|--exclude)     value=$(parse "$1" "$2" namecheck) || exit $?; [ $# -gt 1 ] && shift
-                              exclude="$exclude.$value, "; shift ;;
-            -x=*|--exclude=*) value=$(parse "${1%%=*}" "${1#*=}" namecheck) || exit $?
-                              exclude="$exclude.$value, "; shift ;;
-
-            -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
-                             setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
-            -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
-                             setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
-
-            -b|--backup)   backup=1; clear=;  input=1;  shift ;;
-            -r|--restore)  restore=1;         action=1; shift ;;
-            -c|--clear)    backup=; clear=1;  action=1; shift ;;
-            -n)            backup=; restore=;           shift ;;
-            --no-backup)   backup=;                     shift ;;
-            --no-restore)  restore=;                    shift ;;
-            -m|--modify)        modify=1;               shift ;;
-            -w|--write-protect) modify=;                shift ;;
-            -j|--json)     src=json;          input=1;  shift ;;
-            -p|--posix)    src=src;           input=1;  shift ;;
-            -e|--export)   export=--export;   input=1;  shift ;;
-            -l|--local)    export=0;          input=1;  shift ;;
-            -s|--sort)     sort=1;                      shift ;;
-            -u|--unsorted) sort=;                       shift ;;
-            -q|--quiet)    verbose=;                    shift ;;
-            -v|--verbose)  verbose=1;                   shift ;;
-            --usage)       header; usage; desc; help; man;          exit 0 ;;
-            -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
-            --version)     version;                                 exit 0 ;;
-
-            -i|--input)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
-                            set -- "$@" -- --input "$value"; shift ;;
-            -i=*|--input=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
-                            set -- "$@" -- --input "$value"; shift ;;
-            -)              set -- "$@" -- -;                shift ;;
-
-            -*) if opts=$(getopt 'bcef:hi:jlmnpqrsuvwx:' "$1" 2>&1) && shift; then
-                    # shellcheck disable=SC2086
-                    if [ -n "$ZSH_VERSION" ]; then
-                        setopt shwordsplit > /dev/null 2>&1
-                        set -- ${opts% --} "$@"
-                        unsetopt shwordsplit > /dev/null 2>&1
-                    else
-                        set -- ${opts% --} "$@"
-                    fi
-
-                    continue
-                else
-                    invalid "$1" "$opts"; usage; help; exit 2
-                fi ;;
-            *)  set -- "$@" -- "$1"; shift ;;
-        esac
-    done
-
-    if [ $# = 0 ]; then
-        if [ -z "$arg" ]; then
-            header; usage; desc; help; man; exit 0
-        elif [ -n "$input" ] || [ -z "$action" ]; then
-            noinput; usage; help; exit 2
-        fi
-    fi
-
-    if [ -z "$format" ]; then
-        noformat; usage; help; exit 2
-    elif [ -n "$COMSPEC" ]; then
-        case $shell in
-            pwsh|powershell|cmd|command) ;;
-            *) fixpath=1 ;;
-        esac
-    fi
-
     if ! jq=$(command -v "$jq"); then
         nojq; exit 1
     fi
 
     pwd=$PWD
     snapshot=$("$jq" -n env) || exit $?
+
+    [ -n "$exportcolors" ] && exportcolors
 
     while [ $# -gt 0 ]; do
         case $1 in
@@ -652,34 +648,92 @@ fi
 [ ! -t 0 ] && set -- "$@" -
 [ $# = 0 ] && set -- --usage
 
-DLM=$(printf '\032')
-LF='
-'
+src=src; arg=; input=; action=; exportcolors=
+prefix=; suffix=; exclude=; format=; backup=; restore=; clear=
+modify=1; export=; sort=1; fixpath=; verbose=
 
-capture() {
-    # shellcheck disable=SC2153
-    if [ "$KSH_VERSION" = "Version AJM 93u+ 2012-08-01" ]; then
-        stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@" 3>&1 1>&2 2>&3)" ) 2>&1 )
-        exitcode=${stdout%"${DLM}"*"${DLM}"}
-        exitcode=${exitcode#*"${DLM}"}
-        stderr=${stdout%"${DLM}"}
-        stderr=${stderr##*"${DLM}"}
-        stderr=${stderr%"${LF}"}
-        stdout=${stdout%%"${DLM}"*}
-        stdout=${stdout%"${LF}"}
-    else
-        stdout=$( (printf "${DLM}%s${DLM}" "$(trap 'printf "${DLM}%d" "$?"' EXIT; "$@")" 1>&2) 2>&1 )
-        exitcode=${stdout%"${DLM}"}
-        exitcode=${exitcode##*"${DLM}"}
-        stderr=${stdout%%"${DLM}"*}
-        stderr=${stderr%"${LF}"}
-        stdout=${stdout#*"${DLM}"}
-        stdout=${stdout%"${DLM}"*"${DLM}"}
-        stdout=${stdout%"${LF}"}
+setformat "$shell"
+
+while [ $# -gt 0 ] && [ "$1" != -- ]; do
+    arg=1
+    case $1 in
+        --cmd)   cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; arg=; input=; action=; shift ;;
+        --cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             arg=; input=; action=; shift ;;
+
+        --color)         color=$(parse "$1" "$2" validcolor) || exit $?; [ $# -gt 1 ] && shift; shift ;;
+        --color=*)       color=$(parse "${1%%=*}" "${1#*=}" validcolor) || exit $?;             shift ;;
+        --export-colors) exportcolors=1;                                              action=1; shift ;;
+
+        -x|--exclude)     value=$(parse "$1" "$2" validname) || exit $?; [ $# -gt 1 ] && shift
+                          exclude="$exclude.$value, "; shift ;;
+        -x=*|--exclude=*) value=$(parse "${1%%=*}" "${1#*=}" validname) || exit $?
+                          exclude="$exclude.$value, "; shift ;;
+
+        -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
+                         setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
+        -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
+                         setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
+
+        -b|--backup)   backup=1; clear=;  input=1;  shift ;;
+        -r|--restore)  restore=1;         action=1; shift ;;
+        -c|--clear)    backup=; clear=1;  action=1; shift ;;
+        -n)            backup=; restore=;           shift ;;
+        --no-backup)   backup=;                     shift ;;
+        --no-restore)  restore=;                    shift ;;
+        -m|--modify)        modify=1;               shift ;;
+        -w|--write-protect) modify=;                shift ;;
+        -j|--json)     src=json;          input=1;  shift ;;
+        -p|--posix)    src=src;           input=1;  shift ;;
+        -e|--export)   export=--export;   input=1;  shift ;;
+        -l|--local)    export=0;          input=1;  shift ;;
+        -s|--sort)     sort=1;                      shift ;;
+        -u|--unsorted) sort=;                       shift ;;
+        -q|--quiet)    verbose=;                    shift ;;
+        -v|--verbose)  verbose=1;                   shift ;;
+        --usage)       header; usage; desc; help; man;          exit 0 ;;
+        -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
+        --version)     version;                                 exit 0 ;;
+
+        -i|--input)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
+                        set -- "$@" -- --input "$value"; shift ;;
+        -i=*|--input=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
+                        set -- "$@" -- --input "$value"; shift ;;
+        -)              set -- "$@" -- -;                shift ;;
+
+        -*) if opts=$(getopt 'bcef:hi:jlmnpqrsuvwx:' "$1" 2>&1) && shift; then
+                # shellcheck disable=SC2086
+                if [ -n "$ZSH_VERSION" ]; then
+                    setopt shwordsplit > /dev/null 2>&1
+                    set -- ${opts% --} "$@"
+                    unsetopt shwordsplit > /dev/null 2>&1
+                else
+                    set -- ${opts% --} "$@"
+                fi
+
+                continue
+            else
+                invalid "$1" "$opts"; usage; help; exit 2
+            fi ;;
+        *)  set -- "$@" -- "$1"; shift ;;
+    esac
+done
+
+if [ $# = 0 ]; then
+    if [ -z "$arg" ]; then
+        header; usage; desc; help; man; exit 0
+    elif [ -n "$input" ] || [ -z "$action" ]; then
+        noinput; usage; help; exit 2
     fi
+fi
 
-    return "$exitcode"
-}
+if [ -z "$format" ]; then
+    noformat; usage; help; exit 2
+elif [ -n "$COMSPEC" ]; then
+    case $shell in
+        pwsh|powershell|cmd|command) ;;
+        *) fixpath=1 ;;
+    esac
+fi
 
 capture run "$@"
 

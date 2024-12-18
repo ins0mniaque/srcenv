@@ -678,9 +678,11 @@ EOF
 
 # region Tests
 
-[ -t 0 ] && no_stdin=1 || no_stdin=
+export SRCENV_COLOR=always
 
 [ -n "$COMSPEC" ] && export SRCENV_JQ_OPTS=-b
+
+[ -t 0 ] && no_stdin=1 || no_stdin=
 
 run_posix_tests() {
     case $1 in
