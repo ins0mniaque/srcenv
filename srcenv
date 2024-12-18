@@ -397,8 +397,8 @@ build() {
     [ -n "$exclude" ] && exclude="|del(${exclude%, })"
     [ -n "$modify"  ] && modify= || modify='$snapshot[$k] == null and '
 
-    diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
-    ffid='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
+    diff='reduce (env|del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+    ffid='reduce (env|del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
 
     if [ -z "$sort" ]; then
         keys='keys_unsorted[] as $k'
@@ -527,6 +527,7 @@ run() {
         nojq; exit 1
     fi
 
+    pwd=$PWD
     snapshot=$("$jq" -n env) || exit $?
 
     while [ $# -gt 0 ]; do
@@ -576,9 +577,12 @@ src() {
     elif [ -f "$2" ]; then
         # shellcheck disable=SC1090
         case $2 in
-            .*|/*) .   "$2" 1>&2 || exitcode=$? ;;
-            *)     . "./$2" 1>&2 || exitcode=$? ;;
+            */*) cd "${2%/*}" && \
+                 . "./${2##*/}" 1>&2 || exitcode=$? ;;
+            *)   . "./$2"       1>&2 || exitcode=$? ;;
         esac
+
+        cd "$pwd" || exitcode=$?
     else
         echo >&2 "$2: No such file or directory"
         exitcode=2

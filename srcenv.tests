@@ -730,6 +730,7 @@ run_posix_tests() {
     run "$1" "$2 sh --backup --restore --cmd src --restore"                      ''
     run "$1" "$2 sh --backup --restore --cmd src --clear"                        'unset SRCENV_RESTORE'
 
+    run "$1" "$2 sh --input 'cd ..'"                         ''
     run "$1" "$2 sh --input 'echo something'"                ''
     run "$1" "$2 sh --input 'echo something; not_a_command'" '' 127
     run "$1" "$2 sh -eiSRCENV_TEST_A=1"                      "export SRCENV_TEST_A='1'"
