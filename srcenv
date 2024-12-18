@@ -583,9 +583,11 @@ src() {
 
 json() {
     if [ "$1" = var ]; then
-        env=$(printf "%s\n" "$2" | "$jq" -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"') || return $?
+        # shellcheck disable=SC2086
+        env=$(printf "%s\n" "$2" | "$jq" $SRCENV_JQ_OPTS -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"') || return $?
     elif [ -f "$2" ]; then
-        env=$("$jq" -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"' "$2") || return $?
+        # shellcheck disable=SC2086
+        env=$("$jq" $SRCENV_JQ_OPTS -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"' "$2") || return $?
     else
         echo >&2 "$2: No such file or directory"
         return 2
