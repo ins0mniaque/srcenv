@@ -378,7 +378,7 @@ EOF
 
 { nu_setup_script=$(cat); } << 'EOF'
 ^'./space srcenv' %s | save -f test.setup.nu
-let SRCENV_JQ_OPTS = '%s'
+let SRCENV_JQ_BINARY = '%s'
 EOF
 
 { nu_script="$(cat) '$diff'"; } << 'EOF'
@@ -676,8 +676,7 @@ EOF
 # region Tests
 
 export SRCENV_COLOR=always
-
-[ -n "$COMSPEC" ] && export SRCENV_JQ_OPTS=-b
+export SRCENV_JQ_BINARY=${COMSPEC:+1}
 
 [ -t 0 ] && no_stdin=1 || no_stdin=
 
@@ -952,7 +951,7 @@ detect() { command -v "$1" > /dev/null && echo 1; }
 escape() { printf "'%s'\\n" "$(printf '%s' "$1" | sed -e "s/'/'\\\\''/g")"; }
 script() {
     # shellcheck disable=SC2059
-    escape "$(printf "$@" "$SRCENV_JQ_OPTS")"
+    escape "$(printf "$@" ${SRCENV_JQ_BINARY:+-b})"
 }
 
 sh=$(detect sh) || msg warn 'sh not found; skipping tests...'
@@ -1184,15 +1183,15 @@ cmd=$(detect cmd) || msg warn 'Windows Command shell not found; skipping tests..
 
 # shellcheck disable=SC2059
 if [ "$cmd" = 1 ]; then
-    printf "$cmd_script"         "cmd $env_input"                "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >  test.cmd.output; rm -f test.cmd
-    printf "$cmd_script"         "cmd $posix_input"              "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_script"         "cmd $path_input"               "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_script"         "cmd \"$dir_path_input\""       "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_init_script"    'cmd' 'src'                                       > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_restore_script" "cmd $env_input"          'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_restore_script" "cmd $posix_input"        'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_restore_script" "cmd $path_input"         'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
-    printf "$cmd_restore_script" "cmd \"$dir_path_input\"" 'cmd' "$SRCENV_JQ_OPTS" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         "cmd $env_input"                "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >  test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         "cmd $posix_input"              "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         "cmd $path_input"               "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_script"         "cmd \"$dir_path_input\""       "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_init_script"    'cmd' 'src'                                               > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" "cmd $env_input"          'cmd' "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" "cmd $posix_input"        'cmd' "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" "cmd $path_input"         'cmd' "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
+    printf "$cmd_restore_script" "cmd \"$dir_path_input\"" 'cmd' "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
 
     cmd_name=src
     cmd_temp=$(cmd '/c echo %TEMP%')

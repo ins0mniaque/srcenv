@@ -545,8 +545,7 @@ run() {
     build
 
     if [ -n "$verbose" ]; then
-        # shellcheck disable=SC2086
-        stdout=$(printf "%s\n" "$snapshot" | "$jq" $SRCENV_JQ_OPTS -r "$filter")
+        stdout=$(printf "%s\n" "$snapshot" | "$jq" ${SRCENV_JQ_BINARY:+-b} -r "$filter")
         exitcode=$?
 
         out           "${stdout##*"${LF}"}"
@@ -554,8 +553,7 @@ run() {
 
         exit "$exitcode"
     else
-        # shellcheck disable=SC2086
-        printf "%s\n" "$snapshot" | "$jq" $SRCENV_JQ_OPTS -r "$filter"
+        printf "%s\n" "$snapshot" | "$jq" ${SRCENV_JQ_BINARY:+-b} -r "$filter"
     fi
 }
 
@@ -599,11 +597,9 @@ src() {
 
 json() {
     if [ "$1" = var ]; then
-        # shellcheck disable=SC2086
-        env=$(printf "%s\n" "$2" | "$jq" $SRCENV_JQ_OPTS -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"') || return 5
+        env=$(printf "%s\n" "$2" | "$jq" ${SRCENV_JQ_BINARY:+-b} -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"') || return 5
     elif [ -f "$2" ]; then
-        # shellcheck disable=SC2086
-        env=$("$jq" $SRCENV_JQ_OPTS -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"' "$2") || return 5
+        env=$("$jq" ${SRCENV_JQ_BINARY:+-b} -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"' "$2") || return 5
     else
         out "$2: No such file or directory"
         return 2
