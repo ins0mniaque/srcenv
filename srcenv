@@ -277,6 +277,13 @@ validcolor() {
     esac
 }
 
+parse() {
+    case $2 in
+        -*|'') invalid "$1" 'option requires an argument'; usage; help; return 2 ;;
+        *)     [ -n "$3" ] && ! "$3" "$1 '$2'" "$2" && return $?; printf '%s' "$2" ;;
+    esac
+}
+
 # endregion Help / Usage
 
 # region init() / rc()
@@ -509,13 +516,6 @@ capture() {
     fi
 
     return "$exitcode"
-}
-
-parse() {
-    case $2 in
-        -*|'') invalid "$1" 'option requires an argument'; usage; help; return 2 ;;
-        *)     [ -n "$3" ] && ! "$3" "$1 '$2'" "$2" && return $?; printf '%s' "$2" ;;
-    esac
 }
 
 run() {
