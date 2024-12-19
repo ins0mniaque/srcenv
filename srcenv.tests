@@ -628,18 +628,15 @@ out '{"SRCENV_RESTORE":null,"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TE
 EOF
 
 { nu_output=$(cat); } << 'EOF'
-$env.SRCENV_TEST_A = r#'6'#
-$env.SRCENV_TEST_B = r#'7'#
-$env.SRCENV_TEST_C = r#'42'#
-$env.SRCENV_TEST_ESCAPE = r#'$NOT_EXPANDED\t\r\n'"'#
-$env.SRCENV_TEST_MULTILINE = r#'
-6
-7
-42'#
+$env.SRCENV_TEST_A = "6"
+$env.SRCENV_TEST_B = "7"
+$env.SRCENV_TEST_C = "42"
+$env.SRCENV_TEST_ESCAPE = "$NOT_EXPANDED\\t\\r\\n'\""
+$env.SRCENV_TEST_MULTILINE = "\n6\n7\n42"
 EOF
 
 { nu_backup_output=$(cat); } << 'EOF'
-$env.SRCENV_RESTORE = r#'{"SRCENV_RESTORE":null,"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null}'#
+$env.SRCENV_RESTORE = "{\"SRCENV_RESTORE\":null,\"SRCENV_TEST_A\":null,\"SRCENV_TEST_B\":null,\"SRCENV_TEST_C\":null,\"SRCENV_TEST_ESCAPE\":null,\"SRCENV_TEST_MULTILINE\":null}"
 EOF
 
 { pwsh_output=$(cat); } << 'EOF'

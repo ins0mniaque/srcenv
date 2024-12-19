@@ -418,7 +418,7 @@ setformat() {
                              'set -e \($k)' ;;
         murex)           fmt 'out \(.[$k]|@sh) -> export \($k)' \
                              '!export \($k)' ;;
-        nu|nushell)      fmt '$env.\($k) = r#'"'"'\(.[$k])'"'"'#' \
+        nu|nushell)      fmt '$env.\($k) = \(.[$k]|@json)' \
                              '$env.\($k) = null' ;;
         pwsh|powershell) fmt '$Env:\($k) = \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
                              '$Env:\($k) = $null' ;;
