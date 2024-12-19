@@ -160,8 +160,6 @@ nosupport() {
 invalid() {
     colors NORMAL BOLD ITALIC UNDERLINE RED YELLOW
 
-    LF='
-'
     error=${2#getopt: }
     error=${error%%"${LF}"*}
     case $error in
@@ -200,9 +198,7 @@ err() {
                  error=${error#error*: }
                  echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_RESTORE${NORMAL} environment variable contains ${RED}invalid JSON${NORMAL}: $error" ;;
 
-        $jq:\ *) LF='
-'
-                 error=${1#"$jq": }
+        $jq:\ *) error=${1#"$jq": }
                  error=${error#error: }
                  error=${error%%, line 1:"${LF}"*}
                  echo >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error" ;;
