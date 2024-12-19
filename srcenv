@@ -18,17 +18,17 @@ version() {
 header() { echo >&2 'srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.'; }
 
 desc() {
-    echo >&2 "\
+    echo >&2 "
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
 and prints a shell specific script exporting the environment variables that have
-changed since the snapshot.
-"
+changed since the snapshot."
 }
 
 help() {
     colors NORMAL BOLD
 
-    echo >&2 "For listing the command options, use '${cmd:-${0##*/}} ${BOLD}--help${NORMAL}'."
+    echo >&2 "
+For listing the command options, use '${cmd:-${0##*/}} ${BOLD}--help${NORMAL}'."
 }
 
 man() {
@@ -50,8 +50,7 @@ usage() {
         echo >&2 "
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMAL}> [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
               init|rc <${ITALIC}shell${NORMAL}> [--cmd ${ITALIC}name${NORMAL}] [-- ${ITALIC}options${NORMAL}]
-              [-h|--help|--version]
-"
+              [-h|--help|--version]"
     else
         warn=; command -v "$jq" > /dev/null || \
         warn=$(printf "%$((46 - ${#cmd} + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
@@ -61,8 +60,7 @@ ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMA
 
         echo >&2 "
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}$cmd${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
-$help
-"
+$help"
     fi
 }
 
@@ -70,7 +68,7 @@ options() {
     colors NORMAL BOLD ITALIC UNDERLINE
 
     if [ -z "$cmd" ]; then
-        echo >&2 "\
+        echo >&2 "
 ${BOLD}${UNDERLINE}Commands${NORMAL}:
   ${BOLD}init              ${NORMAL}Generate the initialization script
   ${BOLD}rc                ${NORMAL}Generate the command to install the initialization script
@@ -90,14 +88,13 @@ ${BOLD}${UNDERLINE}Shells${NORMAL}:
   ${BOLD}nu, nushell       ${NORMAL}Format the output as a Nushell script
   ${BOLD}posix, sh         ${NORMAL}Format the output as a POSIX shell script
   ${BOLD}pwsh, powershell  ${NORMAL}Format the output as a PowerShell script
-  ${BOLD}zsh               ${NORMAL}Format the output as a Zsh script
-"
+  ${BOLD}zsh               ${NORMAL}Format the output as a Zsh script"
     fi
 
-    echo >&2 "\
+    echo >&2 "
 ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}--color WHEN, --color=WHEN  ${NORMAL}Specify when to use colored output: ${BOLD:-*}auto${BOLD:-*}${NORMAL}, never or always
-                              ${ITALIC}i.e. 'auto' disables colors if the output goes to a pipe${NORMAL}
+                              ${ITALIC}${DIM}i.e. 'auto' disables colors if the output goes to a pipe${NORMAL}
   ${BOLD}-x VAR, --exclude VAR,
   ${BOLD}-x=VAR, --exclude=VAR       ${NORMAL}Exclude VAR from exported variables ${ITALIC}(can be used multiple times)${NORMAL}
   ${BOLD}-f FORMAT, --format FORMAT,
@@ -123,8 +120,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-q, --quiet                 ${NORMAL}Do not display changed environment variables
   ${BOLD}-v, --verbose               ${NORMAL}Display changed environment variables
   ${BOLD}-h, --help                  ${NORMAL}Display help and exit
-  ${BOLD}--version                   ${NORMAL}Display the version number and exit
-"
+  ${BOLD}--version                   ${NORMAL}Display the version number and exit"
 }
 
 noinput() {
@@ -698,9 +694,9 @@ while [ $# -gt 0 ] && [ "$1" != -- ]; do
         -u|--unsorted) sort=;                       shift ;;
         -q|--quiet)    verbose=;                    shift ;;
         -v|--verbose)  verbose=1;                   shift ;;
-        --usage)       header; usage; desc; help; man;          exit 0 ;;
-        -\?|-h|--help) header; usage; desc; options; help; man; exit 0 ;;
-        --version)     version;                                 exit 0 ;;
+        --usage)       header; usage; desc; help; man;    exit 0 ;;
+        -\?|-h|--help) header; usage; desc; options; man; exit 0 ;;
+        --version)     version;                           exit 0 ;;
 
         -i|--input)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                         set -- "$@" -- --input "$value"; shift ;;
