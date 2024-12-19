@@ -719,21 +719,11 @@ while [ $# -gt 0 ] && [ "$1" != -- ]; do
                         set -- "$@" -- --input "$value"; shift ;;
         -)              set -- "$@" -- -;                shift ;;
 
-        -*) if opts=$(getopt 'bcef:hi:jlmnpqrsuvwx:' "$1" 2>&1) && shift; then
-                # shellcheck disable=SC2086
-                if [ -n "$ZSH_VERSION" ]; then
-                    setopt shwordsplit > /dev/null 2>&1
-                    set -- ${opts% --} "$@"
-                    unsetopt shwordsplit > /dev/null 2>&1
-                else
-                    set -- ${opts% --} "$@"
-                fi
-
-                continue
-            else
-                invalid "$1" "$opts"; usage; help; exit 2
-            fi ;;
-        *)  set -- "$@" -- "$1"; shift ;;
+        -[!-]?*) opts=${1#??}; opt=${1%"$opts"}; shift
+                 case $opt in -[!fix]) opts="-$opts" ;; esac
+                 set -- "$opt" "$opts" "$@" ;;
+        -*)      invalid "$1" "invalid option -- -"; usage; help; exit 2 ;;
+        *)       set -- "$@" -- "$1"; shift ;;
     esac
 done
 
