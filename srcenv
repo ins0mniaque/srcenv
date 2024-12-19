@@ -553,8 +553,8 @@ run() {
             -rn "$prefix $restore $diff $backup $fixpath | $keys | $format $suffix $verbose")
         exitcode=$?
 
-        printf 1>&2 "%s\n" "${stdout##*"${LF}"}"
-        printf      "%s\n" "${stdout%"${LF}"*}"
+        printf >&2 "%s\n" "${stdout##*"${LF}"}"
+        printf     "%s\n" "${stdout%"${LF}"*}"
 
         exit "$exitcode"
     else
