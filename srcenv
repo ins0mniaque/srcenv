@@ -541,7 +541,9 @@ run() {
         case $1 in
             --)      shift ;;
             --input) "$src" var "$2"     "$export"             || exit $?; shift; shift ;;
-            -)       "$src" var "$(cat)" "$export"             || exit $?; shift ;;
+            -)       stdin=; while read -r line; do stdin="$stdin$line${LF}"; done
+                     stdin=${stdin%"${LF}"}
+                     "$src" var "$stdin" "$export"             || exit $?; shift ;;
             *.env)   "$src" file "$1"    "${export:---export}" || exit $?; shift ;;
             *)       "$src" file "$1"    "$export"             || exit $?; shift ;;
         esac
