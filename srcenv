@@ -289,21 +289,20 @@ validcolor() {
 
 # region init() / rc()
 
-init() {
-    name=src; sh=; opts='--backup --restore --verbose'; quote=\'
+arg0=$0
 
+initrc() {
     case $shell in
-        csh|tcsh)         quote=\" ;;
-        pwsh|powershell|\
-        cmd|command)      sh='sh' ;;
+        csh|tcsh) quote=\" ;;
+        *)        quote=\' ;;
     esac
 
-    case $0 in
-        /*)  srcenv="${quote}$0${quote}" ;;
-        ./*) srcenv="${quote}$PWD/${0#./}${quote}" ;;
-        */*) srcenv="${quote}$PWD/$0${quote}" ;;
-        *)   srcenv="${quote}$(command -v "$0")${quote}" || \
-             srcenv="${quote}$PWD/$0${quote}" ;;
+    case $arg0 in
+        /*)  srcenv="${quote}$arg0${quote}" ;;
+        ./*) srcenv="${quote}$PWD/${arg0#./}${quote}" ;;
+        */*) srcenv="${quote}$PWD/$arg0${quote}" ;;
+        *)   srcenv="${quote}$(command -v "$arg0")${quote}" || \
+             srcenv="${quote}$PWD/$arg0${quote}" ;;
     esac
 
     while [ $# -gt 0 ]; do
@@ -316,6 +315,16 @@ init() {
             *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
     done
+}
+
+init() {
+    name=src; sh=; opts='--backup --restore --verbose'
+
+    case $shell in
+        pwsh|powershell|cmd|command) sh='sh' ;;
+    esac
+
+    initrc "$@" || exit $?
 
     case $shell in
         nu|nushell) srcenv="${sh:+"$sh "}$srcenv json $opts --cmd $name" ;;
@@ -346,31 +355,9 @@ init() {
 }
 
 rc() {
-    name=; opts=; quote=\'
+    name=; sh=; opts=
 
-    case $shell in
-        csh|tcsh) quote=\" ;;
-    esac
-
-    case $0 in
-        /*)   srcenv="${quote}$0${quote}" ;;
-        ./*)  srcenv="${quote}$PWD/${0#./}${quote}" ;;
-        */*)  srcenv="${quote}$PWD/$0${quote}" ;;
-        *\ *) srcenv="${quote}$0${quote}" ;;
-        *)    command -v "$0" > /dev/null && srcenv=$0 || \
-              srcenv="${quote}$0${quote}" ;;
-    esac
-
-    while [ $# -gt 0 ]; do
-        case $1 in
-            --cmd)   name=$(parse "$1" "$2" validname)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" validname)  || exit $?;                        shift ;;
-            --sh)    sh=$(parse "$1" "$2" validsh)                 || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --sh=*)  sh=$(parse "${1%%=*}" "${1#*=}" validsh)      || exit $?;                        shift ;;
-            --)      shift; opts="$*";                                break ;;
-            *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
-        esac
-    done
+    initrc "$@" || exit $?
 
     srcenv="$srcenv init $shell${name:+" --cmd $name"}${sh:+" --sh $sh"}${opts:+" -- $opts"}"
 
