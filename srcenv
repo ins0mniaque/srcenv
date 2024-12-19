@@ -299,12 +299,14 @@ initrc() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            --cmd)   name=$(parse "$1" "$2" validname)            || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" validname) || exit $?;                        shift ;;
-            --sh)    sh=$(parse "$1" "$2" validsh)                || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --sh=*)  sh=$(parse "${1%%=*}" "${1#*=}" validsh)     || exit $?;                        shift ;;
-            --)      shift; opts="$*";          break ;;
-            *)       invalid "$1"; usage; help; exit 2 ;;
+            --cmd)     name=$(parse "$1" "$2" validname)            || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --cmd=*)   name=$(parse "${1%%=*}" "${1#*=}" validname) || exit $?;                        shift ;;
+            --sh)      sh=$(parse "$1" "$2" validsh)                || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --sh=*)    sh=$(parse "${1%%=*}" "${1#*=}" validsh)     || exit $?;                        shift ;;
+            -h|--help) header; usage; desc; options; man; exit 0 ;;
+            --version) version;                           exit 0 ;;
+            --)        shift; opts="$*";                  break ;;
+            *)         invalid "$1"; usage; help;         exit 2 ;;
         esac
     done
 }
@@ -648,7 +650,6 @@ if [ "$command" = init ] || [ "$command" = rc ]; then
 fi
 
 [ ! -t 0 ] && set -- "$@" -
-[ $# = 0 ] && set -- --usage
 
 src=src; arg=; input=; action=; colorize=
 prefix=; suffix=; exclude=; format=; backup=; restore=; clear=
@@ -693,8 +694,7 @@ while [ $# -gt 0 ] && [ "$1" != -- ]; do
         -u|--unsorted) sort=;                       shift ;;
         -q|--quiet)    verbose=;                    shift ;;
         -v|--verbose)  verbose=1;                   shift ;;
-        --usage)       header; usage; desc; help; man;    exit 0 ;;
-        -\?|-h|--help) header; usage; desc; options; man; exit 0 ;;
+        -h|--help)     header; usage; desc; options; man; exit 0 ;;
         --version)     version;                           exit 0 ;;
 
         -i|--input)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
