@@ -221,6 +221,9 @@ err() {
 color=${SRCENV_COLOR:-auto}
 colors=$SRCENV_COLORS
 
+NORMAL=; BOLD=; DIM=; ITALIC=; UNDERLINE=
+BLACK=; RED=; GREEN=; YELLOW=; BLUE=; MAGENTA=; CYAN=; WHITE=
+
 colors() {
     case $color in
         never)  return ;;
@@ -271,6 +274,10 @@ exportcolors() {
     color=always
     colors NORMAL BOLD DIM ITALIC UNDERLINE BLACK RED GREEN YELLOW BLUE MAGENTA CYAN WHITE
     export SRCENV_COLORS="$NORMAL${DLM}$BOLD${DLM}$DIM${DLM}$ITALIC${DLM}$UNDERLINE${DLM}$BLACK${DLM}$RED${DLM}$GREEN${DLM}$YELLOW${DLM}$BLUE${DLM}$MAGENTA${DLM}$CYAN${DLM}$WHITE"
+}
+
+clearcolors() {
+    unset SRCENV_COLORS
 }
 
 validcolor() {
@@ -528,7 +535,7 @@ run() {
     pwd=$PWD
     snapshot=$("$jq" -n env) || exit $?
 
-    [ -n "$exportcolors" ] && exportcolors
+    [ -n "$colorize" ] && "$colorize"
 
     while [ $# -gt 0 ]; do
         case $1 in
@@ -652,7 +659,7 @@ fi
 [ ! -t 0 ] && set -- "$@" -
 [ $# = 0 ] && set -- --usage
 
-src=src; arg=; input=; action=; exportcolors=
+src=src; arg=; input=; action=; colorize=
 prefix=; suffix=; exclude=; format=; backup=; restore=; clear=
 modify=1; export=; sort=1; fixpath=; verbose=
 
@@ -666,7 +673,8 @@ while [ $# -gt 0 ] && [ "$1" != -- ]; do
 
         --color)         color=$(parse "$1" "$2" validcolor) || exit $?; [ $# -gt 1 ] && shift; shift ;;
         --color=*)       color=$(parse "${1%%=*}" "${1#*=}" validcolor) || exit $?;             shift ;;
-        --export-colors) exportcolors=1;                                              action=1; shift ;;
+        --export-colors) colorize=exportcolors;                                       action=1; shift ;;
+        --clear-colors)  colorize=clearcolors;                                        action=1; shift ;;
 
         -x|--exclude)     value=$(parse "$1" "$2" validname) || exit $?; [ $# -gt 1 ] && shift
                           exclude="$exclude.$value, "; shift ;;
