@@ -9,16 +9,16 @@ version() {
     if [ -z "$cmd" ]; then
         echo 'srcenv 1.5.14'
     else
-        echo >&2 'srcenv 1.5.14'
+        out 'srcenv 1.5.14'
     fi
 }
 
 # region Help / Usage
 
-header() { echo >&2 'srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.'; }
+header() { out 'srcenv is a cross-shell tool for sourcing POSIX compliant .env scripts.'; }
 
 desc() {
-    echo >&2 "
+    out "
 srcenv takes a snapshot of the POSIX shell environment, sources the .env scripts
 and prints a shell specific script exporting the environment variables that have
 changed since the snapshot."
@@ -27,14 +27,14 @@ changed since the snapshot."
 help() {
     colors NORMAL BOLD
 
-    echo >&2 "
+    out "
 For listing the command options, use '${cmd:-${0##*/}} ${BOLD}--help${NORMAL}'."
 }
 
 man() {
     colors NORMAL ITALIC
 
-    echo >&2 "
+    out "
 For more advanced usage see the srcenv(1) manpage ${ITALIC}('man srcenv')${NORMAL} and/or
 https://github.com/ins0mniaque/srcenv."
 }
@@ -47,7 +47,7 @@ usage() {
         warn=$(printf "%$((32 + (${#NORMAL} * 2 + ${#BOLD} * 2 + ${#YELLOW})))s" \
                       "${BOLD}${YELLOW}warning: ${NORMAL}${BOLD}$jq${NORMAL} not found")
 
-        echo >&2 "
+        out "
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMAL}> [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
               init|rc <${ITALIC}shell${NORMAL}> [--cmd ${ITALIC}name${NORMAL}] [-- ${ITALIC}options${NORMAL}]
               [-h|--help|--version]"
@@ -58,7 +58,7 @@ ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMA
         help=$(printf "%$((29 + ${#cmd}))s" \
                       "[-h|--help|--version]")
 
-        echo >&2 "
+        out "
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}$cmd${NORMAL} [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
 $help"
     fi
@@ -68,7 +68,7 @@ options() {
     colors NORMAL BOLD ITALIC UNDERLINE
 
     if [ -z "$cmd" ]; then
-        echo >&2 "
+        out "
 ${BOLD}${UNDERLINE}Commands${NORMAL}:
   ${BOLD}init              ${NORMAL}Generate the initialization script
   ${BOLD}rc                ${NORMAL}Generate the command to install the initialization script
@@ -91,7 +91,7 @@ ${BOLD}${UNDERLINE}Shells${NORMAL}:
   ${BOLD}zsh               ${NORMAL}Format the output as a Zsh script"
     fi
 
-    echo >&2 "
+    out "
 ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}--color WHEN, --color=WHEN  ${NORMAL}Specify when to use colored output: ${BOLD:-*}auto${BOLD:-*}${NORMAL}, never or always
                               ${ITALIC}${DIM}i.e. 'auto' disables colors if the output goes to a pipe${NORMAL}
@@ -126,35 +126,36 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
 noinput() {
     colors NORMAL BOLD RED
 
-    echo >&2 "${BOLD}${RED}error:${NORMAL} no input files or arguments"
+    out "${BOLD}${RED}error:${NORMAL} no input files or arguments"
 }
 
 nojq() {
     colors NORMAL BOLD RED GREEN YELLOW
 
     [ "$jq" != jq ] && \
-    echo >&2 "${BOLD}${YELLOW}warn: ${NORMAL} ${YELLOW}jq${NORMAL} is set to ${GREEN}$jq${NORMAL}; unset ${YELLOW}SRCENV_JQ${NORMAL} to revert to ${GREEN}jq${NORMAL}"
-    echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}jq${NORMAL} not found; see https://jqlang.github.io/jq/download for installation options"
+    out "${BOLD}${YELLOW}warn: ${NORMAL} ${YELLOW}jq${NORMAL} is set to ${GREEN}$jq${NORMAL}; unset ${YELLOW}SRCENV_JQ${NORMAL} to revert to ${GREEN}jq${NORMAL}"
+    out "${BOLD}${RED}error:${NORMAL} ${YELLOW}jq${NORMAL} not found; see https://jqlang.github.io/jq/download for installation options"
 }
 
 noformat() {
     colors NORMAL BOLD RED
 
-    echo >&2 "${BOLD}${RED}error:${NORMAL} no shell or format specified"
+    out "${BOLD}${RED}error:${NORMAL} no shell or format specified"
 }
 
 noshell() {
     colors NORMAL BOLD RED YELLOW
 
-    [ -z "$1" ] && \
-    echo >&2 "${BOLD}${RED}error:${NORMAL} no shell specified" || \
-    echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}$1${NORMAL} is not a supported shell"
+    case $1 in
+        '') out "${BOLD}${RED}error:${NORMAL} no shell specified" ;;
+        *)  out "${BOLD}${RED}error:${NORMAL} ${YELLOW}$1${NORMAL} is not a supported shell"
+    esac
 }
 
 nosupport() {
     colors NORMAL BOLD RED YELLOW
 
-    echo >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}$1${NORMAL} not supported for shell ${YELLOW}$shell${NORMAL}"
+    out "${BOLD}${RED}error:${NORMAL} ${BOLD}$1${NORMAL} not supported for shell ${YELLOW}$shell${NORMAL}"
 }
 
 invalid() {
@@ -176,42 +177,52 @@ invalid() {
                   error="${error%%\'*}'${YELLOW}$option${NORMAL}'${error##*\'}" ;;
     esac
 
-    echo >&2 "${BOLD}${RED}error:${NORMAL} $error"
+    out "${BOLD}${RED}error:${NORMAL} $error"
 }
 
 err() {
-    colors NORMAL
-
     if [ "$2" = 0 ]; then
-        printf >&2 '%s\n' "${NORMAL}$1"; return
+        out "$1"; return
     fi
 
-    colors BOLD RED YELLOW
+    colors NORMAL BOLD RED YELLOW
 
     escape=$(printf '\033')
     case $1 in
-        '')       echo   >&2 '' ;;
-        $escape*) printf >&2 '%s\n' "$1" ;;
+        '')       out '' ;;
+        $escape*) out "$1" ;;
 
         $jq:\ *\<unknown\>*parsing*)
                  error=${1#"$jq": }
                  error=${error#error*: }
-                 echo >&2 "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_RESTORE${NORMAL} environment variable contains ${RED}invalid JSON${NORMAL}: $error" ;;
+                 out "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_RESTORE${NORMAL} environment variable contains ${RED}invalid JSON${NORMAL}: $error" ;;
 
         $jq:\ *) error=${1#"$jq": }
                  error=${error#error: }
                  error=${error%%, line 1:"${LF}"*}
-                 echo >&2 "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error" ;;
+                 out "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error" ;;
 
         *) printf '%s\n' "$1" | while IFS= read -r line; do
                line=${line#"$0": }
                line=${line#line [0-9]*: }
                line=${line#"$0"\[[0-9]*\]: }
 
-               echo >&2 "${BOLD}${RED}error:${NORMAL} $line"
+               out "${BOLD}${RED}error:${NORMAL} $line"
            done ;;
     esac
 }
+
+out() { echo >&2 "$1"; }
+
+if [ -n "$MUREX_PID" ]; then
+    out() {
+        colors NORMAL
+
+        printf '%s\n' "$1" | while IFS= read -r line; do
+            echo >&2 "${NORMAL}$line"
+        done
+    }
+fi
 
 [ -t 1 ] && colorless= || colorless=1
 color=${SRCENV_COLOR:-auto}
@@ -553,8 +564,8 @@ run() {
             -rn "$prefix $restore $diff $backup $fixpath | $keys | $format $suffix $verbose")
         exitcode=$?
 
-        printf >&2 "%s\n" "${stdout##*"${LF}"}"
-        printf     "%s\n" "${stdout%"${LF}"*}"
+        out           "${stdout##*"${LF}"}"
+        printf "%s\n" "${stdout%"${LF}"*}"
 
         exit "$exitcode"
     else
@@ -589,7 +600,7 @@ src() {
 
         cd "$pwd" || exitcode=$?
     else
-        echo >&2 "$2: No such file or directory"
+        out "$2: No such file or directory"
         exitcode=2
     fi
 
@@ -610,7 +621,7 @@ json() {
         # shellcheck disable=SC2086
         env=$("$jq" $SRCENV_JQ_OPTS -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"' "$2") || return 5
     else
-        echo >&2 "$2: No such file or directory"
+        out "$2: No such file or directory"
         return 2
     fi
 
