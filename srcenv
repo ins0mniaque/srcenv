@@ -159,25 +159,9 @@ nosupport() {
 }
 
 invalid() {
-    colors NORMAL BOLD ITALIC UNDERLINE RED YELLOW
+    colors NORMAL BOLD RED YELLOW
 
-    error=${2#getopt: }
-    error=${error%%"${LF}"*}
-    case $error in
-        *' -- '*) option=${error#* -- }
-                  [ "$option" = - ] && option=${1#-}
-                  option=${option#-}
-                  error=${error% -- *}
-                  error="$error -- ${YELLOW}$option${NORMAL}" ;;
-        *'`'*\'*) option=${error#*\`};
-                  option=${option%\'*};
-                  error="${error%%\`*}'${YELLOW}$option${NORMAL}'${error##*\'}" ;;
-        *\'*\'*)  option=${error#*\'};
-                  option=${option%\'*};
-                  error="${error%%\'*}'${YELLOW}$option${NORMAL}'${error##*\'}" ;;
-    esac
-
-    out "${BOLD}${RED}error:${NORMAL} $error"
+    out "${BOLD}${RED}error:${NORMAL} ${2:-invalid option} -- ${YELLOW}$1${NORMAL}"
 }
 
 err() {
@@ -289,7 +273,7 @@ validcolor() {
     case $2 in
         auto|always|never) ;;
         *) colors NORMAL GREEN
-           invalid "$1" "color must be either ${GREEN}auto${NORMAL}, ${GREEN}never${NORMAL} or ${GREEN}always${NORMAL} -- -"; usage; help; exit 2 ;;
+           invalid "$1" "color must be either ${GREEN}auto${NORMAL}, ${GREEN}never${NORMAL} or ${GREEN}always${NORMAL}"; usage; help; exit 2 ;;
     esac
 }
 
@@ -315,12 +299,12 @@ initrc() {
 
     while [ $# -gt 0 ]; do
         case $1 in
-            --cmd)   name=$(parse "$1" "$2" validname)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" validname)  || exit $?;                        shift ;;
-            --sh)    sh=$(parse "$1" "$2" validsh)                 || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --sh=*)  sh=$(parse "${1%%=*}" "${1#*=}" validsh)      || exit $?;                        shift ;;
-            --)      shift; opts="$*";                                break ;;
-            *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
+            --cmd)   name=$(parse "$1" "$2" validname)            || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" validname) || exit $?;                        shift ;;
+            --sh)    sh=$(parse "$1" "$2" validsh)                || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --sh=*)  sh=$(parse "${1%%=*}" "${1#*=}" validsh)     || exit $?;                        shift ;;
+            --)      shift; opts="$*";          break ;;
+            *)       invalid "$1"; usage; help; exit 2 ;;
         esac
     done
 }
@@ -401,14 +385,14 @@ rc() {
 
 validname() {
     case $2 in
-        *[!A-Za-z0-9_]*) invalid "$1" 'name must contain only alphanumeric and underscore characters -- -'; usage; help; exit 2 ;;
-        [!A-Za-z]*)      invalid "$1" 'name must start with a letter -- -'; usage; help; exit 2 ;;
+        *[!A-Za-z0-9_]*) invalid "$1" 'name must contain only alphanumeric and underscore characters'; usage; help; exit 2 ;;
+        [!A-Za-z]*)      invalid "$1" 'name must start with a letter'; usage; help; exit 2 ;;
     esac
 }
 
 validsh() {
     if ! command -v "$2" >/dev/null; then
-        invalid "$1" 'POSIX shell not found -- -'; usage; help; exit 2
+        invalid "$1" 'POSIX shell not found'; usage; help; exit 2
     fi
 }
 
@@ -527,7 +511,7 @@ capture() {
 
 parse() {
     case $2 in
-        -*|'') invalid "$1" 'option requires an argument -- -'; usage; help; return 2 ;;
+        -*|'') invalid "$1" 'option requires an argument'; usage; help; return 2 ;;
         *)     [ -n "$3" ] && ! "$3" "$1 '$2'" "$2" && return $?; printf '%s' "$2" ;;
     esac
 }
@@ -722,7 +706,7 @@ while [ $# -gt 0 ] && [ "$1" != -- ]; do
         -[!-]?*) opts=${1#??}; opt=${1%"$opts"}; shift
                  case $opt in -[!fix]) opts="-$opts" ;; esac
                  set -- "$opt" "$opts" "$@" ;;
-        -*)      invalid "$1" "invalid option -- -"; usage; help; exit 2 ;;
+        -*)      invalid "$1"; usage; help; exit 2 ;;
         *)       set -- "$@" -- "$1"; shift ;;
     esac
 done
