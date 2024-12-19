@@ -487,6 +487,8 @@ build() {
         nochanges="\"${ITALIC}No changes${NORMAL}\""
         verbose='+ "\n'$header'" + (['$changed' | keys[] as $k | if .[$k] then if $snapshot[$k] then '$modified' else '$added' end else '$removed' end] | join(", ") | if . == "" then '$nochanges' else . end)'
     fi
+
+    filter=". as \$snapshot | $prefix $restore $diff $backup $fixpath | $keys | $format $suffix $verbose"
 }
 
 DLM=$(printf '\032')
@@ -544,8 +546,7 @@ run() {
 
     if [ -n "$verbose" ]; then
         # shellcheck disable=SC2086
-        stdout=$("$jq" $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" \
-            -rn "$prefix $restore $diff $backup $fixpath | $keys | $format $suffix $verbose")
+        stdout=$(printf "%s\n" "$snapshot" | "$jq" $SRCENV_JQ_OPTS -r "$filter")
         exitcode=$?
 
         out           "${stdout##*"${LF}"}"
@@ -554,8 +555,7 @@ run() {
         exit "$exitcode"
     else
         # shellcheck disable=SC2086
-        "$jq" $SRCENV_JQ_OPTS --argjson snapshot "$snapshot" \
-            -rn "$prefix $restore $diff $backup $fixpath | $keys | $format $suffix"
+        printf "%s\n" "$snapshot" | "$jq" $SRCENV_JQ_OPTS -r "$filter"
     fi
 }
 
