@@ -731,6 +731,8 @@ run_posix_tests() {
     run "$1" "$2 sh --backup --restore --cmd src --restore"                      ''
     run "$1" "$2 sh --backup --restore --cmd src --clear"                        'unset SRCENV_RESTORE'
 
+    run "$1" "$2 sh --input 'unset PATH'"                    'unset PATH'
+    run "$1" "$2 sh --input 'unset PATH' -w"                 ''
     run "$1" "$2 sh --input 'cd ..'"                         ''
     run "$1" "$2 sh --input 'echo something'"                ''
     run "$1" "$2 sh --input 'echo something; not_a_command'" '' 127
