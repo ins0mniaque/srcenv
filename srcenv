@@ -716,6 +716,8 @@ if [ $# = 0 ]; then
         header; usage; desc; help; man; exit 0
     elif [ -n "$input" ] || [ -z "$action" ]; then
         noinput; usage; help; exit 2
+    elif [ -n "$colorize" ]; then
+        backup=; restore=
     fi
 fi
 
