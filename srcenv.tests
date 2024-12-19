@@ -701,7 +701,6 @@ run_posix_tests() {
     run "$1" "$2 init sh --cmd src42 > /dev/null" ''
     run "$1" "$2 init sh --cmd src,42"            '' 2
     run "$1" "$2 init sh --cmd 'space src'"       '' 2
-    run "$1" "$2 init sh --cmd 'space src'"       '' 2
     run "$1" "$2 sh not_a_file"                   '' 2
     run "$1" "$2 sh --input not_a_command"        '' 127
     run "$1" "$2 sh --json not_a_file"            '' 2
