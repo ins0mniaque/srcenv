@@ -290,24 +290,36 @@ validcolor() {
 # region init() / rc()
 
 init() {
-    name=src
-    opts='--backup --restore --verbose'
+    name=src; sh=; opts='--backup --restore --verbose'; quote=\'
+
+    case $shell in
+        csh|tcsh)         quote=\" ;;
+        pwsh|powershell|\
+        cmd|command)      sh='sh' ;;
+    esac
+
+    case $0 in
+        /*)  srcenv="${quote}$0${quote}" ;;
+        ./*) srcenv="${quote}$PWD/${0#./}${quote}" ;;
+        */*) srcenv="${quote}$PWD/$0${quote}" ;;
+        *)   srcenv="${quote}$(command -v "$0")${quote}" || \
+             srcenv="${quote}$PWD/$0${quote}" ;;
+    esac
 
     while [ $# -gt 0 ]; do
         case $1 in
             --cmd)   name=$(parse "$1" "$2" validname)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
             --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" validname)  || exit $?;                        shift ;;
+            --sh)    sh=$(parse "$1" "$2" validsh)                 || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --sh=*)  sh=$(parse "${1%%=*}" "${1#*=}" validsh)      || exit $?;                        shift ;;
             --)      shift; opts="$*";                                break ;;
             *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
         esac
     done
 
-    case $0 in
-        /*)  srcenv="$0" ;;
-        ./*) srcenv="$PWD/${0#./}" ;;
-        */*) srcenv="$PWD/$0" ;;
-        *)   srcenv="$(command -v "$0")" || \
-             srcenv="$PWD/$0" ;;
+    case $shell in
+        nu|nushell) srcenv="${sh:+"$sh "}$srcenv json $opts --cmd $name" ;;
+        *)          srcenv="${sh:+"$sh "}$srcenv $shell $opts --cmd $name" ;;
     esac
 
     case $shell in
@@ -315,18 +327,18 @@ init() {
         bash|\
         ksh|pdksh|mksh|\
         posix|sh|\
-        zsh)             echo "$name() { eval \"\$('$srcenv' $shell $opts --cmd $name \"\$@\")\"; }" ;;
+        zsh)             echo "$name() { eval \"\$($srcenv \"\$@\")\"; }" ;;
         csh|tcsh)        if [ -e /dev/stdin ]; then
-                             echo "alias $name '\"$srcenv\" $shell $opts --cmd $name \!* | source /dev/stdin'"
+                             echo "alias $name '$srcenv \!* | source /dev/stdin'"
                          else
-                             echo "alias $name 'set mktemp = \"\`mktemp\`\"; \"$srcenv\" $shell $opts --cmd $name \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
+                             echo "alias $name 'set mktemp = \"\`mktemp\`\"; $srcenv \!* > \"\$mktemp\"; source \"\$mktemp\"; rm -f \"\$mktemp\"'"
                          fi ;;
-        elvish)          echo "var $name = {|@a| eval ('$srcenv' $shell $opts --cmd $name \$@a | slurp) }" ;;
-        fish)            echo "function $name; '$srcenv' $shell $opts --cmd $name \$argv | source; end" ;;
-        murex)           echo "function $name { '$srcenv' $shell $opts --cmd $name @PARAMS -> source }" ;;
-        nu|nushell)      echo "def --env --wrapped $name [...args] { ^'$srcenv' json $opts --cmd $name ...(\$args) | from json | default {} | load-env }" ;;
-        pwsh|powershell) echo "function $name { \$script=((sh '$srcenv' $shell $opts --cmd $name \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
-        cmd|command)     echo "DOSKEY $name=@echo off \$T sh '$srcenv' $shell $opts --cmd $name \$* \$G %TEMP%\srcenv.$name.cmd \$T\$T call %TEMP%\srcenv.$name.cmd \$T del %TEMP%\srcenv.$name.cmd \$T echo on" ;;
+        elvish)          echo "var $name = {|@a| eval ($srcenv \$@a | slurp) }" ;;
+        fish)            echo "function $name; $srcenv \$argv | source; end" ;;
+        murex)           echo "function $name { $srcenv @PARAMS -> source }" ;;
+        nu|nushell)      echo "def --env --wrapped $name [...args] { ^$srcenv ...(\$args) | from json | default {} | load-env }" ;;
+        pwsh|powershell) echo "function $name { \$script=(($srcenv \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
+        cmd|command)     echo "DOSKEY $name=@echo off \$T $srcenv \$* \$G %TEMP%\srcenv.$name.cmd \$T\$T call %TEMP%\srcenv.$name.cmd \$T del %TEMP%\srcenv.$name.cmd \$T echo on" ;;
         env|\
         json|\
         launchctl)       nosupport init; return 1 ;;
@@ -334,20 +346,10 @@ init() {
 }
 
 rc() {
-    name=; opts=
-
-    while [ $# -gt 0 ]; do
-        case $1 in
-            --cmd)   name=$(parse "$1" "$2" validname)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
-            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" validname)  || exit $?;                        shift ;;
-            --)      shift; opts="$*";                                break ;;
-            *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
-        esac
-    done
+    name=; opts=; quote=\'
 
     case $shell in
-        csh|tcsh) quote='"' ;;
-        *)        quote="'" ;;
+        csh|tcsh) quote=\" ;;
     esac
 
     case $0 in
@@ -359,30 +361,43 @@ rc() {
               srcenv="${quote}$0${quote}" ;;
     esac
 
+    while [ $# -gt 0 ]; do
+        case $1 in
+            --cmd)   name=$(parse "$1" "$2" validname)             || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --cmd=*) name=$(parse "${1%%=*}" "${1#*=}" validname)  || exit $?;                        shift ;;
+            --sh)    sh=$(parse "$1" "$2" validsh)                 || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --sh=*)  sh=$(parse "${1%%=*}" "${1#*=}" validsh)      || exit $?;                        shift ;;
+            --)      shift; opts="$*";                                break ;;
+            *)       invalid "$1" 'invalid option -- -'; usage; help; exit 2 ;;
+        esac
+    done
+
+    srcenv="$srcenv init $shell${name:+" --cmd $name"}${sh:+" --sh $sh"}${opts:+" -- $opts"}"
+
     case $shell in
-        ash|posix|sh)    echo "eval \"\$($srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"})\"" ;;
+        ash|posix|sh)    echo "eval \"\$($srcenv)\"" ;;
         bash|dash|\
         ksh|pdksh|mksh|\
-        zsh)             echo "source <($srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"})" ;;
+        zsh)             echo "source <($srcenv)" ;;
         csh|tcsh)        if [ -e /dev/stdin ]; then
-                             echo "$srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"} | source /dev/stdin"
+                             echo "$srcenv | source /dev/stdin"
                          else
-                             echo "eval \"\`$srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"})\`\""
+                             echo "eval \"\`$srcenv\`\""
                          fi ;;
-        elvish)          echo "var ${name:-src}~ = { }; eval &on-end={|ns| set ${name:-src}~ = \$ns[${name:-src}] } ($srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"})" ;;
-        fish)            echo "$srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"} | source" ;;
-        murex)           echo "$srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"} -> source }" ;;
+        elvish)          echo "var ${name:-src}~ = { }; eval &on-end={|ns| set ${name:-src}~ = \$ns[${name:-src}] } ($srcenv)" ;;
+        fish)            echo "$srcenv | source" ;;
+        murex)           echo "$srcenv -> source }" ;;
         nu|nushell)      echo '# Add to env.nu'
-                         echo "^$srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"} | save -f ${name:-srcenv}.init.nu"
+                         echo "^$srcenv | save -f ${name:-srcenv}.init.nu"
                          echo
                          echo '# Add to config.nu'
                          echo "source ${name:-srcenv}.init.nu" ;;
-        pwsh|powershell) echo "Invoke-Expression (sh $srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"})" ;;
+        pwsh|powershell) echo "Invoke-Expression (sh $srcenv)" ;;
         cmd|command)     echo 'rem Initialize:'
-                         echo "@echo off & sh $srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"} > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on"
+                         echo "@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on"
                          echo
                          echo 'rem AutoRun:'
-                         echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh $srcenv init $shell${name:+" --cmd $name"}${opts:+" -- $opts"} > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
+                         echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
         env|\
         json|\
         launchctl)       nosupport rc; return 1 ;;
@@ -394,6 +409,12 @@ validname() {
         *[!A-Za-z0-9_]*) invalid "$1" 'name must contain only alphanumeric and underscore characters -- -'; usage; help; exit 2 ;;
         [!A-Za-z]*)      invalid "$1" 'name must start with a letter -- -'; usage; help; exit 2 ;;
     esac
+}
+
+validsh() {
+    if ! command -v "$2" >/dev/null; then
+        invalid "$1" 'POSIX shell not found -- -'; usage; help; exit 2
+    fi
 }
 
 # endregion init() / rc()
