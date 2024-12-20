@@ -2,7 +2,6 @@
 #
 # srcenv - A cross-shell tool for sourcing POSIX compliant .env scripts
 #
-# shellcheck disable=SC2016
 # shellcheck disable=SC2317
 
 version() {
@@ -428,8 +427,10 @@ validsh() {
 
 # region setformat()
 
+# shellcheck disable=SC2016
 fmt() { format='if .[$k] != null then "'$1'" else "'$2'" end'; }
 
+# shellcheck disable=SC2016
 setformat() {
     case $1 in
         ash|dash|\
@@ -467,6 +468,7 @@ setformat() {
 
 # region run()
 
+# shellcheck disable=SC2016
 build() {
     [ -n "$exclude" ] && exclude=" | del(${exclude%, })"
     [ -n "$modify"  ] && modify= || modify='$snapshot[$k] == null and '
@@ -612,6 +614,7 @@ src() {
     return "$exitcode"
 }
 
+# shellcheck disable=SC2016
 json() {
     if [ "$1" = var ]; then
         env=$(printf "%s\n" "$2" | "$jq" ${SRCENV_JQ_BINARY:+-b} -r 'keys[] as $k | "export \($k)=\(.[$k]|@sh)"') || return 5
