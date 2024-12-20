@@ -434,7 +434,7 @@ setformat() {
         posix|sh|\
         zsh)             fmt 'export \($k)=\(.[$k]|@sh)' \
                              'unset \($k)' ;;
-        csh|tcsh)        fmt 'setenv \($k) \(.[$k]|@sh|gsub("\\n"; "\\\n"))' \
+        csh|tcsh)        fmt 'setenv \($k) \(.[$k]|@sh|gsub("\\n"; "\\\n")|gsub("!"; "\\!"))' \
                              'unsetenv \($k)' ;;
         elvish)          fmt 'set-env \($k) \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
                              'unset-env \($k)' ;;

@@ -188,7 +188,7 @@ SRCENV_TEST_B=${SRCENV_TEST_NOT_EXISTING:-7}
 SRCENV_TEST_C=$((SRCENV_TEST_A * SRCENV_TEST_B))
 
 # Escape sequence tests
-SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\""
+SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\"!x\$(p)\${b}\"'"
 
 # Multi-line tests
 SRCENV_TEST_MULTILINE="
@@ -207,7 +207,7 @@ export SRCENV_TEST_B=${SRCENV_TEST_NOT_EXISTING:-7}
 export SRCENV_TEST_C=$((SRCENV_TEST_A * SRCENV_TEST_B * SRCENV_TEST_NOT_EXPORTED))
 
 # Escape sequence tests
-export SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\""
+export SRCENV_TEST_ESCAPE="\$NOT_EXPANDED\t\r\n'\"!x\$(p)\${b}\"'"
 
 # Multi-line tests
 export SRCENV_TEST_MULTILINE="
@@ -221,7 +221,7 @@ tee "$json_input" > /dev/null << 'EOF'
   "SRCENV_TEST_A": "6",
   "SRCENV_TEST_B": "7",
   "SRCENV_TEST_C": "42",
-  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"",
+  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"!x$(p)${b}\"'",
   "SRCENV_TEST_MULTILINE": "\n6\n7\n42"
 }
 EOF
@@ -481,7 +481,7 @@ EOF
   "SRCENV_TEST_A": "6",
   "SRCENV_TEST_B": "7",
   "SRCENV_TEST_C": "42",
-  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"",
+  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"!x$(p)${b}\"'",
   "SRCENV_TEST_MULTILINE": "\n6\n7\n42"
 }
 EOF
@@ -492,7 +492,7 @@ EOF
   "SRCENV_TEST_A": "6",
   "SRCENV_TEST_B": "7",
   "SRCENV_TEST_C": "42",
-  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"",
+  "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"!x$(p)${b}\"'",
   "SRCENV_TEST_MULTILINE": "\n6\n7\n42"
 }
 EOF
@@ -511,7 +511,7 @@ fi
 SRCENV_TEST_A='6'
 SRCENV_TEST_B='7'
 SRCENV_TEST_C='42'
-SRCENV_TEST_ESCAPE='$NOT_EXPANDED\t\r\n'\''"'
+SRCENV_TEST_ESCAPE='$NOT_EXPANDED\t\r\n'\''"!x$(p)${b}"'\'''
 SRCENV_TEST_MULTILINE='
 6
 7
@@ -526,7 +526,7 @@ EOF
 export SRCENV_TEST_A='6'
 export SRCENV_TEST_B='7'
 export SRCENV_TEST_C='42'
-export SRCENV_TEST_ESCAPE='$NOT_EXPANDED\t\r\n'\''"'
+export SRCENV_TEST_ESCAPE='$NOT_EXPANDED\t\r\n'\''"!x$(p)${b}"'\'''
 export SRCENV_TEST_MULTILINE='
 6
 7
@@ -544,7 +544,7 @@ cmd_output_suffix=$(printf '\nset \\n=\n')
 set SRCENV_TEST_A=6
 set SRCENV_TEST_B=7
 set SRCENV_TEST_C=42
-set SRCENV_TEST_ESCAPE=$NOT_EXPANDED\t\r\n'"
+set SRCENV_TEST_ESCAPE=$NOT_EXPANDED\t\r\n'"!x$(p)${b}"'
 set SRCENV_TEST_MULTILINE=%\n%6%\n%7%\n%42
 EOF
 
@@ -556,7 +556,7 @@ EOF
 setenv SRCENV_TEST_A '6'
 setenv SRCENV_TEST_B '7'
 setenv SRCENV_TEST_C '42'
-setenv SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"'
+setenv SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"\!x$(p)${b}"'\'''
 setenv SRCENV_TEST_MULTILINE '\
 6\
 7\
@@ -571,7 +571,7 @@ EOF
 set-env SRCENV_TEST_A '6'
 set-env SRCENV_TEST_B '7'
 set-env SRCENV_TEST_C '42'
-set-env SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n''"'
+set-env SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n''"!x$(p)${b}"'''
 set-env SRCENV_TEST_MULTILINE '
 6
 7
@@ -586,7 +586,7 @@ EOF
 set -gx SRCENV_TEST_A '6'
 set -gx SRCENV_TEST_B '7'
 set -gx SRCENV_TEST_C '42'
-set -gx SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"'
+set -gx SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"!x$(p)${b}"'\'''
 set -gx SRCENV_TEST_MULTILINE '
 6
 7
@@ -601,7 +601,7 @@ EOF
 launchctl setenv SRCENV_TEST_A '6'
 launchctl setenv SRCENV_TEST_B '7'
 launchctl setenv SRCENV_TEST_C '42'
-launchctl setenv SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"'
+launchctl setenv SRCENV_TEST_ESCAPE '$NOT_EXPANDED\t\r\n'\''"!x$(p)${b}"'\'''
 launchctl setenv SRCENV_TEST_MULTILINE '
 6
 7
@@ -616,7 +616,7 @@ EOF
 out '6' -> export SRCENV_TEST_A
 out '7' -> export SRCENV_TEST_B
 out '42' -> export SRCENV_TEST_C
-out '$NOT_EXPANDED\t\r\n'\''"' -> export SRCENV_TEST_ESCAPE
+out '$NOT_EXPANDED\t\r\n'\''"!x$(p)${b}"'\''' -> export SRCENV_TEST_ESCAPE
 out '
 6
 7
@@ -631,7 +631,7 @@ EOF
 $env.SRCENV_TEST_A = "6"
 $env.SRCENV_TEST_B = "7"
 $env.SRCENV_TEST_C = "42"
-$env.SRCENV_TEST_ESCAPE = "$NOT_EXPANDED\\t\\r\\n'\""
+$env.SRCENV_TEST_ESCAPE = "$NOT_EXPANDED\\t\\r\\n'\"!x$(p)${b}\"'"
 $env.SRCENV_TEST_MULTILINE = "\n6\n7\n42"
 EOF
 
@@ -643,7 +643,7 @@ EOF
 $Env:SRCENV_TEST_A = '6'
 $Env:SRCENV_TEST_B = '7'
 $Env:SRCENV_TEST_C = '42'
-$Env:SRCENV_TEST_ESCAPE = '$NOT_EXPANDED\t\r\n''"'
+$Env:SRCENV_TEST_ESCAPE = '$NOT_EXPANDED\t\r\n''"!x$(p)${b}"'''
 $Env:SRCENV_TEST_MULTILINE = '
 6
 7
@@ -660,7 +660,7 @@ format='--format '\''\($k)☕\(.[$k])??\($k)☕'\'
 SRCENV_TEST_A☕6
 SRCENV_TEST_B☕7
 SRCENV_TEST_C☕42
-SRCENV_TEST_ESCAPE☕$NOT_EXPANDED\t\r\n'"
+SRCENV_TEST_ESCAPE☕$NOT_EXPANDED\t\r\n'"!x$(p)${b}"'
 SRCENV_TEST_MULTILINE☕
 6
 7
