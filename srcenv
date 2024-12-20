@@ -376,7 +376,7 @@ rc() {
                          fi ;;
         elvish)          echo "var ${name:-src}~ = { }; eval &on-end={|ns| set ${name:-src}~ = \$ns[${name:-src}] } ($srcenv)" ;;
         fish)            echo "$srcenv | source" ;;
-        murex)           echo "$srcenv -> source }" ;;
+        murex)           echo "$srcenv -> source" ;;
         nu|nushell)      echo '# Add to env.nu'
                          echo "^$srcenv | save -f ${name:-srcenv}.init.nu"
                          echo
