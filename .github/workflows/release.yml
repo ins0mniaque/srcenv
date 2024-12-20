@@ -109,6 +109,11 @@ jobs:
 
           cp "rpmbuild/RPMS/noarch/srcenv-$VERSION-1.noarch.rpm" release
 
+      - name: Generate Checksum File
+        run: |
+          cd release
+          sha256sum * | tee SHA256SUMS
+
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
