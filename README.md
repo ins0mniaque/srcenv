@@ -148,13 +148,14 @@ To add the `src` command, add the following to your shell's configuration file:
 
 > [!NOTE]
 > To use a different command name _(e.g. `magicenv`)_, add `--cmd magicenv`.
->
-> _e.g. `source <(srcenv init bash --cmd magicenv)`._
-
-> [!TIP]
-> You can pass different arguments to srcenv with `--` at the end. Without `--`, the default options are `--backup --restore --verbose`.
+> You can also pass different arguments to srcenv with `--` at the end. Without `--`, the default options are `--backup --restore --verbose`.
 >
 > _e.g. `source <(srcenv init bash --cmd srcundo -- --restore)` creates a command named `srcundo` that restores the last backed up changes._
+
+> [!TIP]
+> To improve performance or compatibility, you can specify different POSIX shell with `--sh`. If available, dash or ksh usually outperform bash and zsh.
+>
+> To further improve performance when using colored output, use `src --export-colors` **once** to cache terminal capabilities in the `SRCENV_COLORS` environment variable.
 
 For non-standard integration, use `srcenv rc <shell> [--cmd name] [-- options]` to output what needs to be added to your shell's configuration file.
 
