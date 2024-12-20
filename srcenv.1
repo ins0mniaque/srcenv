@@ -11,7 +11,7 @@
 .P
 .PD
 \f[B]srcenv\f[R] init|rc <\f[I]shell\f[R]> [\-\-cmd \f[I]name\f[R]]
-[\-\- \f[I]options\f[R]]
+[\-\-sh \f[I]sh\f[R]] [\-\- \f[I]options\f[R]]
 .PD 0
 .P
 .PD
@@ -33,11 +33,15 @@ parsing error and 127 on command not found.
 .SH COMMANDS
 .TP
 init
-Generate the initialization script.
+Generate the integration script to be sourced with command name
+\f[CR]\[ga]\f[R]src\f[CR]\[ga]\f[R] \f[I](change with \-\-cmd)\f[R] and
+POSIX shell \f[CR]\[ga]\f[R]sh\f[CR]\[ga]\f[R] \f[I](change with
+\-\-sh)\f[R].
 For details, see SHELL INTEGRATION section below.
 .TP
 rc
-Generate the command to install the initialization script.
+Generate the command to add to your shell\[cq]s configuration file to
+source the integration script.
 For details, see SHELL INTEGRATION section below.
 .SH SHELLS
 .TP
@@ -235,8 +239,8 @@ creates a command named \f[CR]\[ga]\f[R]srcundo\f[CR]\[ga]\f[R] that
 restores the last backed up changes.
 .PP
 For non\-standard integration, use \f[CR]\[ga]\f[R]srcenv rc <shell>
-[\-\-cmd name] [\-\- options]\f[CR]\[ga]\f[R] to output what needs to be
-added to your shell\[cq]s configuration file.
+[\-\-cmd name] [\-\-sh sh] [\-\- options]\f[CR]\[ga]\f[R] to output what
+needs to be added to your shell\[cq]s configuration file.
 .SH EXAMPLES
 The following examples show how to source \f[CR].env\f[R] in different
 shells:

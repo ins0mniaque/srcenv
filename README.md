@@ -157,7 +157,7 @@ To add the `src` command, add the following to your shell's configuration file:
 >
 > To further improve performance when using colored output, use `src --export-colors` **once** to cache terminal capabilities in the `SRCENV_COLORS` environment variable.
 
-For non-standard integration, use `srcenv rc <shell> [--cmd name] [-- options]` to output what needs to be added to your shell's configuration file.
+For non-standard integration, use `srcenv rc <shell> [--cmd name] [--sh sh] [-- options]` to output what needs to be added to your shell's configuration file.
 
 For a list of supported options, see `src --help`.
 

@@ -49,7 +49,7 @@ usage() {
 
         out "
 ${BOLD}${UNDERLINE}Usage${NORMAL}: ${BOLD}srcenv${NORMAL} <${ITALIC}shell${NORMAL}> [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}]         $warn
-              init|rc <${ITALIC}shell${NORMAL}> [--cmd ${ITALIC}name${NORMAL}] [-- ${ITALIC}options${NORMAL}]
+              init|rc <${ITALIC}shell${NORMAL}> [--cmd ${ITALIC}name${NORMAL}] [--sh ${ITALIC}sh${NORMAL}] [-- ${ITALIC}options${NORMAL}]
               [-h|--help|--version]"
     else
         warn=; command -v "$jq" > /dev/null || \
@@ -70,8 +70,10 @@ options() {
     if [ -z "$cmd" ]; then
         out "
 ${BOLD}${UNDERLINE}Commands${NORMAL}:
-  ${BOLD}init              ${NORMAL}Generate the initialization script
-  ${BOLD}rc                ${NORMAL}Generate the command to install the initialization script
+  ${BOLD}init    ${NORMAL}Generate the integration script to be sourced with command name 'src'
+          ${ITALIC}(change with ${BOLD}--cmd${NORMAL}${ITALIC})${NORMAL} and POSIX shell 'sh' ${ITALIC}(change with ${BOLD}--sh${NORMAL}${ITALIC})${NORMAL}
+  ${BOLD}rc      ${NORMAL}Generate the command to add to your shell's configuration file to
+          source the integration script
 
 ${BOLD}${UNDERLINE}Shells${NORMAL}:
   ${BOLD}ash, dash         ${NORMAL}Format the output as an Ash/Dash script

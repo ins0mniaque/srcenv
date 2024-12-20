@@ -11,7 +11,7 @@ SYNOPSIS
 ========
 
 | **srcenv** \<_shell_\> \[_options_] \[_files_]
-| **srcenv** init|rc \<_shell_\> \[\--cmd _name_] \[\-- _options_]
+| **srcenv** init|rc \<_shell_\> \[\--cmd _name_] \[\--sh _sh_] \[\-- _options_]
 | **srcenv** \[**-h**|**\--help**|**\--version**]
 
 DESCRIPTION
@@ -34,11 +34,11 @@ COMMANDS
 
 init
 
-:   Generate the initialization script. For details, see SHELL INTEGRATION section below.
+:   Generate the integration script to be sourced with command name `` ` ``src`` ` `` _(change with \--cmd)_ and POSIX shell `` ` ``sh`` ` `` _(change with \--sh)_. For details, see SHELL INTEGRATION section below.
 
 rc
 
-:   Generate the command to install the initialization script. For details, see SHELL INTEGRATION section below.
+:   Generate the command to add to your shell's configuration file to source the integration script. For details, see SHELL INTEGRATION section below.
 
 SHELLS
 ======
@@ -294,7 +294,7 @@ You can pass different arguments to srcenv with `` ` ``\--`` ` `` at the end. Wi
 
 :   e.g. `source <(srcenv init bash --cmd srcundo -- --restore)` creates a command named `` ` ``srcundo`` ` `` that restores the last backed up changes.
 
-For non-standard integration, use `` ` ``srcenv rc \<shell> [\--cmd name] [\-- options]`` ` `` to output what needs to be added to your shell's configuration file.
+For non-standard integration, use `` ` ``srcenv rc \<shell> [\--cmd name] [\--sh sh] [\-- options]`` ` `` to output what needs to be added to your shell's configuration file.
 
 EXAMPLES
 ========
