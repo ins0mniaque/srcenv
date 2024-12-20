@@ -181,7 +181,10 @@ For more advanced usage see the [srcenv(1) manpage](https://github.com/ins0mniaq
 
 ## Roadmap
 
-- [ ] Fill out roadmap
+- [ ] Add [Clink](https://chrisant996.github.io/clink/clink.html) support
+- [ ] Add [ion](https://gitlab.redox-os.org/redox-os/ion) support
+- [ ] Add [Xonsh](https://xon.sh) support
+- [ ] Automatic mode _(à la [direnv](https://direnv.net))_
 
 ## Contributing
 
