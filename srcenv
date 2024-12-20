@@ -174,13 +174,13 @@ err() {
 
     escape=$(printf '\033')
     case $1 in
-        '')       out '' ;;
+        '')       ;;
         $escape*) out "$1" ;;
 
-        $jq:\ *\<unknown\>*parsing*)
-                 error=${1#"$jq": }
-                 error=${error#error*: }
-                 out "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_RESTORE${NORMAL} environment variable contains ${RED}invalid JSON${NORMAL}: $error" ;;
+        $jq:\ *\<stdin\>*) error=${1#"$jq": }
+                           error=${error#error*: }
+                           error=${error%%, line 1:"${LF}"*}
+                           out "${BOLD}${RED}error:${NORMAL} ${YELLOW}SRCENV_RESTORE${NORMAL} environment variable contains ${RED}invalid JSON${NORMAL}: $error" ;;
 
         $jq:\ *) error=${1#"$jq": }
                  error=${error#error: }
