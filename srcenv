@@ -96,6 +96,8 @@ ${BOLD}${UNDERLINE}Shells${NORMAL}:
 ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}--color WHEN, --color=WHEN  ${NORMAL}Specify when to use colored output: ${BOLD:-*}auto${BOLD:-*}${NORMAL}, never or always
                               ${ITALIC}${DIM}i.e. 'auto' disables colors if the output goes to a pipe${NORMAL}
+  ${BOLD}--export-colors             ${NORMAL}Cache terminal capabilities to SRCENV_RESTORE to improve performance
+  ${BOLD}--clear-colors              ${NORMAL}Clear cached terminal capabilities from SRCENV_RESTORE
   ${BOLD}-x VAR, --exclude VAR,
   ${BOLD}-x=VAR, --exclude=VAR       ${NORMAL}Exclude VAR from exported variables ${ITALIC}(can be used multiple times)${NORMAL}
   ${BOLD}-f FORMAT, --format FORMAT,

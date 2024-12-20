@@ -110,6 +110,14 @@ OPTIONS
 
 :   Specify when to use colored output: \*auto\*, never or always. `` ` ``auto`` ` `` disables colors if the output goes to a pipe.
 
+\--export-colors
+
+:   Cache terminal capabilities to SRCENV_RESTORE to improve performance. For details, see ENVIRONMENT section below.
+
+\--clear-colors
+
+:   Clear cached terminal capabilities from SRCENV_RESTORE.
+
 -x VAR, \--exclude VAR, -x=VAR, \--exclude=VAR
 
 :   Exclude VAR from exported variables (can be used multiple times).
