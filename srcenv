@@ -450,11 +450,11 @@ setformat() {
 # region run()
 
 build() {
-    [ -n "$exclude" ] && exclude="|del(${exclude%, })"
+    [ -n "$exclude" ] && exclude=" | del(${exclude%, })"
     [ -n "$modify"  ] && modify= || modify='$snapshot[$k] == null and '
 
-    diff='reduce ($snapshot|. += env|del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
-    ffid='reduce ($snapshot|. += env|del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES)'$exclude'|keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k]=$snapshot[$k] else . end)'
+    diff='reduce ($snapshot | . += env | del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES)'$exclude' | keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k] = env[$k] else . end)'
+    ffid='reduce ($snapshot | . += env | del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES)'$exclude' | keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k] = $snapshot[$k] else . end)'
 
     if [ -z "$sort" ]; then
         keys='keys_unsorted[] as $k'
@@ -465,10 +465,10 @@ build() {
     fi
 
     [ "$format" = . ] && keys=$sort
-    [ -n "$backup"  ] && backup='| ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
+    [ -n "$backup"  ] && backup=' | ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
     [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
     [ -n "$clear"   ] && restore="$restore{ SRCENV_RESTORE: null } | . += "
-    [ -n "$fixpath" ] && fixpath='| if .PATH then .PATH = (.PATH|gsub("\\\\"; "/")|gsub("(?<drive>.):/"; "/" + (.drive|ascii_downcase) + "/")|gsub(";"; ":")) end'
+    [ -n "$fixpath" ] && fixpath=' | if .PATH then .PATH = (.PATH | gsub("\\\\"; "/") | gsub("(?<drive>.):/"; "/" + (.drive | ascii_downcase) + "/") | gsub(";"; ":")) end'
 
     if [ -n "$verbose" ]; then
         [ "$format" = . ] && format='keys[] as $k | "  \($k|tojson): \(.[$k]|tojson)"' && \
@@ -481,15 +481,15 @@ build() {
         colors NORMAL BOLD ITALIC DIM RED GREEN YELLOW
 
         header="${BOLD}${DIM}srcenv:${NORMAL} "
-        changed="$restore $diff ${backup:+"| . += { SRCENV_RESTORE: \"\" }"}"
+        changed="$restore$diff${backup:+" | . += { SRCENV_RESTORE: \"\" }"}"
         added="\"${GREEN}+\\(\$k)${NORMAL}\""
         modified="\"${YELLOW}~\\(\$k)${NORMAL}\""
         removed="\"${RED}-\\(\$k)${NORMAL}\""
         nochanges="\"${ITALIC}No changes${NORMAL}\""
-        verbose='+ "\n'$header'" + (['$changed' | keys[] as $k | if .[$k] then if $snapshot[$k] then '$modified' else '$added' end else '$removed' end] | join(", ") | if . == "" then '$nochanges' else . end)'
+        verbose=' + "\n'$header'" + (['$changed' | keys[] as $k | if .[$k] then if $snapshot[$k] then '$modified' else '$added' end else '$removed' end] | join(", ") | if . == "" then '$nochanges' else . end)'
     fi
 
-    filter=". as \$snapshot | $prefix $restore $diff $backup $fixpath | $keys | $format $suffix $verbose"
+    filter=". as \$snapshot | $prefix$restore$diff$backup$fixpath | $keys | $format$suffix$verbose"
 }
 
 DLM=$(printf '\032')
