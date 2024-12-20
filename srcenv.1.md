@@ -286,13 +286,13 @@ Windows Command shell _(HKCU\\SOFTWARE\\Microsoft\\Command Processor\\AutoRun)_:
 Tips
 ----
 
-To use a different command name (e.g. `` ` ``magicenv`` ` ``), add `` ` ``\--cmd magicenv`` ` ``.
+To use a different command name (e.g. `` ` ``magicenv`` ` ``), add `` ` ``\--cmd magicenv`` ` ``. You can also pass different arguments to srcenv with `` ` ``\--`` ` `` at the end. Without `` ` ``\--`` ` ``, the default options are `` ` ``\--backup \--restore \--verbose`` ` ``.
 
-:   e.g. `source <(srcenv init bash --cmd magicenv)`.
+:   e.g. `` ` ``source <(srcenv init bash \--cmd srcundo \-- \--restore)`` ` `` creates a command named `` ` ``srcundo`` ` `` that restores the last backed up changes.
 
-You can pass different arguments to srcenv with `` ` ``\--`` ` `` at the end. Without `` ` ``\--`` ` ``, the default options are `` ` ``\--backup \--restore \--verbose`` ` ``.
+To improve performance or compatibility, you can specify different POSIX shell with `` ` ``\--sh`` ` ``. If available, dash or ksh usually outperform bash and zsh.
 
-:   e.g. `source <(srcenv init bash --cmd srcundo -- --restore)` creates a command named `` ` ``srcundo`` ` `` that restores the last backed up changes.
+To further improve performance when using colored output, use `` ` ``src \--export-colors`` ` `` **once** to cache terminal capabilities in the `` ` ``SRCENV_COLORS`` ` `` environment variable.
 
 For non-standard integration, use `` ` ``srcenv rc \<shell> [\--cmd name] [\--sh sh] [\-- options]`` ` `` to output what needs to be added to your shell's configuration file.
 

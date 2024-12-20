@@ -230,13 +230,20 @@ Windows Command shell \f[I](HKCU\[rs]SOFTWARE\[rs]Microsoft\[rs]Command Processo
 \f[CR]\[at]echo off & sh \[dq]/path/to/srcenv\[dq] init cmd > %TEMP%\[rs]srcenv.init.cmd && call %TEMP%\[rs]srcenv.init.cmd & del %TEMP%\[rs]srcenv.init.cmd & echo on\f[R]
 .SS Tips
 .TP
-To use a different command name (e.g.\ \f[CR]\[ga]\f[R]magicenv\f[CR]\[ga]\f[R]), add \f[CR]\[ga]\f[R]\-\-cmd magicenv\f[CR]\[ga]\f[R].
-e.g.\ \f[CR]source <(srcenv init bash \-\-cmd magicenv)\f[R].
-.TP
-You can pass different arguments to srcenv with \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R] at the end. Without \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R], the default options are \f[CR]\[ga]\f[R]\-\-backup \-\-restore \-\-verbose\f[CR]\[ga]\f[R].
-e.g.\ \f[CR]source <(srcenv init bash \-\-cmd srcundo \-\- \-\-restore)\f[R]
-creates a command named \f[CR]\[ga]\f[R]srcundo\f[CR]\[ga]\f[R] that
-restores the last backed up changes.
+To use a different command name (e.g.\ \f[CR]\[ga]\f[R]magicenv\f[CR]\[ga]\f[R]), add \f[CR]\[ga]\f[R]\-\-cmd magicenv\f[CR]\[ga]\f[R]. You can also pass different arguments to srcenv with \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R] at the end. Without \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R], the default options are \f[CR]\[ga]\f[R]\-\-backup \-\-restore \-\-verbose\f[CR]\[ga]\f[R].
+e.g.\ \f[CR]\[ga]\f[R]source <(srcenv init bash \-\-cmd srcundo \-\-
+\-\-restore)\f[CR]\[ga]\f[R] creates a command named
+\f[CR]\[ga]\f[R]srcundo\f[CR]\[ga]\f[R] that restores the last backed up
+changes.
+.PP
+To improve performance or compatibility, you can specify different POSIX
+shell with \f[CR]\[ga]\f[R]\-\-sh\f[CR]\[ga]\f[R].
+If available, dash or ksh usually outperform bash and zsh.
+.PP
+To further improve performance when using colored output, use
+\f[CR]\[ga]\f[R]src \-\-export\-colors\f[CR]\[ga]\f[R] \f[B]once\f[R] to
+cache terminal capabilities in the
+\f[CR]\[ga]\f[R]SRCENV_COLORS\f[CR]\[ga]\f[R] environment variable.
 .PP
 For non\-standard integration, use \f[CR]\[ga]\f[R]srcenv rc <shell>
 [\-\-cmd name] [\-\-sh sh] [\-\- options]\f[CR]\[ga]\f[R] to output what
