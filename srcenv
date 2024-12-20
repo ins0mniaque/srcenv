@@ -83,11 +83,12 @@ ${BOLD}${UNDERLINE}Shells${NORMAL}:
   ${BOLD}fish              ${NORMAL}Format the output as a Fish script
   ${BOLD}json              ${NORMAL}Format the output as JSON
   ${BOLD}ksh, pdksh, mksh  ${NORMAL}Format the output as a Ksh script
-  ${BOLD}launchctl         ${NORMAL}Format the output as a launchctl calls ${ITALIC}(macOS)${NORMAL}
+  ${BOLD}launchd           ${NORMAL}Format the output as a launchd environment script
   ${BOLD}murex             ${NORMAL}Format the output as a Murex script
   ${BOLD}nu, nushell       ${NORMAL}Format the output as a Nushell script
   ${BOLD}posix, sh         ${NORMAL}Format the output as a POSIX shell script
   ${BOLD}pwsh, powershell  ${NORMAL}Format the output as a PowerShell script
+  ${BOLD}systemd           ${NORMAL}Format the output as a systemd EnvironmentFile
   ${BOLD}zsh               ${NORMAL}Format the output as a Zsh script"
     fi
 
@@ -350,9 +351,9 @@ init() {
         nu|nushell)      echo "def --env --wrapped $name [...args] { ^$srcenv ...(\$args) | from json | default {} | load-env }" ;;
         pwsh|powershell) echo "function $name { \$script=(($srcenv \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
         cmd|command)     echo "DOSKEY $name=@echo off \$T $srcenv \$* \$G %TEMP%\srcenv.$name.cmd \$T\$T call %TEMP%\srcenv.$name.cmd \$T del %TEMP%\srcenv.$name.cmd \$T echo on" ;;
-        env|\
+        env|systemd|\
         json|\
-        launchctl)       nosupport init; return 1 ;;
+        launchd)         nosupport init; return 1 ;;
     esac
 }
 
@@ -387,9 +388,9 @@ rc() {
                          echo
                          echo 'rem AutoRun:'
                          echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
-        env|\
+        env|systemd|\
         json|\
-        launchctl)       nosupport rc; return 1 ;;
+        launchd)         nosupport rc; return 1 ;;
     esac
 }
 
@@ -432,14 +433,14 @@ setformat() {
                              '$env.\($k) = null' ;;
         pwsh|powershell) fmt '$Env:\($k) = \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
                              '$Env:\($k) = $null' ;;
-        env)             fmt '\($k)=\(.[$k]|@sh)' \
+        env|systemd)     fmt '\($k)=\(.[$k]|@sh)' \
                              '\($k)=' ;;
         json)            format=. ;;
         cmd|command)     fmt 'set \($k)=\(.[$k] | gsub("\n"; "%\\n%"))' \
                              'set \($k)='
                          prefix='"@echo off\n\n(set \\n=^^^\n\n^\n\n)\n\n" + (['
                          suffix='] | join("\n")) + "\n\nset \\n="' ;;
-        launchctl)       fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
+        launchd)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                              'launchctl unsetenv \($k)' ;;
         *)               return 1 ;;
     esac
@@ -629,11 +630,11 @@ case $1 in
     murex|\
     nu|nushell|\
     pwsh|powershell|\
-    env|\
+    env|systemd|\
     json|\
     cmd|command|\
-    launchctl) shell=$1; shift ;;
-    *)         shell= ;;
+    launchd) shell=$1; shift ;;
+    *)       shell= ;;
 esac
 
 if [ "$command" = init ] || [ "$command" = rc ]; then

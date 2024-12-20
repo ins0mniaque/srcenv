@@ -597,7 +597,7 @@ EOF
 set -gx SRCENV_RESTORE '{"SRCENV_RESTORE":null,"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null}'
 EOF
 
-{ launchctl_output=$(cat); } << 'EOF'
+{ launchd_output=$(cat); } << 'EOF'
 launchctl setenv SRCENV_TEST_A '6'
 launchctl setenv SRCENV_TEST_B '7'
 launchctl setenv SRCENV_TEST_C '42'
@@ -608,7 +608,7 @@ launchctl setenv SRCENV_TEST_MULTILINE '
 42'
 EOF
 
-{ launchctl_backup_output=$(cat); } << 'EOF'
+{ launchd_backup_output=$(cat); } << 'EOF'
 launchctl setenv SRCENV_RESTORE '{"SRCENV_RESTORE":null,"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null}'
 EOF
 
@@ -788,12 +788,13 @@ run_output_tests() {
     run "$1" "$2 tcsh $env_input"       "$csh_output"
     run "$1" "$2 elvish $env_input"     "$elvish_output"
     run "$1" "$2 fish $env_input"       "$fish_output"
-    run "$1" "$2 launchctl $env_input"  "$launchctl_output"
+    run "$1" "$2 launchd $env_input"    "$launchd_output"
     run "$1" "$2 murex $env_input"      "$murex_output"
     run "$1" "$2 nu $env_input"         "$nu_output"
     run "$1" "$2 nushell $env_input"    "$nu_output"
     run "$1" "$2 pwsh $env_input"       "$pwsh_output"
     run "$1" "$2 powershell $env_input" "$pwsh_output"
+    run "$1" "$2 systemd $env_input"    "$env_output"
     run "$1" "$2 env $env_input"        "$env_output"
     run "$1" "$2 json $env_input"       "$json_output"
     run "$1" "$2 $format $env_input"    "$format_output"
@@ -812,12 +813,13 @@ run_output_tests() {
     run "$1" "$2 --format tcsh $env_input"       "$csh_output"
     run "$1" "$2 --format elvish $env_input"     "$elvish_output"
     run "$1" "$2 --format fish $env_input"       "$fish_output"
-    run "$1" "$2 --format launchctl $env_input"  "$launchctl_output"
+    run "$1" "$2 --format launchd $env_input"    "$launchd_output"
     run "$1" "$2 --format murex $env_input"      "$murex_output"
     run "$1" "$2 --format nu $env_input"         "$nu_output"
     run "$1" "$2 --format nushell $env_input"    "$nu_output"
     run "$1" "$2 --format pwsh $env_input"       "$pwsh_output"
     run "$1" "$2 --format powershell $env_input" "$pwsh_output"
+    run "$1" "$2 --format systemd $env_input"    "$env_output"
     run "$1" "$2 --format env $env_input"        "$env_output"
     run "$1" "$2 --format json $env_input"       "$json_output"
 
@@ -835,12 +837,13 @@ run_output_tests() {
     run "$1" "$2 tcsh --backup $env_input"       "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 elvish --backup $env_input"     "$elvish_backup_output${LF}$elvish_output"
     run "$1" "$2 fish --backup $env_input"       "$fish_backup_output${LF}$fish_output"
-    run "$1" "$2 launchctl --backup $env_input"  "$launchctl_backup_output${LF}$launchctl_output"
+    run "$1" "$2 launchd --backup $env_input"    "$launchd_backup_output${LF}$launchd_output"
     run "$1" "$2 murex --backup $env_input"      "$murex_backup_output${LF}$murex_output"
     run "$1" "$2 nu --backup $env_input"         "$nu_backup_output${LF}$nu_output"
     run "$1" "$2 nushell --backup $env_input"    "$nu_backup_output${LF}$nu_output"
     run "$1" "$2 pwsh --backup $env_input"       "$pwsh_backup_output${LF}$pwsh_output"
     run "$1" "$2 powershell --backup $env_input" "$pwsh_backup_output${LF}$pwsh_output"
+    run "$1" "$2 systemd --backup $env_input"    "$env_backup_output${LF}$env_output"
     run "$1" "$2 env --backup $env_input"        "$env_backup_output${LF}$env_output"
     run "$1" "$2 json --backup $env_input"       "$json_backup_output"
     run "$1" "$2 $format --backup $env_input"    "$format_backup_output${LF}$format_output"
@@ -859,12 +862,13 @@ run_output_tests() {
     run "$1" "$2 tcsh --local $env_input"       ''
     run "$1" "$2 elvish --local $env_input"     ''
     run "$1" "$2 fish --local $env_input"       ''
-    run "$1" "$2 launchctl --local $env_input"  ''
+    run "$1" "$2 launchd --local $env_input"    ''
     run "$1" "$2 murex --local $env_input"      ''
     run "$1" "$2 nu --local $env_input"         ''
     run "$1" "$2 nushell --local $env_input"    ''
     run "$1" "$2 pwsh --local $env_input"       ''
     run "$1" "$2 powershell --local $env_input" ''
+    run "$1" "$2 systemd --local $env_input"    ''
     run "$1" "$2 env --local $env_input"        ''
     run "$1" "$2 json --local $env_input"       '{}'
     run "$1" "$2 $format --local $env_input"    ''
@@ -883,12 +887,13 @@ run_output_tests() {
     run "$1" "$2 tcsh --local --backup $env_input"       ''
     run "$1" "$2 elvish --local --backup $env_input"     ''
     run "$1" "$2 fish --local --backup $env_input"       ''
-    run "$1" "$2 launchctl --local --backup $env_input"  ''
+    run "$1" "$2 launchd --local --backup $env_input"    ''
     run "$1" "$2 murex --local --backup $env_input"      ''
     run "$1" "$2 nu --local --backup $env_input"         ''
     run "$1" "$2 nushell --local --backup $env_input"    ''
     run "$1" "$2 pwsh --local --backup $env_input"       ''
     run "$1" "$2 powershell --local --backup $env_input" ''
+    run "$1" "$2 systemd --local --backup $env_input"    ''
     run "$1" "$2 env --local --backup $env_input"        ''
     run "$1" "$2 json --local --backup $env_input"       '{}'
     run "$1" "$2 $format --local --backup $env_input"    ''
@@ -907,12 +912,13 @@ run_output_tests() {
     run "$1" "$2 tcsh $posix_input"       "$csh_output"
     run "$1" "$2 elvish $posix_input"     "$elvish_output"
     run "$1" "$2 fish $posix_input"       "$fish_output"
-    run "$1" "$2 launchctl $posix_input"  "$launchctl_output"
+    run "$1" "$2 launchd $posix_input"    "$launchd_output"
     run "$1" "$2 murex $posix_input"      "$murex_output"
     run "$1" "$2 nu $posix_input"         "$nu_output"
     run "$1" "$2 nushell $posix_input"    "$nu_output"
     run "$1" "$2 pwsh $posix_input"       "$pwsh_output"
     run "$1" "$2 powershell $posix_input" "$pwsh_output"
+    run "$1" "$2 systemd $posix_input"    "$env_output"
     run "$1" "$2 env $posix_input"        "$env_output"
     run "$1" "$2 json $posix_input"       "$json_output"
     run "$1" "$2 $format $posix_input"    "$format_output"
@@ -931,12 +937,13 @@ run_output_tests() {
     run "$1" "$2 tcsh --backup $posix_input"       "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 elvish --backup $posix_input"     "$elvish_backup_output${LF}$elvish_output"
     run "$1" "$2 fish --backup $posix_input"       "$fish_backup_output${LF}$fish_output"
-    run "$1" "$2 launchctl --backup $posix_input"  "$launchctl_backup_output${LF}$launchctl_output"
+    run "$1" "$2 launchd --backup $posix_input"    "$launchd_backup_output${LF}$launchd_output"
     run "$1" "$2 murex --backup $posix_input"      "$murex_backup_output${LF}$murex_output"
     run "$1" "$2 nu --backup $posix_input"         "$nu_backup_output${LF}$nu_output"
     run "$1" "$2 nushell --backup $posix_input"    "$nu_backup_output${LF}$nu_output"
     run "$1" "$2 pwsh --backup $posix_input"       "$pwsh_backup_output${LF}$pwsh_output"
     run "$1" "$2 powershell --backup $posix_input" "$pwsh_backup_output${LF}$pwsh_output"
+    run "$1" "$2 systemd --backup $posix_input"    "$env_backup_output${LF}$env_output"
     run "$1" "$2 env --backup $posix_input"        "$env_backup_output${LF}$env_output"
     run "$1" "$2 json --backup $posix_input"       "$json_backup_output"
     run "$1" "$2 $format --backup $posix_input"    "$format_backup_output${LF}$format_output"

@@ -78,9 +78,9 @@ murex
 
 :   Format the output as a Murex script.
 
-launchctl
+launchd
 
-:   Format the output as a launchctl calls (macOS).
+:   Format the output as a launchd environment script.
 
 nu, nushell
 
