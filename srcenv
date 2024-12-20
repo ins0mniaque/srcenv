@@ -366,7 +366,7 @@ rc() {
     initrc "$@" || exit $?
 
     case $shell in
-        launchd) srcenv="${sh:+"$sh "}$srcenv" ;;
+        launchd) srcenv="${sh:+"$sh "}'\\'$srcenv\\'' $shell $opts" ;;
         *)       srcenv="$srcenv init $shell${name:+" --cmd $name"}${sh:+" --sh $sh"}${opts:+" -- $opts"}" ;;
     esac
 
@@ -401,9 +401,9 @@ rc() {
                          echo "plutil -create xml1 $plist"
                          echo "plutil -insert Label -string ${name:-srcenv} $plist"
                          echo "plutil -insert ProgramArguments -array $plist"
-                         echo "plutil -insert ProgramArguments.0 -string $srcenv $plist"
-                         echo "plutil -insert ProgramArguments.1 -string launchd $plist"
-                         echo "plutil -insert ProgramArguments.2 -string '$opts' $plist"
+                         echo "plutil -insert ProgramArguments.0 -string ${sh:-sh} $plist"
+                         echo "plutil -insert ProgramArguments.1 -string '-c' $plist"
+                         echo "plutil -insert ProgramArguments.2 -string 'eval \"\$($srcenv)\"' $plist"
                          echo "plutil -insert RunAtLoad -bool true $plist" ;;
         systemd|\
         env|json)        nosupport rc; return 1 ;;
