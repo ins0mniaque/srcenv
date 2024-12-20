@@ -688,7 +688,7 @@ run_posix_tests() {
 
     [ "$no_stdin" = 1 ] && [ "$1" = 1 ] && when_no_stdin=1 || when_no_stdin=
 
-    run "$1" "$2 --version" 'srcenv 1.5.15'
+    run "$1" "$2 --version" 'srcenv 1.5.16'
 
     run "$when_no_stdin" "$2"                     ''
     run "$1" "$2 --invalid"                       '' 2
