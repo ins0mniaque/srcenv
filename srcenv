@@ -351,9 +351,9 @@ init() {
         nu|nushell)      echo "def --env --wrapped $name [...args] { ^$srcenv ...(\$args) | from json | default {} | load-env }" ;;
         pwsh|powershell) echo "function $name { \$script=(($srcenv \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
         cmd|command)     echo "DOSKEY $name=@echo off \$T $srcenv \$* \$G %TEMP%\srcenv.$name.cmd \$T\$T call %TEMP%\srcenv.$name.cmd \$T del %TEMP%\srcenv.$name.cmd \$T echo on" ;;
-        env|systemd|\
-        json|\
-        launchd)         nosupport init; return 1 ;;
+        launchd|\
+        systemd|\
+        env|json)        nosupport init; return 1 ;;
     esac
 }
 
@@ -362,7 +362,10 @@ rc() {
 
     initrc "$@" || exit $?
 
-    srcenv="$srcenv init $shell${name:+" --cmd $name"}${sh:+" --sh $sh"}${opts:+" -- $opts"}"
+    case $shell in
+        launchd) srcenv="${sh:+"$sh "}$srcenv" ;;
+        *)       srcenv="$srcenv init $shell${name:+" --cmd $name"}${sh:+" --sh $sh"}${opts:+" -- $opts"}" ;;
+    esac
 
     case $shell in
         ash|posix|sh)    echo "eval \"\$($srcenv)\"" ;;
@@ -388,9 +391,19 @@ rc() {
                          echo
                          echo 'rem AutoRun:'
                          echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
-        env|systemd|\
-        json|\
-        launchd)         nosupport rc; return 1 ;;
+        launchd)         [ -z "$opts" ] && colors NORMAL ITALIC YELLOW && invalid '' "missing ${YELLOW}--${NORMAL} or [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}] after${YELLOW}" && exit 2
+                         plist='~'/Library/LaunchAgents/"${name:-srcenv}.plist"
+                         echo "mkdir -p ${plist%/*}"
+                         echo
+                         echo "plutil -create xml1 $plist"
+                         echo "plutil -insert Label -string ${name:-srcenv} $plist"
+                         echo "plutil -insert ProgramArguments -array $plist"
+                         echo "plutil -insert ProgramArguments.0 -string $srcenv $plist"
+                         echo "plutil -insert ProgramArguments.1 -string launchd $plist"
+                         echo "plutil -insert ProgramArguments.2 -string '$opts' $plist"
+                         echo "plutil -insert RunAtLoad -bool true $plist" ;;
+        systemd|\
+        env|json)        nosupport rc; return 1 ;;
     esac
 }
 
