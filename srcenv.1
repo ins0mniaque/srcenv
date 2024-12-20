@@ -27,6 +27,9 @@ srcenv depends on jq(1) ≥ 1.5 being available; see \c
 .UR https://jqlang.github.io/jq
 .UE \c
 \ for installation options.
+.SH EXIT STATUS
+srcenv exits 0 on success, 1 on error, 2 on invalid option, 5 on JSON
+parsing error and 127 on command not found.
 .SH COMMANDS
 .TP
 init
@@ -278,6 +281,34 @@ Double quoted value:
 .TP
 POSIX format:
 \f[CR]export \[rs]($k)=\[rs](.[$k]|\[at]sh)??unset \[rs]($k)\f[R]
+.SH ENVIRONMENT
+.TP
+SRCENV_JQ
+If this environment variable is defined, srcenv will use it as the
+location for jq(1).
+.TP
+SRCENV_JQ_BINARY
+If this environment variable is defined, srcenv will pass the \-\-binary
+option to jq(1).
+.TP
+SRCENV_COLOR
+If this environment variable is defined, it will be the default value
+for the \-\-color option.
+.TP
+SRCENV_COLORS
+If this environment variable is defined, terminal capabilities will be
+read from it as a list of ANSI sequences separated by
+\f[CR]\[ga]\f[R]\[rs]032\f[CR]\[ga]\f[R].
+It can also be used to theme srcenv.
+.IP
+.EX
+\f[I]# Default theme\f[R]
+SRCENV_COLORS=$(printf \[dq]$(tput sgr0)\[rs]032$(tput bold)\[rs]032$(tput dim)\[rs]032$(tput sitm)\[rs]032$(tput smul)\[rs]032$(tput setaf 0)\[rs]032$(tput setaf 1)\[rs]032$(tput setaf 2)\[rs]032$(tput setaf 3)\[rs]032$(tput setaf 4)\[rs]032$(tput setaf 5)\[rs]032$(tput setaf 6)\[rs]032$(tput setaf 7)\[dq])
+.EE
+.TP
+COMSPEC, MUREX_PID, BASH_VERSION, KSH_VERSION, ZSH_VERSION
+These environment variables are checked to detect Windows, Murex, Bash,
+Ksh and Zsh respectively.
 .SH SEE ALSO
 Repository: https://github.com/ins0mniaque/srcenv
 .PP

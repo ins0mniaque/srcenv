@@ -24,6 +24,11 @@ changed since the snapshot, with support for reverting those changes.
 srcenv depends on jq(1) ≥ 1.5 being available; see <https://jqlang.github.io/jq> for
 installation options.
 
+EXIT STATUS
+===========
+
+srcenv exits 0 on success, 1 on error, 2 on invalid option, 5 on JSON parsing error and 127 on command not found.
+
 COMMANDS
 ========
 
@@ -344,6 +349,34 @@ Double quoted value:
 POSIX format:
 
 :   `export \($k)=\(.[$k]|@sh)??unset \($k)`
+
+ENVIRONMENT
+===========
+
+SRCENV_JQ
+
+:   If this environment variable is defined, srcenv will use it as the location for jq(1).
+
+SRCENV_JQ_BINARY
+
+:   If this environment variable is defined, srcenv will pass the \--binary option to jq(1).
+
+SRCENV_COLOR
+
+:   If this environment variable is defined, it will be the default value for the \--color option.
+
+SRCENV_COLORS
+
+:   If this environment variable is defined, terminal capabilities will be read from it as a list of ANSI sequences separated by `` ` ``\032`` ` ``. It can also be used to theme srcenv.
+
+```bash
+# Default theme
+SRCENV_COLORS=$(printf "$(tput sgr0)\032$(tput bold)\032$(tput dim)\032$(tput sitm)\032$(tput smul)\032$(tput setaf 0)\032$(tput setaf 1)\032$(tput setaf 2)\032$(tput setaf 3)\032$(tput setaf 4)\032$(tput setaf 5)\032$(tput setaf 6)\032$(tput setaf 7)")
+```
+
+COMSPEC, MUREX_PID, BASH_VERSION, KSH_VERSION, ZSH_VERSION
+
+:   These environment variables are checked to detect Windows, Murex, Bash, Ksh and Zsh respectively.
 
 SEE ALSO
 ========
