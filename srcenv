@@ -119,6 +119,7 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-u, --unsorted              ${NORMAL}Keep the environment variables unsorted
   ${BOLD}-q, --quiet                 ${NORMAL}Do not display changed environment variables
   ${BOLD}-v, --verbose               ${NORMAL}Display changed environment variables
+  ${BOLD}-d, --debug                 ${NORMAL}Display jq filter without sourcing and exit
   ${BOLD}-h, --help                  ${NORMAL}Display help and exit
   ${BOLD}--version                   ${NORMAL}Display the version number and exit"
 }
@@ -542,8 +543,6 @@ run() {
         esac
     done
 
-    build
-
     if [ -n "$verbose" ]; then
         stdout=$(printf "%s\n" "$snapshot" | "$jq" ${SRCENV_JQ_BINARY:+-b} -r "$filter")
         exitcode=$?
@@ -647,7 +646,7 @@ fi
 
 [ ! -t 0 ] && set -- "$@" -
 
-src=src; arg=; input=; action=; colorize=
+src=src; arg=; input=; action=; colorize=; debug=
 prefix=; suffix=; exclude=; format=; backup=; restore=; clear=
 modify=1; export=; sort=1; fixpath=; verbose=
 
@@ -690,6 +689,7 @@ while [ $# -gt 0 ] && [ "$1" != -- ]; do
         -u|--unsorted) sort=;                       shift ;;
         -q|--quiet)    verbose=;                    shift ;;
         -v|--verbose)  verbose=1;                   shift ;;
+        -d|--debug)    debug=1;                     shift ;;
         -h|--help)     header; usage; desc; options; man; exit 0 ;;
         --version)     version;                           exit 0 ;;
 
@@ -724,6 +724,13 @@ elif [ -n "$COMSPEC" ]; then
         pwsh|powershell|cmd|command) ;;
         *) fixpath=1 ;;
     esac
+fi
+
+build
+
+if [ -n "$debug" ]; then
+    command -v bat > /dev/null && filter=$(printf '%s\n' "$filter" | bat --color=always -pl jq)
+    out "$filter"; exit 0
 fi
 
 capture run "$@"

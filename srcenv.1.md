@@ -185,6 +185,10 @@ OPTIONS
 
 :   Display changed environment variables.
 
+-d, \--debug
+
+:   Display jq filter without sourcing and exit.
+
 -h, \--help
 
 :   Display help and exit.
