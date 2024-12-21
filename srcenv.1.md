@@ -99,6 +99,10 @@ pwsh, powershell
 
 :   Format the output as a PowerShell script.
 
+xonsh
+
+:   Format the output as a Xonsh script.
+
 zsh
 
 :   Format the output as a Zsh script.
@@ -279,6 +283,10 @@ PowerShell:
 
 :   `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`
 
+Xonsh:
+
+:   `execx($(srcenv init xonsh))`
+
 Windows Command shell _(HKCU\\SOFTWARE\\Microsoft\\Command Processor\\AutoRun)_:
 
 :   `@echo off & sh "/path/to/srcenv" init cmd > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on`
@@ -328,6 +336,10 @@ Fish:
 PowerShell:
 
 :   `Invoke-Expression (sh "/path/to/srcenv" pwsh .env)`
+
+Xonsh:
+
+:   `execx($(srcenv xonsh .env))`
 
 Windows Command shell:
 

@@ -87,6 +87,9 @@ Format the output as a POSIX shell script.
 pwsh, powershell
 Format the output as a PowerShell script.
 .TP
+xonsh
+Format the output as a Xonsh script.
+.TP
 zsh
 Format the output as a Zsh script.
 .SH OPTIONS
@@ -226,6 +229,9 @@ Fish:
 PowerShell:
 \f[CR]Invoke\-Expression (sh \[dq]/path/to/srcenv\[dq] init pwsh)\f[R]
 .TP
+Xonsh:
+\f[CR]execx($(srcenv init xonsh))\f[R]
+.TP
 Windows Command shell \f[I](HKCU\[rs]SOFTWARE\[rs]Microsoft\[rs]Command Processor\[rs]AutoRun)\f[R]:
 \f[CR]\[at]echo off & sh \[dq]/path/to/srcenv\[dq] init cmd > %TEMP%\[rs]srcenv.init.cmd && call %TEMP%\[rs]srcenv.init.cmd & del %TEMP%\[rs]srcenv.init.cmd & echo on\f[R]
 .SS Tips
@@ -272,6 +278,9 @@ Fish:
 .TP
 PowerShell:
 \f[CR]Invoke\-Expression (sh \[dq]/path/to/srcenv\[dq] pwsh .env)\f[R]
+.TP
+Xonsh:
+\f[CR]execx($(srcenv xonsh .env))\f[R]
 .TP
 Windows Command shell:
 \f[CR]\[at]echo off & sh \[dq]/path/to/srcenv\[dq] cmd .env > %TEMP%\[rs]srcenv.temp.cmd && call %TEMP%\[rs]srcenv.temp.cmd & del %TEMP%\[rs]srcenv.temp.cmd & echo on\f[R]

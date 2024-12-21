@@ -265,7 +265,8 @@ trap cleanup EXIT INT HUP TERM
 
 # region Scripts
 
-diff='reduce (env|del(.SHLVL, ._, ._AST_FEATURES)|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+veto='del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES, .UPDATE_OS_ENVIRON, .XONSH_CAPTURE_ALWAYS)'
+diff='reduce (env|'$veto'|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
 
 { posix_script="$(cat) '$diff'"; } << 'EOF'
 snapshot=$(jq -n env); eval "$(./srcenv %s)"
@@ -437,6 +438,24 @@ EOF
 { powershell_restore_script="$(cat) '. as \$snapshot | $diff'"; } << 'EOF'
 $snapshot=$(jq -n env); Invoke-Expression ((sh srcenv %s --backup --verbose) -join "`n"); Invoke-Expression ((sh srcenv %s --restore --verbose) -join "`n")
 echo "$snapshot" | jq %s
+EOF
+
+{ xonsh_script="$(cat) '$diff'"; } << 'EOF'
+snapshot=$(jq -n env); execx($(./srcenv %s))
+jq %s --argjson snapshot @(snapshot) -n
+EOF
+
+{ xonsh_init_script="$(cat) '$diff'"; } << 'EOF'
+execx($(./srcenv init %s))
+src --version
+snapshot=$(jq -n env)
+src %s
+jq %s --argjson snapshot @(snapshot) -n
+EOF
+
+{ xonsh_restore_script="$(cat) '$diff'"; } << 'EOF'
+snapshot=$(jq -n env); execx($(./srcenv %s --backup --verbose)); execx($(./srcenv %s --restore --verbose))
+jq %s --argjson snapshot @(snapshot) -n
 EOF
 
 { cmd_script="$(cat) \". as \$snapshot | $diff\" snapshot.env
@@ -1187,6 +1206,20 @@ run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershe
 run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershell $posix_input"        'powershell')" '{}'
 run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershell $path_input"         'powershell')" '{}'
 run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershell \"$dir_path_input\"" 'powershell')" '{}'
+
+xonsh=$(detect xonsh) || msg warn 'Xonsh not found; skipping tests...'
+run "$xonsh" "xonsh -c $(script "$xonsh_script"         "xonsh $env_input"              )" "$json_output"
+run "$xonsh" "xonsh -c $(script "$xonsh_script"         "xonsh $posix_input"            )" "$json_output"
+run "$xonsh" "xonsh -c $(script "$xonsh_script"         "xonsh $path_input"             )" "$(when "$xonsh" xonsh -c "$json_path_output_cmd")"
+run "$xonsh" "xonsh -c $(script "$xonsh_script"         "xonsh '$dir_path_input'"       )" "$(when "$xonsh" cd "${dir_path_input%/*}" && xonsh -c "$json_path_output_cmd")"
+run "$xonsh" "xonsh -c $(script "$xonsh_init_script"    'xonsh' "$env_input"            )" "$json_backup_output"
+run "$xonsh" "xonsh -c $(script "$xonsh_init_script"    'xonsh' "$posix_input"          )" "$json_backup_output"
+run "$xonsh" "xonsh -c $(script "$xonsh_init_script"    'xonsh' "$path_input"           )" "$(when "$xonsh" xonsh -c "$json_path_backup_output_cmd")"
+run "$xonsh" "xonsh -c $(script "$xonsh_init_script"    'xonsh' "'$dir_path_input'"     )" "$(when "$xonsh" cd "${dir_path_input%/*}" && xonsh -c "$json_path_backup_output_cmd")"
+run "$xonsh" "xonsh -c $(script "$xonsh_restore_script" "xonsh $env_input"        'xonsh')" '{}'
+run "$xonsh" "xonsh -c $(script "$xonsh_restore_script" "xonsh $posix_input"      'xonsh')" '{}'
+run "$xonsh" "xonsh -c $(script "$xonsh_restore_script" "xonsh $path_input"       'xonsh')" '{}'
+run "$xonsh" "xonsh -c $(script "$xonsh_restore_script" "xonsh '$dir_path_input'" 'xonsh')" '{}'
 
 # NOTE: Running cmd inside sh messes up the shell
 #       • 'run' can only be used once afterwards

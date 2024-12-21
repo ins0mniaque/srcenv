@@ -90,6 +90,7 @@ ${BOLD}${UNDERLINE}Shells${NORMAL}:
   ${BOLD}posix, sh         ${NORMAL}Format the output as a POSIX shell script
   ${BOLD}pwsh, powershell  ${NORMAL}Format the output as a PowerShell script
   ${BOLD}systemd           ${NORMAL}Format the output as a systemd EnvironmentFile
+  ${BOLD}xonsh             ${NORMAL}Format the output as a Xonsh script
   ${BOLD}zsh               ${NORMAL}Format the output as a Zsh script"
     fi
 
@@ -297,8 +298,8 @@ arg0=$0
 
 initrc() {
     case $shell in
-        csh|tcsh) quote=\" ;;
-        *)        quote=\' ;;
+        csh|tcsh|xonsh) quote=\" ;;
+        *)              quote=\' ;;
     esac
 
     case $arg0 in
@@ -354,6 +355,7 @@ init() {
         nu|nushell)      echo "def --env --wrapped $name [...args] { ^$srcenv ...(\$args) | from json | default {} | load-env }" ;;
         pwsh|powershell) echo "function $name { \$script=(($srcenv \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
         cmd|command)     echo "DOSKEY $name=@echo off \$T $srcenv \$* \$G %TEMP%\srcenv.$name.cmd \$T\$T call %TEMP%\srcenv.$name.cmd \$T del %TEMP%\srcenv.$name.cmd \$T echo on" ;;
+        xonsh)           echo "aliases['$name'] = 'execx(\$($srcenv @(\$args)))'" ;;
         launchd|\
         systemd|\
         env|json)        nosupport init; return 1 ;;
@@ -375,6 +377,11 @@ rc() {
         bash|dash|\
         ksh|pdksh|mksh|\
         zsh)             echo "source <($srcenv)" ;;
+        cmd|command)     echo 'rem Initialize:'
+                         echo "@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on"
+                         echo
+                         echo 'rem AutoRun:'
+                         echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
         csh|tcsh)        if [ -e /dev/stdin ]; then
                              echo "$srcenv | source /dev/stdin"
                          else
@@ -382,18 +389,6 @@ rc() {
                          fi ;;
         elvish)          echo "var ${name:-src}~ = { }; eval &on-end={|ns| set ${name:-src}~ = \$ns[${name:-src}] } ($srcenv)" ;;
         fish)            echo "$srcenv | source" ;;
-        murex)           echo "$srcenv -> source" ;;
-        nu|nushell)      echo '# Add to env.nu'
-                         echo "^$srcenv | save -f ${name:-srcenv}.init.nu"
-                         echo
-                         echo '# Add to config.nu'
-                         echo "source ${name:-srcenv}.init.nu" ;;
-        pwsh|powershell) echo "Invoke-Expression (sh $srcenv)" ;;
-        cmd|command)     echo 'rem Initialize:'
-                         echo "@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on"
-                         echo
-                         echo 'rem AutoRun:'
-                         echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
         launchd)         [ -z "$opts" ] && colors NORMAL ITALIC YELLOW && invalid '' "missing ${YELLOW}--${NORMAL} or [${ITALIC}options${NORMAL}] [${ITALIC}files${NORMAL}] after${YELLOW}" && exit 2
                          plist='~'/Library/LaunchAgents/"${name:-srcenv}.plist"
                          echo "mkdir -p ${plist%/*}"
@@ -405,6 +400,14 @@ rc() {
                          echo "plutil -insert ProgramArguments.1 -string '-c' $plist"
                          echo "plutil -insert ProgramArguments.2 -string 'eval \"\$($srcenv)\"' $plist"
                          echo "plutil -insert RunAtLoad -bool true $plist" ;;
+        murex)           echo "$srcenv -> source" ;;
+        nu|nushell)      echo '# Add to env.nu'
+                         echo "^$srcenv | save -f ${name:-srcenv}.init.nu"
+                         echo
+                         echo '# Add to config.nu'
+                         echo "source ${name:-srcenv}.init.nu" ;;
+        pwsh|powershell) echo "Invoke-Expression (sh $srcenv)" ;;
+        xonsh)           echo "execx(\$($srcenv))" ;;
         systemd|\
         env|json)        nosupport rc; return 1 ;;
     esac
@@ -439,27 +442,31 @@ setformat() {
         posix|sh|\
         zsh)             fmt 'export \($k)=\(.[$k]|@sh)' \
                              'unset \($k)' ;;
+        cmd|command)     fmt 'set \($k)=\(.[$k] | gsub("\n"; "%\\n%"))' \
+                             'set \($k)='
+                         prefix='"@echo off\n\n(set \\n=^^^\n\n^\n\n)\n\n" + (['
+                         suffix='] | join("\n")) + "\n\nset \\n="' ;;
         csh|tcsh)        fmt 'setenv \($k) \(.[$k]|@sh|gsub("\\n"; "\\\n")|gsub("!"; "\\!"))' \
                              'unsetenv \($k)' ;;
         elvish)          fmt 'set-env \($k) \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
                              'unset-env \($k)' ;;
         fish)            fmt 'set -gx \($k) \(.[$k]|@sh)' \
                              'set -e \($k)' ;;
+        launchd)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
+                             'launchctl unsetenv \($k)' ;;
         murex)           fmt 'out \(.[$k]|@sh) -> export \($k)' \
                              '!export \($k)' ;;
         nu|nushell)      fmt '$env.\($k) = \(.[$k]|@json)' \
                              '$env.\($k) = null' ;;
         pwsh|powershell) fmt '$Env:\($k) = \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
                              '$Env:\($k) = $null' ;;
+        xonsh)           fmt '    $\($k) = \(.[$k]|@json)' \
+                             '    del $\($k)'
+                         prefix='"with ${...}.swap(UPDATE_OS_ENVIRON=True):\n" + (['
+                         suffix='] | join("\n"))' ;;
         env|systemd)     fmt '\($k)=\(.[$k]|@sh)' \
                              '\($k)=' ;;
         json)            format=. ;;
-        cmd|command)     fmt 'set \($k)=\(.[$k] | gsub("\n"; "%\\n%"))' \
-                             'set \($k)='
-                         prefix='"@echo off\n\n(set \\n=^^^\n\n^\n\n)\n\n" + (['
-                         suffix='] | join("\n")) + "\n\nset \\n="' ;;
-        launchd)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
-                             'launchctl unsetenv \($k)' ;;
         *)               return 1 ;;
     esac
 }
@@ -473,8 +480,9 @@ build() {
     [ -n "$exclude" ] && exclude=" | del(${exclude%, })"
     [ -n "$modify"  ] && modify= || modify='$snapshot[$k] == null and '
 
-    diff='reduce ($snapshot | . += env | del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES)'$exclude' | keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k] = env[$k] else . end)'
-    ffid='reduce ($snapshot | . += env | del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES)'$exclude' | keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k] = $snapshot[$k] else . end)'
+    veto='del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES, .UPDATE_OS_ENVIRON, .XONSH_CAPTURE_ALWAYS)'
+    diff='reduce ($snapshot | . += env | '$veto$exclude' | keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k] = env[$k] else . end)'
+    ffid='reduce ($snapshot | . += env | '$veto$exclude' | keys_unsorted[]) as $k ({}; if '$modify'env[$k] != $snapshot[$k] then .[$k] = $snapshot[$k] else . end)'
 
     if [ -z "$sort" ]; then
         keys='keys_unsorted[] as $k'
@@ -644,17 +652,18 @@ case $1 in
     ksh|pdksh|mksh|\
     posix|sh|\
     zsh|\
+    cmd|command|\
     csh|tcsh|\
     elvish|\
     fish|\
+    launchd|\
     murex|\
     nu|nushell|\
     pwsh|powershell|\
+    xonsh|\
     env|systemd|\
-    json|\
-    cmd|command|\
-    launchd) shell=$1; shift ;;
-    *)       shell= ;;
+    json) shell=$1; shift ;;
+    *)    shell= ;;
 esac
 
 if [ "$command" = init ] || [ "$command" = rc ]; then
@@ -742,7 +751,7 @@ if [ -z "$format" ]; then
     noformat; usage; help; exit 2
 elif [ -n "$COMSPEC" ]; then
     case $shell in
-        pwsh|powershell|cmd|command) ;;
+        cmd|command|pwsh|powershell) ;;
         *) fixpath=1 ;;
     esac
 fi

@@ -30,7 +30,7 @@ jobs:
       - name: Install shells
         run: |
           sudo apt-get update
-          sudo apt-get install ash csh elvish fish ksh mksh tcsh zsh
+          sudo apt-get install ash csh elvish fish ksh mksh tcsh xonsh zsh
 
           echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
@@ -62,7 +62,7 @@ jobs:
       - name: Install shells
         run: |
           brew update
-          brew install elvish fish mksh murex nushell
+          brew install elvish fish mksh murex nushell xonsh
 
       - name: Run srcenv tests
         run: ./srcenv.tests
