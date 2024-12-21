@@ -1185,8 +1185,8 @@ run "$ion" "ion -c $(script "$ion_init_script"    'ion' "$path_input"           
 run "$ion" "ion -c $(script "$ion_init_script"    'ion' "'$dir_path_input'"     )" "$(when "$ion" cd "${dir_path_input%/*}" && ion -c "$json_path_backup_output_cmd")"
 run "$ion" "ion -c $(script "$ion_restore_script" "ion $env_input"        'ion')" "$json_restore_empty_output"
 run "$ion" "ion -c $(script "$ion_restore_script" "ion $posix_input"      'ion')" "$json_restore_empty_output"
-run "$ion" "ion -c $(script "$ion_restore_script" "ion $path_input"       'ion')" "$json_restore_empty_output"
-run "$ion" "ion -c $(script "$ion_restore_script" "ion '$dir_path_input'" 'ion')" "$json_restore_empty_output"
+run "$ion" "ion -c $(script "$ion_restore_script" "ion $path_input"       'ion')" "{${LF}  \"SRCENV_RESTORE\": \"\"${LF}}"
+run "$ion" "ion -c $(script "$ion_restore_script" "ion '$dir_path_input'" 'ion')" "{${LF}  \"SRCENV_RESTORE\": \"\"${LF}}"
 
 murex=$(detect murex) || msg warn 'Murex not found; skipping tests...'
 run "$murex" "murex -c $(script "$murex_script"         "murex $env_input"               )" "$json_output"
