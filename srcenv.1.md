@@ -198,10 +198,6 @@ OPTIONS
 
 :   Display changed environment variables.
 
--d, \--debug
-
-:   Display jq filter without sourcing and exit.
-
 -h, \--help
 
 :   Display help and exit.
@@ -209,6 +205,10 @@ OPTIONS
 \--version
 
 :   Display the version number and exit.
+
+\--debug
+
+:   Display jq filter without sourcing and exit.
 
 SHELL INTEGRATION
 =================

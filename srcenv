@@ -123,9 +123,9 @@ ${BOLD}${UNDERLINE}Options${NORMAL}:
   ${BOLD}-u, --unsorted              ${NORMAL}Keep the environment variables unsorted
   ${BOLD}-q, --quiet                 ${NORMAL}Do not display changed environment variables
   ${BOLD}-v, --verbose               ${NORMAL}Display changed environment variables
-  ${BOLD}-d, --debug                 ${NORMAL}Display jq filter without sourcing and exit
   ${BOLD}-h, --help                  ${NORMAL}Display help and exit
-  ${BOLD}--version                   ${NORMAL}Display the version number and exit"
+  ${BOLD}--version                   ${NORMAL}Display the version number and exit
+  ${BOLD}--debug                     ${NORMAL}Display jq filter without sourcing and exit"
 }
 
 noinput() {
@@ -710,9 +710,9 @@ while [ $# -gt 0 ] && [ "$1" != -- ]; do
         -u|--unsorted) sort=;                       shift ;;
         -q|--quiet)    verbose=;                    shift ;;
         -v|--verbose)  verbose=1;                   shift ;;
-        -d|--debug)    debug=1;                     shift ;;
         -h|--help)     header; usage; desc; options; man; exit 0 ;;
         --version)     version;                           exit 0 ;;
+        --debug)       debug=1;                           shift ;;
 
         -i|--input)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
                         set -- "$@" -- --input "$value"; shift ;;
