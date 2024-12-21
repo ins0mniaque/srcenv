@@ -29,14 +29,17 @@ jobs:
 
       - name: Install shells
         run: |
-          sudo add-apt-repository ppa:mmstick76/ion-shell
           sudo apt-get update
-          sudo apt-get install ash csh elvish fish ion-shell ksh mksh tcsh xonsh zsh
+          sudo apt-get install ash csh elvish fish ksh mksh tcsh xonsh zsh
 
           echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           brew update
           brew install murex nushell
+
+          git clone https://gitlab.redox-os.org/redox-os/ion/
+          cd ion
+          cargo install --path=. --force
 
       - name: Run srcenv tests
         run: ./srcenv.tests
