@@ -20,6 +20,9 @@ jobs:
       - name: Create Release Directory
         run: mkdir -p release
 
+      - name: Copy srcenv
+        run: cp srcenv release
+
       - name: Build DEB Package
         run: |
           mkdir -p debbuild/DEBIAN
