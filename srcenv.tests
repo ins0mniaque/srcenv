@@ -373,7 +373,7 @@ jq %s --argjson snapshot "$snapshot" -n
 EOF
 
 { ion_restore_script="$(cat) '$diff'"; } << 'EOF'
-let snapshot = $(jq -n env); eval "$(./srcenv %s --backup --verbose)"; eval "$(./srcenv %s --restore --verbose)"
+let snapshot = $(jq -n env); eval "$(./srcenv %s --backup --verbose ^> /dev/stderr)"; eval "$(./srcenv %s --restore --verbose ^> /dev/stderr)"
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
@@ -530,6 +530,17 @@ EOF
   "SRCENV_TEST_C": "42",
   "SRCENV_TEST_ESCAPE": "$NOT_EXPANDED\\t\\r\\n'\"!x$(p)${b}\"'",
   "SRCENV_TEST_MULTILINE": "\n6\n7\n42"
+}
+EOF
+
+{ json_restore_empty_output=$(cat); } << 'EOF'
+{
+  "SRCENV_RESTORE": "",
+  "SRCENV_TEST_A": "",
+  "SRCENV_TEST_B": "",
+  "SRCENV_TEST_C": "",
+  "SRCENV_TEST_ESCAPE": "",
+  "SRCENV_TEST_MULTILINE": ""
 }
 EOF
 
@@ -1172,10 +1183,10 @@ run "$ion" "ion -c $(script "$ion_init_script"    'ion' "$env_input"            
 run "$ion" "ion -c $(script "$ion_init_script"    'ion' "$posix_input"          )" "$json_backup_output"
 run "$ion" "ion -c $(script "$ion_init_script"    'ion' "$path_input"           )" "$(when "$ion" ion -c "$json_path_backup_output_cmd")"
 run "$ion" "ion -c $(script "$ion_init_script"    'ion' "'$dir_path_input'"     )" "$(when "$ion" cd "${dir_path_input%/*}" && ion -c "$json_path_backup_output_cmd")"
-run "$ion" "ion -c $(script "$ion_restore_script" "ion $env_input"        'ion')" '{}'
-run "$ion" "ion -c $(script "$ion_restore_script" "ion $posix_input"      'ion')" '{}'
-run "$ion" "ion -c $(script "$ion_restore_script" "ion $path_input"       'ion')" '{}'
-run "$ion" "ion -c $(script "$ion_restore_script" "ion '$dir_path_input'" 'ion')" '{}'
+run "$ion" "ion -c $(script "$ion_restore_script" "ion $env_input"        'ion')" "$json_restore_empty_output"
+run "$ion" "ion -c $(script "$ion_restore_script" "ion $posix_input"      'ion')" "$json_restore_empty_output"
+run "$ion" "ion -c $(script "$ion_restore_script" "ion $path_input"       'ion')" "$json_restore_empty_output"
+run "$ion" "ion -c $(script "$ion_restore_script" "ion '$dir_path_input'" 'ion')" "$json_restore_empty_output"
 
 murex=$(detect murex) || msg warn 'Murex not found; skipping tests...'
 run "$murex" "murex -c $(script "$murex_script"         "murex $env_input"               )" "$json_output"

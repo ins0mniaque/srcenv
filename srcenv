@@ -441,7 +441,6 @@ setformat() {
     case $1 in
         ash|dash|\
         bash|\
-        ion|\
         ksh|pdksh|mksh|\
         posix|sh|\
         zsh)             fmt 'export \($k)=\(.[$k]|@sh)' \
@@ -456,6 +455,8 @@ setformat() {
                              'unset-env \($k)' ;;
         fish)            fmt 'set -gx \($k) \(.[$k]|@sh)' \
                              'set -e \($k)' ;;
+        ion)             fmt 'export \($k)=\(.[$k]|@sh)' \
+                             'export \($k)='\'\' ;;
         launchd)         fmt 'launchctl setenv \($k) \(.[$k]|@sh)' \
                              'launchctl unsetenv \($k)' ;;
         murex)           fmt 'out \(.[$k]|@sh) -> export \($k)' \
