@@ -29,8 +29,9 @@ jobs:
 
       - name: Install shells
         run: |
+          sudo add-apt-repository ppa:mmstick76/ion-shell
           sudo apt-get update
-          sudo apt-get install ash csh elvish fish ksh mksh tcsh xonsh zsh
+          sudo apt-get install ash csh elvish fish ion-shell ksh mksh tcsh xonsh zsh
 
           echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"

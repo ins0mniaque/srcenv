@@ -71,6 +71,10 @@ fish
 
 :   Format the output as a Fish script.
 
+ion
+
+:   Format the output as an ion script.
+
 json
 
 :   Format the output as JSON.
@@ -279,6 +283,10 @@ Fish:
 
 :   `srcenv init fish | source`
 
+ion:
+
+:   `eval "$(srcenv init ion)"`
+
 PowerShell:
 
 :   `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`
@@ -332,6 +340,10 @@ Nushell:
 Fish:
 
 :   `srcenv fish .env | source`
+
+ion:
+
+:   `eval "$(srcenv ion .env)"`
 
 PowerShell:
 

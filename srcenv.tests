@@ -360,6 +360,23 @@ set snapshot (jq -n env); ./srcenv %s --backup --verbose | source; ./srcenv %s -
 jq %s --argjson snapshot "$snapshot" -n
 EOF
 
+{ ion_script="$(cat) '$diff'"; } << 'EOF'
+let snapshot = $(jq -n env); eval "$(./srcenv %s)"
+jq %s --argjson snapshot "$snapshot" -n
+EOF
+
+{ ion_init_script="$(cat) '$diff'"; } << 'EOF'
+eval "$(./space\\ srcenv init %s)"; src [ --version ]
+let snapshot = $(jq -n env)
+src [ %s ]
+jq %s --argjson snapshot "$snapshot" -n
+EOF
+
+{ ion_restore_script="$(cat) '$diff'"; } << 'EOF'
+let snapshot = $(jq -n env); eval "$(./srcenv %s --backup --verbose)"; eval "$(./srcenv %s --restore --verbose)"
+jq %s --argjson snapshot "$snapshot" -n
+EOF
+
 { murex_script="$(cat) '$diff'"; } << 'EOF'
 jq -n env -> set snapshot; ./srcenv %s -> source
 jq %s --argjson snapshot "$snapshot" -n
@@ -1145,6 +1162,20 @@ run "$fish" "fish -c $(script "$fish_restore_script" "fish $env_input"        'f
 run "$fish" "fish -c $(script "$fish_restore_script" "fish $posix_input"      'fish')" '{}'
 run "$fish" "fish -c $(script "$fish_restore_script" "fish $path_input"       'fish')" '{}'
 run "$fish" "fish -c $(script "$fish_restore_script" "fish '$dir_path_input'" 'fish')" '{}'
+
+ion=$(detect ion) || msg warn 'ion not found; skipping tests...'
+run "$ion" "ion -c $(script "$ion_script"         "ion $env_input"              )" "$json_output"
+run "$ion" "ion -c $(script "$ion_script"         "ion $posix_input"            )" "$json_output"
+run "$ion" "ion -c $(script "$ion_script"         "ion $path_input"             )" "$(when "$ion" ion -c "$json_path_output_cmd")"
+run "$ion" "ion -c $(script "$ion_script"         "ion '$dir_path_input'"       )" "$(when "$ion" cd "${dir_path_input%/*}" && ion -c "$json_path_output_cmd")"
+run "$ion" "ion -c $(script "$ion_init_script"    'ion' "$env_input"            )" "$json_backup_output"
+run "$ion" "ion -c $(script "$ion_init_script"    'ion' "$posix_input"          )" "$json_backup_output"
+run "$ion" "ion -c $(script "$ion_init_script"    'ion' "$path_input"           )" "$(when "$ion" ion -c "$json_path_backup_output_cmd")"
+run "$ion" "ion -c $(script "$ion_init_script"    'ion' "'$dir_path_input'"     )" "$(when "$ion" cd "${dir_path_input%/*}" && ion -c "$json_path_backup_output_cmd")"
+run "$ion" "ion -c $(script "$ion_restore_script" "ion $env_input"        'ion')" '{}'
+run "$ion" "ion -c $(script "$ion_restore_script" "ion $posix_input"      'ion')" '{}'
+run "$ion" "ion -c $(script "$ion_restore_script" "ion $path_input"       'ion')" '{}'
+run "$ion" "ion -c $(script "$ion_restore_script" "ion '$dir_path_input'" 'ion')" '{}'
 
 murex=$(detect murex) || msg warn 'Murex not found; skipping tests...'
 run "$murex" "murex -c $(script "$murex_script"         "murex $env_input"               )" "$json_output"

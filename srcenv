@@ -82,6 +82,7 @@ ${BOLD}${UNDERLINE}Shells${NORMAL}:
   ${BOLD}elvish            ${NORMAL}Format the output as an Elvish script
   ${BOLD}env               ${NORMAL}Format the output as a .env file
   ${BOLD}fish              ${NORMAL}Format the output as a Fish script
+  ${BOLD}ion               ${NORMAL}Format the output as an ion script
   ${BOLD}json              ${NORMAL}Format the output as JSON
   ${BOLD}ksh, pdksh, mksh  ${NORMAL}Format the output as a Ksh script
   ${BOLD}launchd           ${NORMAL}Format the output as a launchd environment script
@@ -351,6 +352,7 @@ init() {
                          fi ;;
         elvish)          echo "var $name = {|@a| eval ($srcenv \$@a | slurp) }" ;;
         fish)            echo "function $name; $srcenv \$argv | source; end" ;;
+        ion)             echo "fn $name args:[str]${LF}    let args = \$or(@args \"--help\")${LF}    eval \"\$($srcenv \$args ^> /dev/stderr)\"${LF}end" ;;
         murex)           echo "function $name { $srcenv @PARAMS -> source }" ;;
         nu|nushell)      echo "def --env --wrapped $name [...args] { ^$srcenv ...(\$args) | from json | default {} | load-env }" ;;
         pwsh|powershell) echo "function $name { \$script=(($srcenv \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
@@ -373,7 +375,8 @@ rc() {
     esac
 
     case $shell in
-        ash|posix|sh)    echo "eval \"\$($srcenv)\"" ;;
+        ash|posix|sh|\
+        ion)             echo "eval \"\$($srcenv)\"" ;;
         bash|dash|\
         ksh|pdksh|mksh|\
         zsh)             echo "source <($srcenv)" ;;
@@ -438,6 +441,7 @@ setformat() {
     case $1 in
         ash|dash|\
         bash|\
+        ion|\
         ksh|pdksh|mksh|\
         posix|sh|\
         zsh)             fmt 'export \($k)=\(.[$k]|@sh)' \
@@ -656,6 +660,7 @@ case $1 in
     csh|tcsh|\
     elvish|\
     fish|\
+    ion|\
     launchd|\
     murex|\
     nu|nushell|\

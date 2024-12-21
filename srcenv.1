@@ -66,6 +66,9 @@ Format the output as a .env file.
 fish
 Format the output as a Fish script.
 .TP
+ion
+Format the output as an ion script.
+.TP
 json
 Format the output as JSON.
 .TP
@@ -226,6 +229,9 @@ Nushell \f[I](config.nu)\f[R]:
 Fish:
 \f[CR]srcenv init fish | source\f[R]
 .TP
+ion:
+\f[CR]eval \[dq]$(srcenv init ion)\[dq]\f[R]
+.TP
 PowerShell:
 \f[CR]Invoke\-Expression (sh \[dq]/path/to/srcenv\[dq] init pwsh)\f[R]
 .TP
@@ -275,6 +281,9 @@ Nushell:
 .TP
 Fish:
 \f[CR]srcenv fish .env | source\f[R]
+.TP
+ion:
+\f[CR]eval \[dq]$(srcenv ion .env)\[dq]\f[R]
 .TP
 PowerShell:
 \f[CR]Invoke\-Expression (sh \[dq]/path/to/srcenv\[dq] pwsh .env)\f[R]

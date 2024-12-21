@@ -143,6 +143,7 @@ To add the `src` command, add the following to your shell's configuration file:
 | Nushell         | `srcenv init nu \| save -f srcenv.init.nu` _(env.nu)_ |
 |                 | `source srcenv.init.nu` _(config.nu)_                 |
 | Fish            | `srcenv init fish \| source`                          |
+| ion             | `eval "$(srcenv init ion)`                            |
 | PowerShell      | `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`  |
 | Xonsh           | `execx($(srcenv init xonsh))`                         |
 | Windows Command | `@echo off & sh "/path/to/srcenv" init cmd > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on` _(HKCU\SOFTWARE\Microsoft\Command Processor\AutoRun)_ |
@@ -174,6 +175,7 @@ The following table shows how to source `.env` in different shells:
 | Murex           | `srcenv murex .env -> source`                        |
 | Nushell         | `srcenv json .env \| from json \| load-env`          |
 | Fish            | `srcenv fish .env \| source`                         |
+| ion             | `eval "$(srcenv ion .env)`                           |
 | PowerShell      | `Invoke-Expression (sh "/path/to/srcenv" pwsh .env)` |
 | Xonsh           | `execx($(srcenv xonsh .env))`                        |
 | Windows Command | `@echo off & sh "/path/to/srcenv" cmd .env > %TEMP%\srcenv.temp.cmd && call %TEMP%\srcenv.temp.cmd & del %TEMP%\srcenv.temp.cmd & echo on` |
@@ -185,7 +187,7 @@ For more advanced usage see the [srcenv(1) manpage](https://github.com/ins0mniaq
 ## Roadmap
 
 - [ ] Add [Clink](https://chrisant996.github.io/clink/clink.html) support
-- [ ] Add [ion](https://gitlab.redox-os.org/redox-os/ion) support
+- [x] ~~Add [ion](https://gitlab.redox-os.org/redox-os/ion) support~~
 - [x] ~~Add [Xonsh](https://xon.sh) support~~
 - [ ] Automatic mode _(à la [direnv](https://direnv.net))_
 
