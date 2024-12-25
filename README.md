@@ -143,7 +143,7 @@ To add the `src` command, add the following to your shell's configuration file:
 | Nushell         | `srcenv init nu \| save -f srcenv.init.nu` _(env.nu)_ |
 |                 | `source srcenv.init.nu` _(config.nu)_                 |
 | Fish            | `srcenv init fish \| source`                          |
-| ion             | `eval "$(srcenv init ion)`                            |
+| ion             | `eval "$(srcenv init ion)` _(Usage is different; see [ion shell](#ion-shell))_ |
 | PowerShell      | `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`  |
 | Xonsh           | `execx($(srcenv init xonsh))`                         |
 | Windows Command | `@echo off & sh "/path/to/srcenv" init cmd > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on` _(HKCU\SOFTWARE\Microsoft\Command Processor\AutoRun)_ |
@@ -163,6 +163,15 @@ To add the `src` command, add the following to your shell's configuration file:
 For non-standard integration, use `srcenv rc <shell> [--cmd name] [--sh sh] [-- options]` to output what needs to be added to your shell's configuration file.
 
 For a list of supported options, see `src --help`.
+
+#### ion shell
+
+ion shell implements variadic functions using the array syntax `[...]`. `src` arguments must be provided inside brackets.
+
+_e.g. `src [ project.env ]` or `src [ --help ]`_
+
+> [!WARNING]
+> ion shell has no way to unset environment variables; they are instead set to an empty string.
 
 ### Direct usage _(without shell integration)_
 

@@ -291,6 +291,10 @@ ion:
 
 :   `eval "$(srcenv init ion)"`
 
+```text
+NOTE: Usage is different; see ION SHELL section below.
+```
+
 PowerShell:
 
 :   `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`
@@ -319,6 +323,17 @@ To improve performance or compatibility, you can specify different POSIX shell w
 To further improve performance when using colored output, use `` ` ``src \--export-colors`` ` `` **once** to cache terminal capabilities in the `` ` ``SRCENV_COLORS`` ` `` environment variable.
 
 For non-standard integration, use `` ` ``srcenv rc \<shell> [\--cmd name] [\--sh sh] [\-- options]`` ` `` to output what needs to be added to your shell's configuration file.
+
+ION SHELL
+=========
+
+ion shell implements variadic functions using the array syntax `` ` ``[...]`` ` ``.
+
+`` ` ``src`` ` `` arguments must be provided inside brackets.
+
+:   e.g. `` ` ``src [ project.env ]`` ` `` or `` ` ``src [ \--help ]`` ` ``
+
+WARNING: ion shell has no way to unset environment variables; they are instead set to an empty string.
 
 EXAMPLES
 ========

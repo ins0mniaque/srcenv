@@ -234,6 +234,10 @@ Fish:
 .TP
 ion:
 \f[CR]eval \[dq]$(srcenv init ion)\[dq]\f[R]
+.IP
+.EX
+NOTE: Usage is different; see ION SHELL section below.
+.EE
 .TP
 PowerShell:
 \f[CR]Invoke\-Expression (sh \[dq]/path/to/srcenv\[dq] init pwsh)\f[R]
@@ -266,6 +270,16 @@ cache terminal capabilities in the
 For non\-standard integration, use \f[CR]\[ga]\f[R]srcenv rc <shell>
 [\-\-cmd name] [\-\-sh sh] [\-\- options]\f[CR]\[ga]\f[R] to output what
 needs to be added to your shell\[cq]s configuration file.
+.SH ION SHELL
+ion shell implements variadic functions using the array syntax
+\f[CR]\[ga]\f[R][\&...]\f[CR]\[ga]\f[R].
+.TP
+\f[CR]\[ga]\f[R]src\f[CR]\[ga]\f[R] arguments must be provided inside brackets.
+e.g.\ \f[CR]\[ga]\f[R]src [ project.env ]\f[CR]\[ga]\f[R] or
+\f[CR]\[ga]\f[R]src [ \-\-help ]\f[CR]\[ga]\f[R]
+.PP
+WARNING: ion shell has no way to unset environment variables; they are
+instead set to an empty string.
 .SH EXAMPLES
 The following examples show how to source \f[CR].env\f[R] in different
 shells:
