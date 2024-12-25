@@ -477,7 +477,8 @@ setformat() {
         env|systemd)     fmt '\($k)=\(.[$k]|@sh)' \
                              '\($k)=' ;;
         json)            format=. ;;
-        *)               return 1 ;;
+        '')              return 1 ;;
+        *)               fmt "${1%\?\?*}" "${1#*\?\?}" ;;
     esac
 }
 
@@ -711,9 +712,9 @@ while [ $# -gt 0 ] && [ "$1" != -- ]; do
                           exclude="$exclude.$value, "; shift ;;
 
         -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
-                         setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
+                         setformat "$value"; shift ;;
         -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
-                         setformat "$value" || fmt "${value%\?\?*}" "${value#*\?\?}"; shift ;;
+                         setformat "$value"; shift ;;
 
         -b|--backup)   backup=1; clear=;  input=1;  shift ;;
         -r|--restore)  restore=1;         action=1; shift ;;
