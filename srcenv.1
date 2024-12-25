@@ -51,6 +51,9 @@ Format the output as an Ash/Dash script.
 bash
 Format the output as a Bash script.
 .TP
+clink
+Format the output as a Clink/Windows Command shell script.
+.TP
 cmd, command
 Format the output as a Windows Command shell script.
 .TP
@@ -240,6 +243,9 @@ Xonsh:
 .TP
 Windows Command shell \f[I](HKCU\[rs]SOFTWARE\[rs]Microsoft\[rs]Command Processor\[rs]AutoRun)\f[R]:
 \f[CR]\[at]echo off & sh \[dq]/path/to/srcenv\[dq] init cmd > %TEMP%\[rs]srcenv.init.cmd && call %TEMP%\[rs]srcenv.init.cmd & del %TEMP%\[rs]srcenv.init.cmd & echo on\f[R]
+.TP
+Windows Command shell (Clink) \f[I](%LOCALAPPDATA%\[rs]clink\[rs]srcenv.lua)\f[R]:
+\f[CR]os.execute(io.popen(\[aq]sh /path/to/srcenv init clink\[aq]):read(\[aq]*a\[aq]))\f[R]
 .SS Tips
 .TP
 To use a different command name (e.g.\ \f[CR]\[ga]\f[R]magicenv\f[CR]\[ga]\f[R]), add \f[CR]\[ga]\f[R]\-\-cmd magicenv\f[CR]\[ga]\f[R]. You can also pass different arguments to srcenv with \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R] at the end. Without \f[CR]\[ga]\f[R]\-\-\f[CR]\[ga]\f[R], the default options are \f[CR]\[ga]\f[R]\-\-backup \-\-restore \-\-verbose\f[CR]\[ga]\f[R].

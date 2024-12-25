@@ -51,6 +51,10 @@ bash
 
 :   Format the output as a Bash script.
 
+clink
+
+:   Format the output as a Clink/Windows Command shell script.
+
 cmd, command
 
 :   Format the output as a Windows Command shell script.
@@ -298,6 +302,10 @@ Xonsh:
 Windows Command shell _(HKCU\\SOFTWARE\\Microsoft\\Command Processor\\AutoRun)_:
 
 :   `@echo off & sh "/path/to/srcenv" init cmd > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on`
+
+Windows Command shell (Clink) _(%LOCALAPPDATA%\\clink\\srcenv.lua)_:
+
+:   `os.execute(io.popen('sh /path/to/srcenv init clink'):read('*a'))`
 
 Tips
 ----

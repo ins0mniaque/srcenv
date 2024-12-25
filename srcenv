@@ -77,6 +77,7 @@ ${BOLD}${UNDERLINE}Commands${NORMAL}:
 ${BOLD}${UNDERLINE}Shells${NORMAL}:
   ${BOLD}ash, dash         ${NORMAL}Format the output as an Ash/Dash script
   ${BOLD}bash              ${NORMAL}Format the output as a Bash script
+  ${BOLD}clink             ${NORMAL}Format the output as a Clink/Windows Command shell script
   ${BOLD}cmd, command      ${NORMAL}Format the output as a Windows Command shell script
   ${BOLD}csh, tcsh         ${NORMAL}Format the output as a Csh/Tcsh script
   ${BOLD}elvish            ${NORMAL}Format the output as an Elvish script
@@ -329,7 +330,7 @@ init() {
     name=src; sh=; opts='--backup --restore --verbose'
 
     case $shell in
-        pwsh|powershell|cmd|command) sh='sh' ;;
+        clink|cmd|command|pwsh|powershell) sh='sh' ;;
     esac
 
     initrc "$@" || exit $?
@@ -345,6 +346,8 @@ init() {
         ksh|pdksh|mksh|\
         posix|sh|\
         zsh)             echo "$name() { eval \"\$($srcenv \"\$@\")\"; }" ;;
+        clink|\
+        cmd|command)     echo "DOSKEY $name=@echo off \$T $srcenv \$* \$G %TEMP%\srcenv.$name.cmd \$T\$T call %TEMP%\srcenv.$name.cmd \$T del %TEMP%\srcenv.$name.cmd \$T echo on" ;;
         csh|tcsh)        if [ -e /dev/stdin ]; then
                              echo "alias $name '$srcenv \!* | source /dev/stdin'"
                          else
@@ -356,7 +359,6 @@ init() {
         murex)           echo "function $name { $srcenv @PARAMS -> source }" ;;
         nu|nushell)      echo "def --env --wrapped $name [...args] { ^$srcenv ...(\$args) | from json | default {} | load-env }" ;;
         pwsh|powershell) echo "function $name { \$script=(($srcenv \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
-        cmd|command)     echo "DOSKEY $name=@echo off \$T $srcenv \$* \$G %TEMP%\srcenv.$name.cmd \$T\$T call %TEMP%\srcenv.$name.cmd \$T del %TEMP%\srcenv.$name.cmd \$T echo on" ;;
         xonsh)           echo "aliases['$name'] = 'execx(\$($srcenv @(\$args)))'" ;;
         launchd|\
         systemd|\
@@ -380,10 +382,12 @@ rc() {
         bash|dash|\
         ksh|pdksh|mksh|\
         zsh)             echo "source <($srcenv)" ;;
-        cmd|command)     echo 'rem Initialize:'
+        clink)           printf '%s\n' '-- Add to %LOCALAPPDATA%\clink\srcenv.lua'
+                         printf '%s\n' "os.execute(io.popen('sh $srcenv'):read('*a'))" ;;
+        cmd|command)     echo 'rem Initialize'
                          echo "@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on"
                          echo
-                         echo 'rem AutoRun:'
+                         echo 'rem AutoRun'
                          echo "reg add \"HKCU\\SOFTWARE\\Microsoft\\Command Processor\" /v AutoRun /t REG_SZ /d \"@echo off & sh $srcenv > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on\"" ;;
         csh|tcsh)        if [ -e /dev/stdin ]; then
                              echo "$srcenv | source /dev/stdin"
@@ -445,6 +449,7 @@ setformat() {
         posix|sh|\
         zsh)             fmt 'export \($k)=\(.[$k]|@sh)' \
                              'unset \($k)' ;;
+        clink|\
         cmd|command)     fmt 'set \($k)=\(.[$k] | gsub("\n"; "%\\n%"))' \
                              'set \($k)='
                          prefix='"@echo off\n\n(set \\n=^^^\n\n^\n\n)\n\n" + (['
@@ -657,6 +662,7 @@ case $1 in
     ksh|pdksh|mksh|\
     posix|sh|\
     zsh|\
+    clink|\
     cmd|command|\
     csh|tcsh|\
     elvish|\
@@ -757,7 +763,7 @@ if [ -z "$format" ]; then
     noformat; usage; help; exit 2
 elif [ -n "$COMSPEC" ]; then
     case $shell in
-        cmd|command|pwsh|powershell) ;;
+        clink|cmd|command|pwsh|powershell) ;;
         *) fixpath=1 ;;
     esac
 fi

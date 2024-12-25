@@ -147,6 +147,7 @@ To add the `src` command, add the following to your shell's configuration file:
 | PowerShell      | `Invoke-Expression (sh "/path/to/srcenv" init pwsh)`  |
 | Xonsh           | `execx($(srcenv init xonsh))`                         |
 | Windows Command | `@echo off & sh "/path/to/srcenv" init cmd > %TEMP%\srcenv.init.cmd && call %TEMP%\srcenv.init.cmd & del %TEMP%\srcenv.init.cmd & echo on` _(HKCU\SOFTWARE\Microsoft\Command Processor\AutoRun)_ |
+| Windows Command (Clink) | `os.execute(io.popen('sh /path/to/srcenv init clink'):read('*a'))` _(%LOCALAPPDATA%\\clink\\srcenv.lua)_ |
 
 > [!NOTE]
 > To use a different command name _(e.g. `magicenv`)_, add `--cmd magicenv`.
@@ -186,7 +187,7 @@ For more advanced usage see the [srcenv(1) manpage](https://github.com/ins0mniaq
 
 ## Roadmap
 
-- [ ] Add [Clink](https://chrisant996.github.io/clink/clink.html) support
+- [x] ~~Add [Clink](https://chrisant996.github.io/clink/clink.html) support~~
 - [x] ~~Add [ion](https://gitlab.redox-os.org/redox-os/ion) support~~
 - [x] ~~Add [Xonsh](https://xon.sh) support~~
 - [ ] Automatic mode _(à la [direnv](https://direnv.net))_
