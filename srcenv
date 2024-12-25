@@ -473,7 +473,7 @@ setformat() {
         xonsh)           fmt '    $\($k) = \(.[$k]|@json)' \
                              '    del $\($k)'
                          prefix='"with ${...}.swap(UPDATE_OS_ENVIRON=True):\n" + (['
-                         suffix='] | join("\n"))' ;;
+                         suffix='] | join("\n")) + "\n    pass"' ;;
         env|systemd)     fmt '\($k)=\(.[$k]|@sh)' \
                              '\($k)=' ;;
         json)            format=. ;;

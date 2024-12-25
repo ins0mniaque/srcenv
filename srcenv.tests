@@ -644,6 +644,21 @@ EOF
 set -gx SRCENV_RESTORE '{"SRCENV_RESTORE":null,"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null}'
 EOF
 
+{ ion_output=$(cat); } << 'EOF'
+export SRCENV_TEST_A='6'
+export SRCENV_TEST_B='7'
+export SRCENV_TEST_C='42'
+export SRCENV_TEST_ESCAPE='$NOT_EXPANDED\t\r\n'\''"!x$(p)${b}"'\'''
+export SRCENV_TEST_MULTILINE='
+6
+7
+42'
+EOF
+
+{ ion_backup_output=$(cat); } << 'EOF'
+export SRCENV_RESTORE='{"SRCENV_RESTORE":null,"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null}'
+EOF
+
 { launchd_output=$(cat); } << 'EOF'
 launchctl setenv SRCENV_TEST_A '6'
 launchctl setenv SRCENV_TEST_B '7'
@@ -699,6 +714,21 @@ EOF
 
 { pwsh_backup_output=$(cat); } << 'EOF'
 $Env:SRCENV_RESTORE = '{"SRCENV_RESTORE":null,"SRCENV_TEST_A":null,"SRCENV_TEST_B":null,"SRCENV_TEST_C":null,"SRCENV_TEST_ESCAPE":null,"SRCENV_TEST_MULTILINE":null}'
+EOF
+
+xonsh_prefix='with ${...}.swap(UPDATE_OS_ENVIRON=True):'
+xonsh_suffix='    pass'
+
+{ xonsh_output=$(cat); } << 'EOF'
+    $SRCENV_TEST_A = "6"
+    $SRCENV_TEST_B = "7"
+    $SRCENV_TEST_C = "42"
+    $SRCENV_TEST_ESCAPE = "$NOT_EXPANDED\\t\\r\\n'\"!x$(p)${b}\"'"
+    $SRCENV_TEST_MULTILINE = "\n6\n7\n42"
+EOF
+
+{ xonsh_backup_output=$(cat); } << 'EOF'
+    $SRCENV_RESTORE = "{\"SRCENV_RESTORE\":null,\"SRCENV_TEST_A\":null,\"SRCENV_TEST_B\":null,\"SRCENV_TEST_C\":null,\"SRCENV_TEST_ESCAPE\":null,\"SRCENV_TEST_MULTILINE\":null}"
 EOF
 
 format='--format '\''\($k)☕\(.[$k])??\($k)☕'\'
@@ -834,18 +864,21 @@ run_output_tests() {
     run "$1" "$2 posix $env_input"      "$posix_output"
     run "$1" "$2 sh $env_input"         "$posix_output"
     run "$1" "$2 zsh $env_input"        "$posix_output"
+    run "$1" "$2 clink $env_input"      "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 cmd $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 command $env_input"    "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 csh $env_input"        "$csh_output"
     run "$1" "$2 tcsh $env_input"       "$csh_output"
     run "$1" "$2 elvish $env_input"     "$elvish_output"
     run "$1" "$2 fish $env_input"       "$fish_output"
+    run "$1" "$2 ion $env_input"        "$ion_output"
     run "$1" "$2 launchd $env_input"    "$launchd_output"
     run "$1" "$2 murex $env_input"      "$murex_output"
     run "$1" "$2 nu $env_input"         "$nu_output"
     run "$1" "$2 nushell $env_input"    "$nu_output"
     run "$1" "$2 pwsh $env_input"       "$pwsh_output"
     run "$1" "$2 powershell $env_input" "$pwsh_output"
+    run "$1" "$2 xonsh $env_input"      "$xonsh_prefix${LF}$xonsh_output${LF}$xonsh_suffix"
     run "$1" "$2 systemd $env_input"    "$env_output"
     run "$1" "$2 env $env_input"        "$env_output"
     run "$1" "$2 json $env_input"       "$json_output"
@@ -859,18 +892,21 @@ run_output_tests() {
     run "$1" "$2 --format posix $env_input"      "$posix_output"
     run "$1" "$2 --format sh $env_input"         "$posix_output"
     run "$1" "$2 --format zsh $env_input"        "$posix_output"
+    run "$1" "$2 --format clink $env_input"      "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 --format cmd $env_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 --format command $env_input"    "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 --format csh $env_input"        "$csh_output"
     run "$1" "$2 --format tcsh $env_input"       "$csh_output"
     run "$1" "$2 --format elvish $env_input"     "$elvish_output"
     run "$1" "$2 --format fish $env_input"       "$fish_output"
+    run "$1" "$2 --format ion $env_input"        "$ion_output"
     run "$1" "$2 --format launchd $env_input"    "$launchd_output"
     run "$1" "$2 --format murex $env_input"      "$murex_output"
     run "$1" "$2 --format nu $env_input"         "$nu_output"
     run "$1" "$2 --format nushell $env_input"    "$nu_output"
     run "$1" "$2 --format pwsh $env_input"       "$pwsh_output"
     run "$1" "$2 --format powershell $env_input" "$pwsh_output"
+    run "$1" "$2 --format xonsh $env_input"      "$xonsh_prefix${LF}$xonsh_output${LF}$xonsh_suffix"
     run "$1" "$2 --format systemd $env_input"    "$env_output"
     run "$1" "$2 --format env $env_input"        "$env_output"
     run "$1" "$2 --format json $env_input"       "$json_output"
@@ -883,18 +919,21 @@ run_output_tests() {
     run "$1" "$2 posix --backup $env_input"      "$posix_backup_output${LF}$posix_output"
     run "$1" "$2 sh --backup $env_input"         "$posix_backup_output${LF}$posix_output"
     run "$1" "$2 zsh --backup $env_input"        "$posix_backup_output${LF}$posix_output"
+    run "$1" "$2 clink --backup $env_input"      "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 cmd --backup $env_input"        "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 command --backup $env_input"    "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 csh --backup $env_input"        "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 tcsh --backup $env_input"       "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 elvish --backup $env_input"     "$elvish_backup_output${LF}$elvish_output"
     run "$1" "$2 fish --backup $env_input"       "$fish_backup_output${LF}$fish_output"
+    run "$1" "$2 ion --backup $env_input"        "$ion_backup_output${LF}$ion_output"
     run "$1" "$2 launchd --backup $env_input"    "$launchd_backup_output${LF}$launchd_output"
     run "$1" "$2 murex --backup $env_input"      "$murex_backup_output${LF}$murex_output"
     run "$1" "$2 nu --backup $env_input"         "$nu_backup_output${LF}$nu_output"
     run "$1" "$2 nushell --backup $env_input"    "$nu_backup_output${LF}$nu_output"
     run "$1" "$2 pwsh --backup $env_input"       "$pwsh_backup_output${LF}$pwsh_output"
     run "$1" "$2 powershell --backup $env_input" "$pwsh_backup_output${LF}$pwsh_output"
+    run "$1" "$2 xonsh --backup $env_input"      "$xonsh_prefix${LF}$xonsh_backup_output${LF}$xonsh_output${LF}$xonsh_suffix"
     run "$1" "$2 systemd --backup $env_input"    "$env_backup_output${LF}$env_output"
     run "$1" "$2 env --backup $env_input"        "$env_backup_output${LF}$env_output"
     run "$1" "$2 json --backup $env_input"       "$json_backup_output"
@@ -908,18 +947,21 @@ run_output_tests() {
     run "$1" "$2 posix --local $env_input"      ''
     run "$1" "$2 sh --local $env_input"         ''
     run "$1" "$2 zsh --local $env_input"        ''
+    run "$1" "$2 clink --local $env_input"      "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 cmd --local $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 command --local $env_input"    "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 csh --local $env_input"        ''
     run "$1" "$2 tcsh --local $env_input"       ''
     run "$1" "$2 elvish --local $env_input"     ''
     run "$1" "$2 fish --local $env_input"       ''
+    run "$1" "$2 ion --local $env_input"        ''
     run "$1" "$2 launchd --local $env_input"    ''
     run "$1" "$2 murex --local $env_input"      ''
     run "$1" "$2 nu --local $env_input"         ''
     run "$1" "$2 nushell --local $env_input"    ''
     run "$1" "$2 pwsh --local $env_input"       ''
     run "$1" "$2 powershell --local $env_input" ''
+    run "$1" "$2 xonsh --local $env_input"      "$xonsh_prefix${LF}${LF}$xonsh_suffix"
     run "$1" "$2 systemd --local $env_input"    ''
     run "$1" "$2 env --local $env_input"        ''
     run "$1" "$2 json --local $env_input"       '{}'
@@ -933,18 +975,21 @@ run_output_tests() {
     run "$1" "$2 posix --local --backup $env_input"      ''
     run "$1" "$2 sh --local --backup $env_input"         ''
     run "$1" "$2 zsh --local --backup $env_input"        ''
+    run "$1" "$2 clink --local --backup $env_input"      "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 cmd --local --backup $env_input"        "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 command --local --backup $env_input"    "$cmd_output_prefix${LF}${LF}$cmd_output_suffix"
     run "$1" "$2 csh --local --backup $env_input"        ''
     run "$1" "$2 tcsh --local --backup $env_input"       ''
     run "$1" "$2 elvish --local --backup $env_input"     ''
     run "$1" "$2 fish --local --backup $env_input"       ''
+    run "$1" "$2 ion --local --backup $env_input"        ''
     run "$1" "$2 launchd --local --backup $env_input"    ''
     run "$1" "$2 murex --local --backup $env_input"      ''
     run "$1" "$2 nu --local --backup $env_input"         ''
     run "$1" "$2 nushell --local --backup $env_input"    ''
     run "$1" "$2 pwsh --local --backup $env_input"       ''
     run "$1" "$2 powershell --local --backup $env_input" ''
+    run "$1" "$2 xonsh --local --backup $env_input"      "$xonsh_prefix${LF}${LF}$xonsh_suffix"
     run "$1" "$2 systemd --local --backup $env_input"    ''
     run "$1" "$2 env --local --backup $env_input"        ''
     run "$1" "$2 json --local --backup $env_input"       '{}'
@@ -958,18 +1003,21 @@ run_output_tests() {
     run "$1" "$2 posix $posix_input"      "$posix_output"
     run "$1" "$2 sh $posix_input"         "$posix_output"
     run "$1" "$2 zsh $posix_input"        "$posix_output"
+    run "$1" "$2 clink $posix_input"      "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 cmd $posix_input"        "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 command $posix_input"    "$cmd_output_prefix${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 csh $posix_input"        "$csh_output"
     run "$1" "$2 tcsh $posix_input"       "$csh_output"
     run "$1" "$2 elvish $posix_input"     "$elvish_output"
     run "$1" "$2 fish $posix_input"       "$fish_output"
+    run "$1" "$2 ion $posix_input"        "$ion_output"
     run "$1" "$2 launchd $posix_input"    "$launchd_output"
     run "$1" "$2 murex $posix_input"      "$murex_output"
     run "$1" "$2 nu $posix_input"         "$nu_output"
     run "$1" "$2 nushell $posix_input"    "$nu_output"
     run "$1" "$2 pwsh $posix_input"       "$pwsh_output"
     run "$1" "$2 powershell $posix_input" "$pwsh_output"
+    run "$1" "$2 xonsh $posix_input"      "$xonsh_prefix${LF}$xonsh_output${LF}$xonsh_suffix"
     run "$1" "$2 systemd $posix_input"    "$env_output"
     run "$1" "$2 env $posix_input"        "$env_output"
     run "$1" "$2 json $posix_input"       "$json_output"
@@ -983,18 +1031,21 @@ run_output_tests() {
     run "$1" "$2 posix --backup $posix_input"      "$posix_backup_output${LF}$posix_output"
     run "$1" "$2 sh --backup $posix_input"         "$posix_backup_output${LF}$posix_output"
     run "$1" "$2 zsh --backup $posix_input"        "$posix_backup_output${LF}$posix_output"
+    run "$1" "$2 clink --backup $posix_input"      "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 cmd --backup $posix_input"        "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 command --backup $posix_input"    "$cmd_output_prefix${LF}$cmd_backup_output${LF}$cmd_output${LF}$cmd_output_suffix"
     run "$1" "$2 csh --backup $posix_input"        "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 tcsh --backup $posix_input"       "$csh_backup_output${LF}$csh_output"
     run "$1" "$2 elvish --backup $posix_input"     "$elvish_backup_output${LF}$elvish_output"
     run "$1" "$2 fish --backup $posix_input"       "$fish_backup_output${LF}$fish_output"
+    run "$1" "$2 ion --backup $posix_input"        "$ion_backup_output${LF}$ion_output"
     run "$1" "$2 launchd --backup $posix_input"    "$launchd_backup_output${LF}$launchd_output"
     run "$1" "$2 murex --backup $posix_input"      "$murex_backup_output${LF}$murex_output"
     run "$1" "$2 nu --backup $posix_input"         "$nu_backup_output${LF}$nu_output"
     run "$1" "$2 nushell --backup $posix_input"    "$nu_backup_output${LF}$nu_output"
     run "$1" "$2 pwsh --backup $posix_input"       "$pwsh_backup_output${LF}$pwsh_output"
     run "$1" "$2 powershell --backup $posix_input" "$pwsh_backup_output${LF}$pwsh_output"
+    run "$1" "$2 xonsh --backup $posix_input"      "$xonsh_prefix${LF}$xonsh_backup_output${LF}$xonsh_output${LF}$xonsh_suffix"
     run "$1" "$2 systemd --backup $posix_input"    "$env_backup_output${LF}$env_output"
     run "$1" "$2 env --backup $posix_input"        "$env_backup_output${LF}$env_output"
     run "$1" "$2 json --backup $posix_input"       "$json_backup_output"
