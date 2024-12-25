@@ -1249,19 +1249,21 @@ run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershe
 run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershell $path_input"         'powershell')" '{}'
 run "$powershell" "powershell -c $(script "$powershell_restore_script" "powershell \"$dir_path_input\"" 'powershell')" '{}'
 
+# NOTE: Xonsh somehow runs srcenv in the background and ends up suspending the job because of tty output
+#       'echo | xonsh -c' instead of 'xonsh -c' fixes this problem
 xonsh=$(detect xonsh) || msg warn 'Xonsh not found; skipping tests...'
-run "$xonsh" "xonsh -c $(script "$xonsh_script"         "xonsh $env_input"              )" "$json_output"
-run "$xonsh" "xonsh -c $(script "$xonsh_script"         "xonsh $posix_input"            )" "$json_output"
-run "$xonsh" "xonsh -c $(script "$xonsh_script"         "xonsh $path_input"             )" "$(when "$xonsh" xonsh -c "$json_path_output_cmd")"
-run "$xonsh" "xonsh -c $(script "$xonsh_script"         "xonsh '$dir_path_input'"       )" "$(when "$xonsh" cd "${dir_path_input%/*}" && xonsh -c "$json_path_output_cmd")"
-run "$xonsh" "xonsh -c $(script "$xonsh_init_script"    'xonsh' "$env_input"            )" "$json_backup_output"
-run "$xonsh" "xonsh -c $(script "$xonsh_init_script"    'xonsh' "$posix_input"          )" "$json_backup_output"
-run "$xonsh" "xonsh -c $(script "$xonsh_init_script"    'xonsh' "$path_input"           )" "$(when "$xonsh" xonsh -c "$json_path_backup_output_cmd")"
-run "$xonsh" "xonsh -c $(script "$xonsh_init_script"    'xonsh' "'$dir_path_input'"     )" "$(when "$xonsh" cd "${dir_path_input%/*}" && xonsh -c "$json_path_backup_output_cmd")"
-run "$xonsh" "xonsh -c $(script "$xonsh_restore_script" "xonsh $env_input"        'xonsh')" '{}'
-run "$xonsh" "xonsh -c $(script "$xonsh_restore_script" "xonsh $posix_input"      'xonsh')" '{}'
-run "$xonsh" "xonsh -c $(script "$xonsh_restore_script" "xonsh $path_input"       'xonsh')" '{}'
-run "$xonsh" "xonsh -c $(script "$xonsh_restore_script" "xonsh '$dir_path_input'" 'xonsh')" '{}'
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_script"         "xonsh $env_input"              )" "$json_output"
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_script"         "xonsh $posix_input"            )" "$json_output"
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_script"         "xonsh $path_input"             )" "$(when "$xonsh" xonsh -c "$json_path_output_cmd")"
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_script"         "xonsh '$dir_path_input'"       )" "$(when "$xonsh" cd "${dir_path_input%/*}" && xonsh -c "$json_path_output_cmd")"
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_init_script"    'xonsh' "$env_input"            )" "$json_backup_output"
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_init_script"    'xonsh' "$posix_input"          )" "$json_backup_output"
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_init_script"    'xonsh' "$path_input"           )" "$(when "$xonsh" xonsh -c "$json_path_backup_output_cmd")"
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_init_script"    'xonsh' "'$dir_path_input'"     )" "$(when "$xonsh" cd "${dir_path_input%/*}" && xonsh -c "$json_path_backup_output_cmd")"
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_restore_script" "xonsh $env_input"        'xonsh')" '{}'
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_restore_script" "xonsh $posix_input"      'xonsh')" '{}'
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_restore_script" "xonsh $path_input"       'xonsh')" '{}'
+run "$xonsh" "echo | xonsh -c $(script "$xonsh_restore_script" "xonsh '$dir_path_input'" 'xonsh')" '{}'
 
 # NOTE: Running cmd inside sh messes up the shell
 #       • 'run' can only be used once afterwards
