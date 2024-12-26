@@ -23,6 +23,58 @@ jobs:
       - name: Copy srcenv
         run: cp srcenv release
 
+      - name: Build AUR Package
+        uses: docker://archlinux:latest
+        with:
+          entrypoint: /usr/bin/bash
+          args: |
+            -c "cd /github/workspace
+
+            pacman -Syu --noconfirm --needed base base-devel devtools
+            useradd -d /home/makepkg makepkg
+            mkdir -p /home/makepkg/
+            chown -R makepkg:users /home/makepkg
+            echo \"makepkg ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/makepkg
+
+            mkdir -p aurbuild
+            chown -R makepkg:users aurbuild
+
+            TAG=${GITHUB_REF#refs/tags/}
+            URL=\"https://github.com/ins0mniaque/srcenv/archive/refs/tags/$TAG.tar.gz\"
+            VERSION=${TAG#v}
+
+            curl -Ls \"$URL\" -o \"aurbuild/srcenv-$VERSION.tar.gz\"
+
+            SHA256=$(sha256sum \"aurbuild/srcenv-$VERSION.tar.gz\" | cut -c1-64)
+
+            (
+                echo '# Maintainer: Jean-Philippe Leconte <ins0mniaque@gmail.com>'
+                echo
+                echo 'pkgname=srcenv'
+                echo 'pkgver='$VERSION
+                echo 'pkgrel=1'
+                echo \"pkgdesc='A cross-shell tool for sourcing POSIX compliant .env scripts'\"
+                echo \"arch=('any')\"
+                echo \"url='https://github.com/ins0mniaque/srcenv'\"
+                echo \"license=('MIT')\"
+                echo \"source=('$URL')\"
+                echo \"sha256sums=('$SHA256')\"
+                echo \"depends=('jq')\"
+                echo
+                echo 'package() {'
+                echo '	install -D -m755 \"$srcdir/$pkgname-$pkgver/srcenv\"   \"$pkgdir/usr/bin/srcenv\"'
+                echo '	install -D -m644 \"$srcdir/$pkgname-$pkgver/srcenv.1\" \"$pkgdir/usr/share/man/man1/srcenv.1\"'
+                echo '	install -D -m644 \"$srcdir/$pkgname-$pkgver/LICENSE\"  \"$pkgdir/usr/share/licenses/$pkgname/LICENSE\"'
+                echo '}'
+            ) | tee aurbuild/PKGBUILD
+
+            cd aurbuild
+            sudo -u makepkg makepkg --noconfirm -sf
+            sudo -u makepkg makepkg --printsrcinfo > .SRCINFO
+            cd ..
+
+            cp \"aurbuild/srcenv-$VERSION-1-any.pkg.tar.zst\" release"
+
       - name: Build DEB Package
         run: |
           mkdir -p debbuild/DEBIAN
