@@ -322,6 +322,11 @@ string \f[CR]\[ga]\f[R]\[rs](\&...)\f[CR]\[ga]\f[R] where the key is
 A second interpolated string can be appended with the
 \f[CR]\[ga]\f[R]??\f[CR]\[ga]\f[R] delimiter to format null values
 \f[I](unset environment variables)\f[R].
+Additionally, a prefix can be added to the output by adding
+\f[CR]\[ga]\f[R]prefix{{\f[CR]\[ga]\f[R] at the start of the format, and
+a suffix by adding \f[CR]\[ga]\f[R]}}suffix\f[CR]\[ga]\f[R] at the end
+of the format
+(e.g.\ \f[CR]\[ga]\f[R]prefix{{\[rs]($k)=\[rs].[$k]}}suffix\f[CR]\[ga]\f[R]).
 .TP
 Key:
 \f[CR]\[rs]($k)\f[R]

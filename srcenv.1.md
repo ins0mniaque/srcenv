@@ -383,7 +383,7 @@ Windows Command shell:
 FORMAT
 ======
 
-The format is either a shell (e.g. `` ` ``json`` ` ``) or a jq(1) interpolated string `` ` ``\\(...)`` ` `` where the key is `` ` ``$k`` ` ``, and the value `` ` ``.[\$k]`` ` ``. A second interpolated string can be appended with the `` ` ``??`` ` `` delimiter to format null values _(unset environment variables)_.
+The format is either a shell (e.g. `` ` ``json`` ` ``) or a jq(1) interpolated string `` ` ``\\(...)`` ` `` where the key is `` ` ``$k`` ` ``, and the value `` ` ``.[\$k]`` ` ``. A second interpolated string can be appended with the `` ` ``??`` ` `` delimiter to format null values _(unset environment variables)_. Additionally, a prefix can be added to the output by adding `` ` ``prefix{{`` ` `` at the start of the format, and a suffix by adding `` ` ``}}suffix`` ` `` at the end of the format (e.g. `` ` ``prefix{{\\(\$k)=\\.[\$k]}}suffix`` ` ``).
 
 Key:
 

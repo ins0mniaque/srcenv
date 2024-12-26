@@ -442,6 +442,8 @@ fmt() { format='if .[$k] != null then "'$1'" else "'$2'" end'; }
 
 # shellcheck disable=SC2016
 setformat() {
+    prefix=; suffix=
+
     case $1 in
         ash|dash|\
         bash|\
@@ -452,8 +454,8 @@ setformat() {
         clink|\
         cmd|command)     fmt 'set \($k)=\(.[$k] | gsub("\n"; "%\\n%"))' \
                              'set \($k)='
-                         prefix='"@echo off\n\n(set \\n=^^^\n\n^\n\n)\n\n" + (['
-                         suffix='] | join("\n")) + "\n\nset \\n="' ;;
+                         prefix='@echo off\n\n(set \\n=^^^\n\n^\n\n)\n'
+                         suffix='\nset \\n=' ;;
         csh|tcsh)        fmt 'setenv \($k) \(.[$k]|@sh|gsub("\\n"; "\\\n")|gsub("!"; "\\!"))' \
                              'unsetenv \($k)' ;;
         elvish)          fmt 'set-env \($k) \(.[$k]|@sh|gsub("'"'\\\\\\\\''"'"; "'\'\''"))' \
@@ -472,13 +474,17 @@ setformat() {
                              '$Env:\($k) = $null' ;;
         xonsh)           fmt '    $\($k) = \(.[$k]|@json)' \
                              '    del $\($k)'
-                         prefix='"with ${...}.swap(UPDATE_OS_ENVIRON=True):\n" + (['
-                         suffix='] | join("\n")) + "\n    pass"' ;;
+                         prefix='with ${...}.swap(UPDATE_OS_ENVIRON=True):'
+                         suffix='    pass' ;;
         env|systemd)     fmt '\($k)=\(.[$k]|@sh)' \
                              '\($k)=' ;;
         json)            format=. ;;
         '')              return 1 ;;
-        *)               fmt "${1%\?\?*}" "${1#*\?\?}" ;;
+        *)               format=$1
+                         case $format in *\{\{*) prefix=${format%\{\{*}; format=${format#*\{\{} ;; esac
+                         case $format in *\}\}*) suffix=${format#*\}\}}; format=${format%\}\}*} ;; esac
+                         fmt "${format%\?\?*}" \
+                             "${format#*\?\?}" ;;
     esac
 }
 
@@ -503,6 +509,14 @@ build() {
         sort='to_entries | sort_by(.key) | from_entries'
     fi
 
+    [ -n "$prefix" ] && prefix='"'$prefix'\n" + '
+    [ -n "$suffix" ] && suffix=' + "\n'$suffix'"'
+
+    if [ -n "$prefix" ] || [ -n "$suffix" ] || [ -n "$verbose" ]; then
+        prefix="$prefix(["
+        suffix="] | join(\"\n\"))$suffix"
+    fi
+
     [ "$format" = . ] && keys=$sort
     [ -n "$backup"  ] && backup=' | ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
     [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
@@ -513,9 +527,6 @@ build() {
         [ "$format" = . ] && format='keys[] as $k | "  \($k|tojson): \(.[$k]|tojson)"' && \
                              prefix='"{\n" + ([' && \
                              suffix='] | join(",\n")) + "\n}" | if . == "{\n\n}" then "{}" else . end'
-
-        [ -z "$prefix" ] && prefix='(['
-        [ -z "$suffix" ] && suffix='] | join("\n"))'
 
         colors NORMAL BOLD ITALIC DIM RED GREEN YELLOW
 
