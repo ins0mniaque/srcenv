@@ -294,6 +294,16 @@ parse() {
 
 # endregion Help / Usage
 
+# region auto()
+
+autoable() {
+    case $shell in
+        *) return 1 ;;
+    esac
+}
+
+# endregion auto()
+
 # region init() / rc()
 
 arg0=$0
@@ -314,6 +324,9 @@ initrc() {
 
     while [ $# -gt 0 ]; do
         case $1 in
+            --auto)    auto=1; shift ;;
+            --no-auto) auto=;  shift ;;
+            --no-cmd)  name=;  shift ;;
             --cmd)     name=$(parse "$1" "$2" validname)            || exit $?; [ $# -gt 1 ] && shift; shift ;;
             --cmd=*)   name=$(parse "${1%%=*}" "${1#*=}" validname) || exit $?;                        shift ;;
             --sh)      sh=$(parse "$1" "$2" validsh)                || exit $?; [ $# -gt 1 ] && shift; shift ;;
@@ -327,7 +340,9 @@ initrc() {
 }
 
 init() {
-    name=src; sh=; opts='--backup --restore --verbose'
+    auto=; name=src; sh=; opts='--backup --restore --verbose'
+
+    autoable && auto=1
 
     case $shell in
         clink|cmd|command|pwsh|powershell) sh='sh' ;;
@@ -340,6 +355,12 @@ init() {
         *)          srcenv="${sh:+"$sh "}$srcenv $shell $opts --cmd $name" ;;
     esac
 
+    [ -n "$auto" ] && \
+    case $shell in
+        *) nosupport '--auto'; return 1 ;;
+    esac
+
+    [ -n "$name" ] && \
     case $shell in
         ash|dash|\
         bash|\
@@ -360,21 +381,27 @@ init() {
         nu|nushell)      echo "def --env --wrapped $name [...args] { ^$srcenv ...(\$args) | from json | default {} | load-env }" ;;
         pwsh|powershell) echo "function $name { \$script=(($srcenv \$args) -join \"\`n\"); if (\$script) { Invoke-Expression \$script } }" ;;
         xonsh)           echo "aliases['$name'] = 'execx(\$($srcenv @(\$args)))'" ;;
-        launchd|\
-        systemd|\
-        env|json)        nosupport init; return 1 ;;
+        *)               nosupport init; return 1 ;;
     esac
 }
 
 rc() {
-    name=; sh=; opts=
+    auto=2; name=src; sh=; opts=; noauto=; nocmd=
 
     initrc "$@" || exit $?
 
+    [ -z "$auto" ] && noauto=1
+    [ -z "$name" ] && nocmd=1
+    [ "$name" = src ] && name=
+
     case $shell in
         launchd) srcenv="${sh:+"$sh "}'\\'$srcenv\\'' $shell $opts" ;;
-        *)       srcenv="$srcenv init $shell${name:+" --cmd $name"}${sh:+" --sh $sh"}${opts:+" -- $opts"}" ;;
+        *)       srcenv="$srcenv init $shell${noauto:+" --no-auto"}${nocmd:+" --no-cmd"}${name:+" --cmd $name"}${sh:+" --sh $sh"}${opts:+" -- $opts"}" ;;
     esac
+
+    if [ "$auto" = 1 ] && ! autoable; then
+        nosupport '--auto'; return 1
+    fi
 
     case $shell in
         ash|posix|sh|\
@@ -415,8 +442,7 @@ rc() {
                          echo "source ${name:-srcenv}.init.nu" ;;
         pwsh|powershell) echo "Invoke-Expression (sh $srcenv)" ;;
         xonsh)           echo "execx(\$($srcenv))" ;;
-        systemd|\
-        env|json)        nosupport rc; return 1 ;;
+        *)               nosupport rc; return 1 ;;
     esac
 }
 
