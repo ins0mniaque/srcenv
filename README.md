@@ -28,7 +28,7 @@ changed since the snapshot, with support for reverting those changes.
 brew install ins0mniaque/srcenv/srcenv
 ```
 
-### Debian / RPM packages
+### Arch / Debian / RPM packages
 
 Download the latest packages from the [GitHub release page](https://github.com/ins0mniaque/srcenv/releases).
 
