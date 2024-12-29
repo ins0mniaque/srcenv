@@ -145,6 +145,14 @@ nojq() {
     out "${BOLD}${RED}error:${NORMAL} ${YELLOW}jq${NORMAL} not found; see https://jqlang.github.io/jq/download for installation options"
 }
 
+nosha() {
+    colors NORMAL BOLD RED GREEN YELLOW
+
+    [ -n "$SRCENV_HASH" ] && \
+    out "${BOLD}${YELLOW}warn: ${NORMAL} ${YELLOW}hash command${NORMAL} is set to ${GREEN}$SRCENV_HASH${NORMAL}; unset ${YELLOW}SRCENV_HASH${NORMAL} to revert to default hash command"
+    out "${BOLD}${RED}error:${NORMAL} ${YELLOW}shasum${NORMAL} or ${YELLOW}sha256sum${NORMAL} or ${YELLOW}openssl${NORMAL} not found; install any or set SRCENV_HASH for custom hash command"
+}
+
 noformat() {
     colors NORMAL BOLD RED
 
@@ -389,7 +397,15 @@ cache() {
 }
 
 sha() {
-    hash=$(sha256sum "$1")
+    if [ -z "$sha" ]; then
+        if   command -v sha256sum > /dev/null; then sha=sha256sum
+        elif command -v shasum    > /dev/null; then sha='shasum -a 256'
+        elif command -v openssl   > /dev/null; then sha='openssl dgst -sha256'
+        else nosha; return 1
+        fi
+    fi
+
+    hash=$($sha "$1")
     hash=${hash%% *}
 
     if [ -z "$2" ]; then
@@ -927,6 +943,7 @@ main() {
 
 arg0=$0
 jq=${SRCENV_JQ:-jq}
+sha=$SRCENV_HASH
 dir=$PWD
 cmd=
 
