@@ -707,7 +707,7 @@ build() {
     [ -n "$backup"  ] && backup=' | ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | if .SRCENV_AUTO_DIR != null then . += { SRCENV_AUTO_DIR: null } else . end | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
     [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
     [ -n "$clear"   ] && restore="$restore{ SRCENV_RESTORE: null } | . += "
-    [ -n "$fixpath" ] && fixpath=' | if .PATH then .PATH = (.PATH | gsub("\\\\"; "/") | gsub("(?<drive>.):/"; "/" + (.drive | ascii_downcase) + "/") | gsub(";"; ":")) end | if .SRCENV_AUTO_DIR then .SRCENV_AUTO_DIR = (.SRCENV_AUTO_DIR | gsub("\\\\"; "/") | gsub("(?<drive>.):/"; "/" + (.drive | ascii_downcase) + "/") | gsub(";"; ":")) end'
+    [ -n "$fixpath" ] && fixpath=' | def fixpath: . | gsub("\\\\"; "/") | gsub("(?<sep>^|;|:)(?<drive>[[:alpha:]]):/"; "/" + (.sep + .drive | ascii_downcase) + "/") | gsub(";"; ":"); if .PATH then .PATH |= fixpath end | if .SRCENV_AUTO_DIR then .SRCENV_AUTO_DIR |= fixpath end'
 
     if [ -n "$verbose" ]; then
         [ "$format" = . ] && format='keys[] as $k | "  \($k|tojson): \(.[$k]|tojson)"' && \
