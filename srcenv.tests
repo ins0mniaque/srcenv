@@ -161,7 +161,9 @@ indent() {
 
 # region Setup
 
+export SRCENV_COLOR=always
 export SRCENV_DATA_DIR="$PWD"
+export SRCENV_JQ_BINARY=${COMSPEC:+1}
 
 tee auto.json > /dev/null << EOF
 {
@@ -559,6 +561,13 @@ json_auto_output="{
   \"SRCENV_TEST_AUTO\": \"auto\"
 }"
 
+if [ -n "$COMSPEC" ]; then
+    json_auto_output=$(printf '%s' "$json_auto_output" | jq ${SRCENV_JQ_BINARY:+-b} '
+.SRCENV_AUTO_DIR  = (.SRCENV_AUTO_DIR  | gsub("^/(?<drive>.)/"; (.drive | ascii_upcase) + ":/")) |
+.SRCENV_AUTO_DIRS = (.SRCENV_AUTO_DIRS | gsub(":"; ";") | gsub("(?<sep>^|;)/(?<drive>[a-z])/"; (.sep + .drive | ascii_upcase) + ":\\") | gsub("/"; "\\")) |
+.SRCENV_AUTO_PWD  = (.SRCENV_AUTO_PWD  | gsub("^/(?<drive>.)/"; (.drive | ascii_upcase) + ":/"))')
+fi
+
 { json_output=$(cat); } << 'EOF'
 {
   "SRCENV_TEST_A": "6",
@@ -805,9 +814,6 @@ EOF
 # endregion Outputs
 
 # region Tests
-
-export SRCENV_COLOR=always
-export SRCENV_JQ_BINARY=${COMSPEC:+1}
 
 [ -t 0 ] && no_stdin=1 || no_stdin=
 
