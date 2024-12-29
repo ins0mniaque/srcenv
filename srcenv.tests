@@ -1399,10 +1399,10 @@ run "$xonsh" "echo | xonsh -c $(script "$xonsh_restore_script" "xonsh '$dir_path
 # NOTE: Running cmd inside sh messes up the shell
 #       • 'run' can only be used once afterwards
 #       • 'run' must be the last command before 'end'
-cmd=$(detect cmd) || msg warn 'Windows Command shell not found; skipping tests...'
+windows=$(detect cmd) || msg warn 'Windows Command shell not found; skipping tests...'
 
 # shellcheck disable=SC2059
-if [ "$cmd" = 1 ]; then
+if [ "$windows" = 1 ]; then
     printf "$cmd_script"         "cmd $env_input"                "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >  test.cmd.output; rm -f test.cmd
     printf "$cmd_script"         "cmd $posix_input"              "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
     printf "$cmd_script"         "cmd $path_input"               "${SRCENV_JQ_BINARY:+-b}" > test.cmd; cmd '/c test.cmd' >> test.cmd.output; rm -f test.cmd
@@ -1426,8 +1426,11 @@ if [ "$cmd" = 1 ]; then
     rm -f test.cmd "${dir_path_input%/*}/test.cmd"
 fi
 
-run "$cmd" "$(printf 'cat test.cmd.output\nrm -f test.cmd.output test.cmd.json.path.output test.cmd.json.dir.path.output')" \
-           "$json_output${LF}$json_output${LF}$(when "$cmd" cat test.cmd.json.path.output)${LF}$(when "$cmd" cat test.cmd.json.dir.path.output)${LF}$cmd_macro${LF}{}${LF}{}${LF}{}${LF}{}"
+run "$windows" 'cat test.cmd.output' "$json_output${LF}$json_output${LF}$(when "$windows" cat test.cmd.json.path.output)${LF}$(when "$windows" cat test.cmd.json.dir.path.output)${LF}$cmd_macro${LF}{}${LF}{}${LF}{}${LF}{}"
+
+if [ "$windows" = 1 ]; then
+    rm -f test.cmd.output test.cmd.json.path.output test.cmd.json.dir.path.output
+fi
 
 end
 
