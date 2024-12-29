@@ -363,9 +363,9 @@ auto() {
 
     if [ -f "$auto_data" ]; then
         # shellcheck disable=SC2016
-        filter='. | with_entries(select(.key | startswith($path))) | to_entries | sort_by(.key) | first | if .value == null then "ok=0" else "dir=\(.key|@sh)\nargs=\(.value.args|@sh)\nok=1\n" + ([(.value.hashes | to_entries[] | "sha \"$dir/\(.key)\" \"\(.value)\" || ok=")] | join("\n")) end'
+        filter='. | with_entries(select(.key | startswith($path'${COMSPEC:+[1:]}'))) | to_entries | sort_by(.key) | first | if .value == null then "ok=0" else "dir=\(.key|@sh)\nargs=\(.value.args|@sh)\nok=1\n" + ([(.value.hashes | to_entries[] | "sha \"$dir/\(.key)\" \"\(.value)\" || ok=")] | join("\n")) end'
 
-        eval "$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg path "$dir" -r "$filter" "$auto_data")"
+        eval "$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg path "${COMSPEC:+\\}$dir" -r "$filter" "$auto_data")"
     else
         ok=0
     fi
