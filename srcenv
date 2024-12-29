@@ -27,7 +27,7 @@ help() {
     colors NORMAL BOLD
 
     out "
-For listing the command options, use '${cmd:-${0##*/}} ${BOLD}--help${NORMAL}'."
+For listing the command options, use '${cmd:-${arg0##*/}} ${BOLD}--help${NORMAL}'."
 }
 
 man() {
@@ -166,6 +166,35 @@ nosupport() {
     out "${BOLD}${RED}error:${NORMAL} ${BOLD}$1${NORMAL} not supported for shell ${YELLOW}$shell${NORMAL}"
 }
 
+autoskip() {
+    colors NORMAL BOLD DIM GREEN
+
+    out "${BOLD}${DIM}srcenv:${NORMAL} ${GREEN}$dir${NORMAL} is already sourced; skipping"
+}
+
+automiss() {
+    colors NORMAL BOLD DIM RED YELLOW
+
+    out "${BOLD}${DIM}srcenv:${NORMAL} No entry for ${RED}$dir${NORMAL} in ${YELLOW}$auto_data${NORMAL}; updating cache"
+}
+
+autoprompt() {
+    colors NORMAL BOLD DIM GREEN YELLOW
+
+    [ "$dir" != "$PWD" ] && \
+    dirarg=" ${BOLD}--dir '$dir'${NORMAL}${GREEN}" || \
+    dirarg=
+
+    out "${BOLD}${DIM}srcenv:${NORMAL} auto ${YELLOW}$dir${NORMAL} disabled; verify changed files and use '${GREEN}${arg0##*/}$dirarg --auto $args${NORMAL}' to enable"
+    return 1
+}
+
+wronghash() {
+    colors NORMAL BOLD DIM RED GREEN YELLOW
+
+    out "${BOLD}${DIM}srcenv:${NORMAL} ${BOLD}${RED}hash mismatch:${NORMAL} ${YELLOW}${1#"$dir/"}${NORMAL}: ${RED}$3${NORMAL} != ${GREEN}$2${NORMAL}"
+}
+
 invalid() {
     colors NORMAL BOLD RED YELLOW
 
@@ -195,9 +224,9 @@ err() {
                  out "${BOLD}${RED}error:${NORMAL} ${BOLD}Invalid format:${NORMAL} $error" ;;
 
         *) printf '%s\n' "$1" | while IFS= read -r line; do
-               line=${line#"$0": }
+               line=${line#"$arg0": }
                line=${line#line [0-9]*: }
-               line=${line#"$0"\[[0-9]*\]: }
+               line=${line#"$arg0"\[[0-9]*\]: }
 
                out "${BOLD}${RED}error:${NORMAL} $line"
            done ;;
@@ -296,17 +325,83 @@ parse() {
 
 # region auto()
 
+locate() {
+    if   [ -n "$SRCENV_DATA_DIR" ]; then auto_data="$SRCENV_DATA_DIR/auto.json"
+    elif [ -n "$XDG_DATA_HOME" ];   then auto_data="$XDG_DATA_HOME/srcenv/auto.json"
+    elif [ -n "$COMSPEC" ] && \
+         [ -n "$LOCALAPPDATA" ];    then auto_data="$LOCALAPPDATA/srcenv/auto.json"
+    else                                 auto_data="$HOME/.local/share/srcenv/auto.json"
+    fi
+}
+
 autoable() {
     case $shell in
         *) return 1 ;;
     esac
 }
 
+auto() {
+    if [ "$dir" = "$SRCENV_AUTO_DIR" ]; then
+        autoskip; exit 0
+    fi
+
+    locate
+
+    if ! jq=$(command -v "$jq"); then
+        nojq; exit 1
+    fi
+
+    args=; ok=
+
+    if [ -f "$auto_data" ]; then
+        # shellcheck disable=SC2016
+        filter='. | with_entries(select(.key | startswith($path))) | to_entries | sort_by(.key) | first | if .value == null then "ok=0" else "dir=\(.key|@sh)\nargs=\(.value.args|@sh)\nok=1\n" + ([(.value.hashes | to_entries[] | "sha \"$dir/\(.key)\" \"\(.value)\" || ok=")] | join("\n")) end'
+
+        eval "$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg path "$dir" -r "$filter" "$auto_data")"
+    else
+        ok=0
+    fi
+
+    [ -z "$ok" ] && autoprompt && ok=1 && args="--auto $args"
+
+    case $ok in
+        '') set -- --restore --verbose --input "export SRCENV_AUTO_DIR=\$dir" ;;
+        0)  set -- --restore --verbose --input 'unset SRCENV_AUTO_DIR'; automiss; cache ;;
+        1)  # shellcheck disable=SC2086
+            set -- --backup --restore --verbose $args --input "export SRCENV_AUTO_DIR=\$dir" ;;
+    esac
+
+    main --dir "$dir" "$@"
+}
+
+cache() {
+    if ! jq=$(command -v "$jq"); then
+        nojq; exit 1
+    fi
+
+    [ -f "$auto_data" ] && source=$auto_data || source=-n
+
+    setup; build
+    filter='{ SRCENV_AUTO_DIRS: (. // {} | keys | sort_by(length) | join("\n")) }'
+    filter="$prefix$filter | $keys | $format$suffix"
+
+    "$jq" ${SRCENV_JQ_BINARY:+-b} -r "$filter" "$source"
+}
+
+sha() {
+    hash=$(sha256sum "$1")
+    hash=${hash%% *}
+
+    if [ -z "$2" ]; then
+        echo "$hash"
+    elif [ "$hash" != "$2" ]; then
+        wronghash "$@" "$hash"; return 1
+    fi
+}
+
 # endregion auto()
 
 # region init() / rc()
-
-arg0=$0
 
 initrc() {
     case $shell in
@@ -339,10 +434,37 @@ initrc() {
     done
 }
 
+# shellcheck disable=SC2016
+hook() {
+    locate; cache; echo
+
+    printf '%s\n\n' '_srcenv_auto() {
+    exit_code=$?; [ "$SRCENV_AUTO_PWD" = "$PWD" ] && return "$exit_code"
+
+    export SRCENV_AUTO_PWD=$PWD
+    printf '\''%s\n'\'' "$SRCENV_AUTO_DIRS" | while IFS= read -r dir; do
+        case $SRCENV_AUTO_PWD in
+            $dir*) [ "$dir" == "$SRCENV_AUTO_DIR" ]; return $? ;;
+        esac
+    done || eval "$('"$srcenv auto $shell"')"
+
+    return "$exit_code"
+}'
+
+    echo 'case ";${PROMPT_COMMAND[*]:-};" in
+    *\;_srcenv_auto\;*) ;;
+    *) case $(declare -p PROMPT_COMMAND 2>&1) in
+           declare\ -a*) export PROMPT_COMMAND=(_srcenv_auto "${PROMPT_COMMAND[@]}") ;;
+           *)            export PROMPT_COMMAND="_srcenv_auto${PROMPT_COMMAND:+;$PROMPT_COMMAND}" ;;
+       esac ;;
+esac'
+}
+
 init() {
     auto=; name=src; sh=; opts='--backup --restore --verbose'
 
-    autoable && auto=1
+    # TODO: Enable on bump to 1.7.0
+    # autoable && auto=1
 
     case $shell in
         clink|cmd|command|pwsh|powershell) sh='sh' ;;
@@ -350,14 +472,19 @@ init() {
 
     initrc "$@" || exit $?
 
+    [ -n "$auto" ] && \
     case $shell in
-        nu|nushell) srcenv="${sh:+"$sh "}$srcenv json $opts --cmd $name" ;;
-        *)          srcenv="${sh:+"$sh "}$srcenv $shell $opts --cmd $name" ;;
+        bash) hook ;;
+        *)    nosupport --auto; return 1 ;;
     esac
 
     [ -n "$auto" ] && \
+    [ -n "$name" ] && \
+    echo
+
     case $shell in
-        *) nosupport '--auto'; return 1 ;;
+        nu|nushell) srcenv="${sh:+"$sh "}$srcenv json $opts --cmd $name" ;;
+        *)          srcenv="${sh:+"$sh "}$srcenv $shell $opts --cmd $name" ;;
     esac
 
     [ -n "$name" ] && \
@@ -394,14 +521,14 @@ rc() {
     [ -z "$name" ] && nocmd=1
     [ "$name" = src ] && name=
 
+    if [ "$auto" = 1 ] && ! autoable; then
+        nosupport --auto; return 1
+    fi
+
     case $shell in
         launchd) srcenv="${sh:+"$sh "}'\\'$srcenv\\'' $shell $opts" ;;
         *)       srcenv="$srcenv init $shell${noauto:+" --no-auto"}${nocmd:+" --no-cmd"}${name:+" --cmd $name"}${sh:+" --sh $sh"}${opts:+" -- $opts"}" ;;
     esac
-
-    if [ "$auto" = 1 ] && ! autoable; then
-        nosupport '--auto'; return 1
-    fi
 
     case $shell in
         ash|posix|sh|\
@@ -518,6 +645,14 @@ setformat() {
 
 # region run()
 
+setup() {
+    src=src; arg=; input=; action=; colorize=; debug=
+    prefix=; suffix=; exclude=; format=; backup=; restore=; clear=
+    modify=1; export=; sort=1; fixpath=; verbose=
+
+    setformat "$shell"
+}
+
 # shellcheck disable=SC2016
 build() {
     [ -n "$exclude" ] && exclude=" | del(${exclude%, })"
@@ -544,7 +679,7 @@ build() {
     fi
 
     [ "$format" = . ] && keys=$sort
-    [ -n "$backup"  ] && backup=' | ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
+    [ -n "$backup"  ] && backup=' | ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | if .SRCENV_AUTO_DIR != null then . += { SRCENV_AUTO_DIR: null } else . end | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
     [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
     [ -n "$clear"   ] && restore="$restore{ SRCENV_RESTORE: null } | . += "
     [ -n "$fixpath" ] && fixpath=' | if .PATH then .PATH = (.PATH | gsub("\\\\"; "/") | gsub("(?<drive>.):/"; "/" + (.drive | ascii_downcase) + "/") | gsub(";"; ":")) end'
@@ -598,11 +733,16 @@ capture() {
 }
 
 run() {
+    pwd=$PWD
+
+    if [ "$dir" != "$pwd" ]; then
+        cd "$dir" || exit $?
+    fi
+
     if ! jq=$(command -v "$jq"); then
         nojq; exit 1
     fi
 
-    pwd=$PWD
     snapshot=$("$jq" -n env) || exit $?
 
     [ -n "$colorize" ] && "$colorize"
@@ -618,6 +758,10 @@ run() {
             *)       "$src" file "$1"    "$export"             || exit $?; shift ;;
         esac
     done
+
+    if [ "$dir" != "$pwd" ]; then
+        cd "$pwd" || exit $?
+    fi
 
     if [ -n "$verbose" ]; then
         stdout=$(printf "%s\n" "$snapshot" | "$jq" ${SRCENV_JQ_BINARY:+-b} -r "$filter")
@@ -655,7 +799,7 @@ src() {
             *)   . "./$2"       1>&2 || exitcode=$? ;;
         esac
 
-        cd "$pwd" || exitcode=$?
+        cd "$dir" || exitcode=$?
     else
         out "$2: No such file or directory"
         exitcode=2
@@ -686,12 +830,109 @@ json() {
 
 # endregion run()
 
+main() {
+    setup
+
+    while [ $# -gt 0 ] && [ "$1" != -- ]; do
+        arg=1
+        case $1 in
+            --cmd)   cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; arg=; input=; action=; shift ;;
+            --cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             arg=; input=; action=; shift ;;
+
+            --color)         color=$(parse "$1" "$2" validcolor) || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            --color=*)       color=$(parse "${1%%=*}" "${1#*=}" validcolor) || exit $?;             shift ;;
+            --export-colors) colorize=exportcolors;                                       action=1; shift ;;
+            --clear-colors)  colorize=clearcolors;                                        action=1; shift ;;
+
+            -d|--dir)     dir=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; shift ;;
+            -d=*|--dir=*) dir=$(parse "${1%%=*}" "${1#*=}") || exit $?;             shift ;;
+
+            -x|--exclude)     value=$(parse "$1" "$2" validname) || exit $?; [ $# -gt 1 ] && shift
+                              exclude="$exclude.$value, "; shift ;;
+            -x=*|--exclude=*) value=$(parse "${1%%=*}" "${1#*=}" validname) || exit $?
+                              exclude="$exclude.$value, "; shift ;;
+
+            -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
+                             setformat "$value"; shift ;;
+            -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
+                             setformat "$value"; shift ;;
+
+            -b|--backup)   backup=1; clear=;  input=1;  shift ;;
+            -r|--restore)  restore=1;         action=1; shift ;;
+            -c|--clear)    backup=; clear=1;  action=1; shift ;;
+            -n)            backup=; restore=;           shift ;;
+            --no-backup)   backup=;                     shift ;;
+            --no-restore)  restore=;                    shift ;;
+            -m|--modify)        modify=1;               shift ;;
+            -w|--write-protect) modify=;                shift ;;
+            -j|--json)     src=json;          input=1;  shift ;;
+            -p|--posix)    src=src;           input=1;  shift ;;
+            -e|--export)   export=--export;   input=1;  shift ;;
+            -l|--local)    export=0;          input=1;  shift ;;
+            -s|--sort)     sort=1;                      shift ;;
+            -u|--unsorted) sort=;                       shift ;;
+            -q|--quiet)    verbose=;                    shift ;;
+            -v|--verbose)  verbose=1;                   shift ;;
+            -h|--help)     header; usage; desc; options; man; exit 0 ;;
+            --version)     version;                           exit 0 ;;
+            --debug)       debug=1;                           shift ;;
+
+            -i|--input)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
+                            set -- "$@" -- --input "$value"; shift ;;
+            -i=*|--input=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
+                            set -- "$@" -- --input "$value"; shift ;;
+            -)              set -- "$@" -- -;                shift ;;
+
+            -[!-]?*) opts=${1#??}; opt=${1%"$opts"}; shift
+                     case $opt in -[!dfix]) opts="-$opts" ;; esac
+                     set -- "$opt" "$opts" "$@" ;;
+            -*)      invalid "$1"; usage; help; exit 2 ;;
+            *)       set -- "$@" -- "$1"; shift ;;
+        esac
+    done
+
+    if [ $# = 0 ]; then
+        if [ -z "$arg" ]; then
+            header; usage; desc; help; man; exit 0
+        elif [ -n "$input" ] || [ -z "$action" ]; then
+            noinput; usage; help; exit 2
+        elif [ -n "$colorize" ]; then
+            backup=; restore=
+        fi
+    fi
+
+    if [ -z "$format" ]; then
+        noformat; usage; help; exit 2
+    elif [ -n "$COMSPEC" ]; then
+        case $shell in
+            clink|cmd|command|pwsh|powershell) ;;
+            *) fixpath=1 ;;
+        esac
+    fi
+
+    build
+
+    if [ -n "$debug" ]; then
+        command -v bat > /dev/null && filter=$(printf '%s\n' "$filter" | bat --color=always -pl jq)
+        out "$filter"; exit 0
+    fi
+
+    capture run "$@"
+
+    [ -n "$stderr" ] && err "$stderr" "$exitcode"
+    [ -n "$stdout" ] && printf '%s\n' "$stdout"
+
+    exit "$exitcode"
+}
+
+arg0=$0
 jq=${SRCENV_JQ:-jq}
+dir=$PWD
 cmd=
 
 case $1 in
-    init|rc) command=$1; shift ;;
-    *)       command= ;;
+    auto|init|rc) command=$1; shift ;;
+    *)            command= ;;
 esac
 
 case $1 in
@@ -716,7 +957,7 @@ case $1 in
     *)    shell= ;;
 esac
 
-if [ "$command" = init ] || [ "$command" = rc ]; then
+if [ -n "$command" ]; then
     if [ -z "$shell" ]; then
         noshell "$1"; usage; help; exit 2
     fi
@@ -726,96 +967,4 @@ fi
 
 [ ! -t 0 ] && set -- "$@" -
 
-src=src; arg=; input=; action=; colorize=; debug=
-prefix=; suffix=; exclude=; format=; backup=; restore=; clear=
-modify=1; export=; sort=1; fixpath=; verbose=
-
-setformat "$shell"
-
-while [ $# -gt 0 ] && [ "$1" != -- ]; do
-    arg=1
-    case $1 in
-        --cmd)   cmd=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift; arg=; input=; action=; shift ;;
-        --cmd=*) cmd=$(parse "${1%%=*}" "${1#*=}") || exit $?;             arg=; input=; action=; shift ;;
-
-        --color)         color=$(parse "$1" "$2" validcolor) || exit $?; [ $# -gt 1 ] && shift; shift ;;
-        --color=*)       color=$(parse "${1%%=*}" "${1#*=}" validcolor) || exit $?;             shift ;;
-        --export-colors) colorize=exportcolors;                                       action=1; shift ;;
-        --clear-colors)  colorize=clearcolors;                                        action=1; shift ;;
-
-        -x|--exclude)     value=$(parse "$1" "$2" validname) || exit $?; [ $# -gt 1 ] && shift
-                          exclude="$exclude.$value, "; shift ;;
-        -x=*|--exclude=*) value=$(parse "${1%%=*}" "${1#*=}" validname) || exit $?
-                          exclude="$exclude.$value, "; shift ;;
-
-        -f|--format)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
-                         setformat "$value"; shift ;;
-        -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
-                         setformat "$value"; shift ;;
-
-        -b|--backup)   backup=1; clear=;  input=1;  shift ;;
-        -r|--restore)  restore=1;         action=1; shift ;;
-        -c|--clear)    backup=; clear=1;  action=1; shift ;;
-        -n)            backup=; restore=;           shift ;;
-        --no-backup)   backup=;                     shift ;;
-        --no-restore)  restore=;                    shift ;;
-        -m|--modify)        modify=1;               shift ;;
-        -w|--write-protect) modify=;                shift ;;
-        -j|--json)     src=json;          input=1;  shift ;;
-        -p|--posix)    src=src;           input=1;  shift ;;
-        -e|--export)   export=--export;   input=1;  shift ;;
-        -l|--local)    export=0;          input=1;  shift ;;
-        -s|--sort)     sort=1;                      shift ;;
-        -u|--unsorted) sort=;                       shift ;;
-        -q|--quiet)    verbose=;                    shift ;;
-        -v|--verbose)  verbose=1;                   shift ;;
-        -h|--help)     header; usage; desc; options; man; exit 0 ;;
-        --version)     version;                           exit 0 ;;
-        --debug)       debug=1;                           shift ;;
-
-        -i|--input)     value=$(parse "$1" "$2") || exit $?; [ $# -gt 1 ] && shift
-                        set -- "$@" -- --input "$value"; shift ;;
-        -i=*|--input=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
-                        set -- "$@" -- --input "$value"; shift ;;
-        -)              set -- "$@" -- -;                shift ;;
-
-        -[!-]?*) opts=${1#??}; opt=${1%"$opts"}; shift
-                 case $opt in -[!fix]) opts="-$opts" ;; esac
-                 set -- "$opt" "$opts" "$@" ;;
-        -*)      invalid "$1"; usage; help; exit 2 ;;
-        *)       set -- "$@" -- "$1"; shift ;;
-    esac
-done
-
-if [ $# = 0 ]; then
-    if [ -z "$arg" ]; then
-        header; usage; desc; help; man; exit 0
-    elif [ -n "$input" ] || [ -z "$action" ]; then
-        noinput; usage; help; exit 2
-    elif [ -n "$colorize" ]; then
-        backup=; restore=
-    fi
-fi
-
-if [ -z "$format" ]; then
-    noformat; usage; help; exit 2
-elif [ -n "$COMSPEC" ]; then
-    case $shell in
-        clink|cmd|command|pwsh|powershell) ;;
-        *) fixpath=1 ;;
-    esac
-fi
-
-build
-
-if [ -n "$debug" ]; then
-    command -v bat > /dev/null && filter=$(printf '%s\n' "$filter" | bat --color=always -pl jq)
-    out "$filter"; exit 0
-fi
-
-capture run "$@"
-
-[ -n "$stderr" ] && err "$stderr" "$exitcode"
-[ -n "$stdout" ] && printf '%s\n' "$stdout"
-
-exit "$exitcode"
+main "$@"

@@ -161,7 +161,30 @@ indent() {
 
 # region Setup
 
+export SRCENV_DATA_DIR="$PWD"
+
+tee auto.json > /dev/null << EOF
+{
+  "${PWD%/*}": { "args": "test.noauto.env", "hashes": { "test.noauto.env": "02c31a24c993ef6d3f5d06018118048f5878fb909607fc333d7c5e738132c787" } },
+  "$PWD": { "args": "test.auto.env", "hashes": { "test.auto.env": "c3df617eb6e340afade1077074206dc03928891877d225e864e8f3ec18d6608d" } },
+  "$PWD/space env": { "args": "../test.noauto.env", "hashes": { "../test.noauto.env": "0000000000000000000000000000000000000000000000000000000000000000" } }
+}
+EOF
+
+tee test.auto.env > /dev/null << 'EOF'
+SRCENV_TEST_AUTO=auto
+EOF
+
+tee test.noauto.env > /dev/null << 'EOF'
+SRCENV_TEST_AUTO_NOT_EXISTING=auto
+EOF
+
+unset SRCENV_AUTO_DIR
+unset SRCENV_AUTO_DIRS
+unset SRCENV_AUTO_PWD
 unset SRCENV_RESTORE
+unset SRCENV_TEST_AUTO
+unset SRCENV_TEST_AUTO_NOT_EXISTING
 unset SRCENV_TEST_A
 unset SRCENV_TEST_B
 unset SRCENV_TEST_C
@@ -252,7 +275,7 @@ EOF
 cleanup() {
     unset SRCENV_TEST_EXISTING
 
-    rm -f "space srcenv" "$env_input" "$posix_input" "$json_input" "$path_input" "$dir_path_input" "$exit_0_input" "$exit_42_input"
+    rm -f auto.json test.auto.env test.noauto.env "space srcenv" "$env_input" "$posix_input" "$json_input" "$path_input" "$dir_path_input" "$exit_0_input" "$exit_42_input"
     rmdir "${dir_path_input%/*}"
 
     trap - EXIT
@@ -267,6 +290,22 @@ trap cleanup EXIT INT HUP TERM
 
 veto='del(.PWD, .OLDPWD, .SHLVL, ._, ._AST_FEATURES, .UPDATE_OS_ENVIRON, .XONSH_CAPTURE_ALWAYS)'
 diff='reduce (env|'$veto'|keys[]) as $k ({}; if env[$k] != $snapshot[$k] then .[$k]=env[$k] else . end)'
+
+# TODO: Remove --auto on bump to 1.7.0
+{ posix_auto_script="$(cat) '$diff'"; } << 'EOF'
+snapshot=$(jq -n env); eval "$(./srcenv init %s --auto)"
+run() { %s; }
+run
+cd 'space env'
+run
+[ "$SRCENV_AUTO_DIR" != "$PWD" ]        && echo "SRCENV_AUTO_DIR should be equal to '$PWD', but is equal '$SRCENV_AUTO_DIR'"
+[ -n "$SRCENV_TEST_AUTO" ]              && echo "SRCENV_TEST_AUTO should not be set"
+[ -n "$SRCENV_TEST_AUTO_NOT_EXISTING" ] && echo "SRCENV_TEST_AUTO_NOT_EXISTING should not be set"
+cd ..
+run
+%s
+jq %s --argjson snapshot "$snapshot" -n
+EOF
 
 { posix_script="$(cat) '$diff'"; } << 'EOF'
 snapshot=$(jq -n env); eval "$(./srcenv %s)"
@@ -511,6 +550,14 @@ EOF
 # endregion Scripts
 
 # region Outputs
+
+json_auto_output="{
+  \"SRCENV_AUTO_DIR\": \"$PWD\",
+  \"SRCENV_AUTO_DIRS\": \"${PWD%/*}\n$PWD\n$PWD/space env\",
+  \"SRCENV_AUTO_PWD\": \"$PWD\",
+  \"SRCENV_RESTORE\": \"{\\\"SRCENV_AUTO_DIR\\\":null,\\\"SRCENV_RESTORE\\\":null,\\\"SRCENV_TEST_AUTO\\\":null}\",
+  \"SRCENV_TEST_AUTO\": \"auto\"
+}"
 
 { json_output=$(cat); } << 'EOF'
 {
@@ -1120,7 +1167,9 @@ run "$ash" "ash -c $(script "$posix_restore_script" "ash $path_input"       'ash
 run "$ash" "ash -c $(script "$posix_restore_script" "ash '$dir_path_input'" 'ash')" '{}'
 
 bash=$(detect bash) || msg warn 'Bash not found; skipping tests...'
+auto='$PROMPT_COMMAND'; clean='unset PROMPT_COMMAND'
 run_posix_tests "$bash" "bash srcenv"
+run "$bash" "bash -c $(script "$posix_auto_script"    'bash' "$auto" "$clean"        )" "$json_auto_output"
 run "$bash" "bash -c $(script "$posix_script"         "bash $env_input"              )" "$json_output"
 run "$bash" "bash -c $(script "$posix_script"         "bash $posix_input"            )" "$json_output"
 run "$bash" "bash -c $(script "$posix_script"         "bash $path_input"             )" "$(when "$bash" bash -c "$json_path_output_cmd")"
