@@ -553,7 +553,7 @@ EOF
 
 json_auto_output="{
   \"SRCENV_AUTO_DIR\": \"$PWD\",
-  \"SRCENV_AUTO_DIRS\": \"${PWD%/*}\n$PWD\n$PWD/space env\",
+  \"SRCENV_AUTO_DIRS\": \"${PWD%/*}:$PWD:$PWD/space env\",
   \"SRCENV_AUTO_PWD\": \"$PWD\",
   \"SRCENV_RESTORE\": \"{\\\"SRCENV_AUTO_DIR\\\":null,\\\"SRCENV_RESTORE\\\":null,\\\"SRCENV_TEST_AUTO\\\":null}\",
   \"SRCENV_TEST_AUTO\": \"auto\"

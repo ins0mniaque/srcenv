@@ -390,7 +390,7 @@ cache() {
     [ -f "$auto_data" ] && source=$auto_data || source=-n
 
     setup; build
-    filter='{ SRCENV_AUTO_DIRS: (. // {} | keys | sort_by(length) | join("\n")) }'
+    filter='{ SRCENV_AUTO_DIRS: (. // {} | keys | sort_by(length) | join(":")) }'
     filter="$prefix$filter | $keys | $format$suffix"
 
     "$jq" ${SRCENV_JQ_BINARY:+-b} -r "$filter" "$source"
@@ -458,11 +458,20 @@ hook() {
     exit_code=$?; [ "$SRCENV_AUTO_PWD" = "$PWD" ] && return "$exit_code"
 
     export SRCENV_AUTO_PWD=$PWD
-    printf '\''%s\n'\'' "$SRCENV_AUTO_DIRS" | while IFS= read -r dir; do
-        case $SRCENV_AUTO_PWD in
-            $dir*) [ "$dir" == "$SRCENV_AUTO_DIR" ]; return $? ;;
+    dir=$SRCENV_AUTO_PWD
+    while [ -n "$dir" ]; do
+        case ":$SRCENV_AUTO_DIRS:" in
+            *:$dir/*|*:$dir:) [ "$dir" = "$SRCENV_AUTO_DIR" ] && dir=; break; ;;
         esac
-    done || eval "$('"$srcenv auto $shell"')"
+
+        case $dir in
+            /)   dir= ;;
+            */*) dir=${dir%/*}; [ -z "$dir" ] && dir=/ ;;
+            *)   dir= ;;
+        esac
+    done
+
+    [ -n "$dir" ] && eval "$('"$srcenv auto $shell"')"
 
     return "$exit_code"
 }'
