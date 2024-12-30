@@ -673,7 +673,7 @@ setformat() {
 setup() {
     src=src; arg=; input=; action=; colorize=; debug=
     prefix=; suffix=; exclude=; format=; backup=; restore=; clear=
-    modify=1; export=; sort=1; fixpath=; verbose=
+    modify=1; export=; sort=1; tounix=; verbose=
 
     setformat "$shell"
 }
@@ -707,7 +707,7 @@ build() {
     [ -n "$backup"  ] && backup=' | ('$ffid') as $ffid | if $ffid != {} then . += { SRCENV_RESTORE: ($ffid | if .SRCENV_AUTO_DIR != null then . += { SRCENV_AUTO_DIR: null } else . end | . += { SRCENV_RESTORE: null } | '$sort' | tostring) } else . end'
     [ -n "$restore" ] && restore='env.SRCENV_RESTORE // "{}" | fromjson | . += '
     [ -n "$clear"   ] && restore="$restore{ SRCENV_RESTORE: null } | . += "
-    [ -n "$fixpath" ] && fixpath=' | def fixpath: . | gsub("\\\\"; "/") | gsub("(?<sep>^|;|:)(?<drive>[[:alpha:]]):/"; .sep + "/" + (.drive | ascii_downcase) + "/") | gsub(";"; ":"); if .PATH then .PATH |= fixpath end | if .SRCENV_AUTO_DIR then .SRCENV_AUTO_DIR |= fixpath end'
+    [ -n "$tounix"  ] && tounix=' | def tounix: . | gsub("\\\\"; "/") | gsub("(?<sep>^|;|:)(?<drive>[[:alpha:]]):/"; .sep + "/" + (.drive | ascii_downcase) + "/") | gsub(";"; ":"); '${tounix# |}
 
     if [ -n "$verbose" ]; then
         [ "$format" = . ] && format='keys[] as $k | "  \($k|tojson): \(.[$k]|tojson)"' && \
@@ -725,7 +725,7 @@ build() {
         verbose=' + "\n'$header'" + (['$changed' | keys[] as $k | if .[$k] then if $snapshot[$k] then '$modified' else '$added' end else '$removed' end] | join(", ") | if . == "" then '$nochanges' else . end)'
     fi
 
-    filter=". as \$snapshot | $prefix$restore$diff$backup$fixpath | $keys | $format$suffix$verbose"
+    filter=". as \$snapshot | $prefix$restore$diff$backup$tounix | $keys | $format$suffix$verbose"
 }
 
 DLM=$(printf '\032')
@@ -882,6 +882,11 @@ main() {
             -f=*|--format=*) value=$(parse "${1%%=*}" "${1#*=}") || exit $?
                              setformat "$value"; shift ;;
 
+            --tounix)   value=$(parse "$1" "$2" validname) || exit $?; [ $# -gt 1 ] && shift
+                        tounix="$tounix | if .$value then .$value |= tounix end"; shift ;;
+            --tounix=*) value=$(parse "${1%%=*}" "${1#*=}" validname) || exit $?
+                        tounix="$tounix | if .$value then .$value |= tounix end"; shift ;;
+
             -b|--backup)   backup=1; clear=;  input=1;  shift ;;
             -r|--restore)  restore=1;         action=1; shift ;;
             -c|--clear)    backup=; clear=1;  action=1; shift ;;
@@ -931,7 +936,8 @@ main() {
     elif [ -n "$COMSPEC" ]; then
         case $shell in
             clink|cmd|command|pwsh|powershell) ;;
-            *) fixpath=1 ;;
+            *) tounix="$tounix | if .PATH then .PATH |= tounix end"
+               tounix="$tounix | if .SRCENV_AUTO_DIR then .SRCENV_AUTO_DIR |= tounix end" ;;
         esac
     fi
 
