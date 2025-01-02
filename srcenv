@@ -197,6 +197,30 @@ autoprompt() {
     return 1
 }
 
+autoadded() {
+    colors NORMAL BOLD DIM GREEN YELLOW
+
+    out "${BOLD}${DIM}srcenv:${NORMAL} auto ${YELLOW}$dir${NORMAL} added: ${GREEN}$args${NORMAL}"
+}
+
+autoaddfailed() {
+    colors NORMAL BOLD RED YELLOW
+
+    out "${BOLD}${RED}error:${NORMAL} Failed to add auto ${YELLOW}$dir${NORMAL}"
+}
+
+autoremoved() {
+    colors NORMAL BOLD DIM YELLOW
+
+    out "${BOLD}${DIM}srcenv:${NORMAL} auto ${YELLOW}$dir${NORMAL} removed"
+}
+
+autoremovefailed() {
+    colors NORMAL BOLD RED YELLOW
+
+    out "${BOLD}${RED}error:${NORMAL} Failed to remove auto ${YELLOW}$dir${NORMAL}${1+: $1}"
+}
+
 wronghash() {
     colors NORMAL BOLD DIM RED GREEN YELLOW
 
@@ -376,10 +400,49 @@ auto() {
         '') set -- --restore --verbose --input "export SRCENV_AUTO_DIR=\$dir" ;;
         0)  set -- --restore --verbose --input 'unset SRCENV_AUTO_DIR'; automiss; cache ;;
         1)  # shellcheck disable=SC2086
-            set -- --backup --restore --verbose $args --input "export SRCENV_AUTO_DIR=\$dir" ;;
+            set -- --backup --restore --verbose $args --no-auto --input "export SRCENV_AUTO_DIR=\$dir" ;;
     esac
 
     main --dir "$dir" "$@"
+}
+
+autoadd() {
+    [ -d "${auto_data%/*}" ] || mkdir -p "${auto_data%/*}"
+    [ -f "$auto_data" ] && source=$auto_data || source=-n
+
+    # shellcheck disable=SC2016
+    adddir='. += { "\($dir)": { "args": $args, "hashes": ($hashes | split("\n\n") | [(.[] | split("\n") | { "\(.[0])": "\(.[1])" })] | add) } }'
+
+    stdout=$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg dir "$dir" --arg args "$args" --arg hashes "${hashes%"${LF}${LF}"}" "$adddir" "$source")
+    exitcode=$?
+
+    if [ "$exitcode" = "0" ]; then
+        printf '%s' "$stdout" > "$auto_data"
+        [ -n "$verbose" ] && autoadded
+    else
+        autoaddfailed; exit "$exitcode"
+    fi
+}
+
+autoremove() {
+    if [ ! -f "$auto_data" ]; then
+        autoremovefailed "$auto_data not found"; exit 1
+    fi
+
+    # shellcheck disable=SC2016
+    removedir='if .[$dir] == null then false else . | del(.[$dir]) end'
+
+    stdout=$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg dir "$dir" -e "$removedir" "$auto_data")
+    exitcode=$?
+
+    if [ "$exitcode" = "0" ]; then
+        printf '%s' "$stdout" > "$auto_data"
+        [ -n "$verbose" ] && autoremoved
+    elif [ "$exitcode" = "1" ]; then
+        autoremovefailed "No matching entry in $auto_data"; exit "$exitcode"
+    else
+        autoremovefailed; exit "$exitcode"
+    fi
 }
 
 cache() {
@@ -390,10 +453,10 @@ cache() {
     [ -f "$auto_data" ] && source=$auto_data || source=-n
 
     setup; build
-    filter='{ SRCENV_AUTO_DIRS: (. // {} | keys | sort_by(length) | join(":")) }'
-    filter="$prefix$filter | $keys | $format$suffix"
+    cache='{ SRCENV_AUTO_DIRS: (. // {} | keys | sort_by(length) | join(":")) }'
+    cache="$prefix$cache | $keys | $format$suffix"
 
-    "$jq" ${SRCENV_JQ_BINARY:+-b} -r "$filter" "$source"
+    "$jq" ${SRCENV_JQ_BINARY:+-b} -r "$cache" "$source"
 }
 
 sha() {
@@ -671,7 +734,7 @@ setformat() {
 # region run()
 
 setup() {
-    src=src; arg=; input=; action=; colorize=; debug=
+    src=src; args=$*; arg=; input=; action=; auto=; otua=; colorize=; debug=
     prefix=; suffix=; exclude=; format=; backup=; restore=; clear=
     modify=1; export=; sort=1; tounix=; verbose=
 
@@ -764,6 +827,19 @@ run() {
         cd "$dir" || exit $?
     fi
 
+    if [ -n "$auto" ]; then
+        hashes=; skip=
+        for arg in "$@"; do
+            [ -n "$skip" ] && skip= && continue
+            case $arg in
+                --)      ;;
+                --input) skip=1 ;;
+                -)       invalid "Automatic sourcing from STDIN is not supported" -; exit 1 ;;
+                *)       hashes="$hashes$arg${LF}$(sha "$arg")${LF}${LF}" || exit 1 ;;
+            esac
+        done
+    fi
+
     if ! jq=$(command -v "$jq"); then
         nojq; exit 1
     fi
@@ -786,6 +862,10 @@ run() {
 
     if [ "$dir" != "$pwd" ]; then
         cd "$pwd" || exit $?
+    fi
+
+    if [ -n "$auto" ]; then
+        locate; autoadd; cache
     fi
 
     if [ -n "$verbose" ]; then
@@ -856,7 +936,7 @@ json() {
 # endregion run()
 
 main() {
-    setup
+    setup "$@"
 
     while [ $# -gt 0 ] && [ "$1" != -- ]; do
         arg=1
@@ -887,6 +967,9 @@ main() {
             --tounix=*) value=$(parse "${1%%=*}" "${1#*=}" validname) || exit $?
                         tounix="$tounix | if .$value then .$value |= tounix end"; shift ;;
 
+            -a|--auto)       auto=1;          input=1;  shift ;;
+            --no-auto)       auto=;                     shift ;;
+            -o|--off|--otua) otua=1;                    shift ;;
             -b|--backup)   backup=1; clear=;  input=1;  shift ;;
             -r|--restore)  restore=1;         action=1; shift ;;
             -c|--clear)    backup=; clear=1;  action=1; shift ;;
@@ -920,6 +1003,10 @@ main() {
             *)       set -- "$@" -- "$1"; shift ;;
         esac
     done
+
+    if [ -n "$otua" ]; then
+        locate; autoremove; exit $?
+    fi
 
     if [ $# = 0 ]; then
         if [ -z "$arg" ]; then
