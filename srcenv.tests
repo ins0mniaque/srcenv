@@ -553,6 +553,15 @@ EOF
 
 # region Outputs
 
+auto_data_test_output='{
+  "'$PWD'": {
+    "args": "--auto test.env",
+    "hashes": {
+      "test.env": "4faccc4168deda65c203c07e1d8289512fe0d97553dd0a95e1e42e0c05e7a957"
+    }
+  }
+}'
+
 json_auto_output="{
   \"SRCENV_AUTO_DIR\": \"$PWD\",
   \"SRCENV_AUTO_DIRS\": \"${PWD%/*}:$PWD:$PWD/space env\",
@@ -908,6 +917,18 @@ run_posix_tests() {
     run "$1" "$2 sh --json --input \"\$(cat $json_input)\"" "$posix_output"
     run "$1" "$2 sh --json - < $json_input"                 "$posix_output"
     run "$1" "$2 sh --json < $json_input"                   "$posix_output"
+
+    export SRCENV_DATA_DIR="$PWD/auto.data.tests"
+    mkdir auto.data.tests
+    auto_data="$PWD/auto.data.tests/auto.json"
+    run "$1"             "$2 sh --off && cat '$auto_data'"             '' 1
+    run "$1"             "echo | $2 sh --auto - && cat '$auto_data'"   '' 1
+    run "$when_no_stdin" "$2 sh --auto $env_input && cat '$auto_data'" "export SRCENV_AUTO_DIRS='$PWD'${LF}$posix_output${LF}$auto_data_test_output"
+    run "$when_no_stdin" "$2 sh --off && cat '$auto_data'"             '{}'
+    run "$1"             "$2 sh --off && cat '$auto_data'"             '' 1
+    rm -f "$auto_data"
+    rmdir auto.data.tests
+    export SRCENV_DATA_DIR="$PWD"
 }
 
 run_output_tests() {

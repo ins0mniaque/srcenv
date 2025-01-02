@@ -387,9 +387,9 @@ auto() {
 
     if [ -f "$auto_data" ]; then
         # shellcheck disable=SC2016
-        filter='. | with_entries(select(.key | startswith($path'${COMSPEC:+[1:]}'))) | to_entries | sort_by(.key) | first | if .value == null then "ok=0" else "dir=\(.key|@sh)\nargs=\(.value.args|@sh)\nok=1\n" + ([(.value.hashes | to_entries[] | "sha \"$dir/\(.key)\" \"\(.value)\" || ok=")] | join("\n")) end'
+        filter='. | with_entries(select(.key | startswith($dir'${COMSPEC:+[1:]}'))) | to_entries | sort_by(.key) | first | if .value == null then "ok=0" else "dir=\(.key|@sh)\nargs=\(.value.args|@sh)\nok=1\n" + ([(.value.hashes | to_entries[] | "sha \"$dir/\(.key)\" \"\(.value)\" || ok=")] | join("\n")) end'
 
-        eval "$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg path "${COMSPEC:+\\}$dir" -r "$filter" "$auto_data")"
+        eval "$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg dir "${COMSPEC:+\\}$dir" -r "$filter" "$auto_data")"
     else
         ok=0
     fi
@@ -411,38 +411,48 @@ autoadd() {
     [ -f "$auto_data" ] && source=$auto_data || source=-n
 
     # shellcheck disable=SC2016
-    adddir='. += { "\($dir)": { "args": $args, "hashes": ($hashes | split("\n\n") | [(.[] | split("\n") | { "\(.[0])": "\(.[1])" })] | add) } }'
+    adddir='. += { "\($dir'${COMSPEC:+[1:]}')": { "args": $args, "hashes": ($hashes | split("\n\n") | [(.[] | split("\n") | { "\(.[0])": "\(.[1])" })] | add) } }'
 
-    stdout=$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg dir "$dir" --arg args "$args" --arg hashes "${hashes%"${LF}${LF}"}" "$adddir" "$source")
+    stdout=$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg dir "${COMSPEC:+\\}$dir" --arg args "$args" --arg hashes "${hashes%"${LF}${LF}"}" "$adddir" "$source")
     exitcode=$?
 
     if [ "$exitcode" = "0" ]; then
-        printf '%s' "$stdout" > "$auto_data"
+        printf '%s' "$stdout" > "$auto_data" || exitcode=74
+    fi
+
+    if [ "$exitcode" = "0" ]; then
         [ -n "$verbose" ] && autoadded
     else
-        autoaddfailed; exit "$exitcode"
+        autoaddfailed
     fi
+
+    return "$exitcode"
 }
 
 autoremove() {
     if [ ! -f "$auto_data" ]; then
-        autoremovefailed "$auto_data not found"; exit 1
+        autoremovefailed "$auto_data not found"; return 1
     fi
 
     # shellcheck disable=SC2016
-    removedir='if .[$dir] == null then false else . | del(.[$dir]) end'
+    removedir='if .[$dir'${COMSPEC:+[1:]}'] == null then false else . | del(.[$dir'${COMSPEC:+[1:]}']) end'
 
-    stdout=$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg dir "$dir" -e "$removedir" "$auto_data")
+    stdout=$("$jq" ${SRCENV_JQ_BINARY:+-b} --arg dir "${COMSPEC:+\\}$dir" -e "$removedir" "$auto_data")
     exitcode=$?
 
     if [ "$exitcode" = "0" ]; then
-        printf '%s' "$stdout" > "$auto_data"
+        printf '%s' "$stdout" > "$auto_data" || exitcode=74
+    fi
+
+    if [ "$exitcode" = "0" ]; then
         [ -n "$verbose" ] && autoremoved
     elif [ "$exitcode" = "1" ]; then
-        autoremovefailed "No matching entry in $auto_data"; exit "$exitcode"
+        autoremovefailed "No matching entry in $auto_data"
     else
-        autoremovefailed; exit "$exitcode"
+        autoremovefailed
     fi
+
+    return "$exitcode"
 }
 
 cache() {
